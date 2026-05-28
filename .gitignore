@@ -1,0 +1,12 @@
+# Ignore node modules and Python virtual environments
+node_modules/
+frontend/node_modules/
+
+
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.DS_Store
+.vscode/
+.idea/
