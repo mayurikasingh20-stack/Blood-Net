@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from flask_jwt_extended import jwt_required, get_jwt_identity
+from flask_jwt_extended import jwt_required, get_jwt_identity, create_access_token
 from app.extensions import db
 from app.models.user import User
 from app.services.auth_service import login_user, register_user
@@ -16,6 +16,16 @@ def login():
     response, status_code = login_user(request.get_json())
     return jsonify(response), status_code
     
+@auth_bp.post("/refresh")
+@jwt_required(refresh=True)
+def refresh():
+    user_id = get_jwt_identity()
+    user = db.session.get(User, user_id)
+    if not user:
+        return jsonify({"message": "User not found"}), 404
+    access_token = create_access_token(identity=user.id)
+    return jsonify({"access_token": access_token}), 200
+
 @auth_bp.get("/profile")
 @jwt_required()
 def profile():

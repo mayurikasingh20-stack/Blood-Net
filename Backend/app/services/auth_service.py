@@ -1,6 +1,6 @@
 from datetime import datetime
 from app.utils.helpers import get_missing_fields
-from flask_jwt_extended import create_access_token
+from flask_jwt_extended import create_access_token, create_refresh_token
 
 from app.extensions import db
 from app.models.user import User
@@ -143,48 +143,38 @@ def login_user(data):
     if not data:
         return {"message": "No JSON data received"}, 400
 
-    role = data.get("role")
-    if role in ("donor", "patient"):
-        required_fields = ["phone", "password"]
-    else:
-        required_fields = ["email", "password"]
+    identifier = data.get("identifier", "").strip()
+    password = data.get("password", "")
 
-    missing_fields = get_missing_fields(data, required_fields)
-
-    if missing_fields:
-        return {
-            "message": "Missing required fields",
-            "missing_fields": missing_fields,
-        }, 400
+    if not identifier:
+        return {"message": "Please enter your email or phone number"}, 400
+    if not password:
+        return {"message": "Please enter your password"}, 400
 
     user = None
-    if role in ("donor", "patient"):
-        normalized_phone = normalize_phone(data["phone"])
+    if "@" in identifier:
+        email = identifier.lower()
+        user = User.query.filter_by(email=email).first()
+    else:
+        normalized_phone = normalize_phone(identifier)
         if normalized_phone:
             user = User.query.filter_by(phone=normalized_phone).first()
-        if not user:
+        if not user and normalized_phone:
             for candidate in User.query.all():
                 if normalize_phone(candidate.phone) == normalized_phone:
                     user = candidate
                     break
-    else:
-        email = data["email"].strip().lower()
-        user = User.query.filter_by(email=email).first()
 
-    if not user or not verify_password(user.password_hash, data["password"]):
+    if not user or not verify_password(user.password_hash, password):
         return {"message": "Credentials not matched"}, 401
 
-    requested_role = data.get("role")
-    if user.role != requested_role:
-        return {
-            "message": "Credentials not matched"
-        }, 401
-
-    access_token = create_access_token(identity=str(user.id))
+    access_token = create_access_token(identity=user.id)
+    refresh_token = create_refresh_token(identity=user.id)
 
     return {
         "message": "Login successful",
         "access_token": access_token,
+        "refresh_token": refresh_token,
         "name": f"{user.first_name} {user.last_name}",
         "user": {
             "id": user.id,

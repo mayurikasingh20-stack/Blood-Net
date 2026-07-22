@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Droplets, Eye, EyeOff } from "lucide-react";
+import { Droplets, Eye, EyeOff, Mail, Phone } from "lucide-react";
 import Button from "../components/ui/Button";
 import Card from "../components/ui/Card";
 import Input from "../components/forms/Input";
@@ -11,23 +11,7 @@ import useAuth from "../context/useAuth";
 import { getAuthErrorMessage, loginUser } from "../services/authService";
 import { dashboardPathForRole } from "../utils/roleHelpers";
 
-const roles = [
-  { value: "donor", label: "Donor" },
-  { value: "patient", label: "Patient" },
-  { value: "bloodbank", label: "Blood Bank" },
-  { value: "admin", label: "Admin" },
-];
-
-const roleLabel = {
-  donor: "Donor",
-  patient: "Patient",
-  bloodbank: "Blood Bank",
-  admin: "Admin",
-};
-
 export default function Login() {
-  const [searchParams] = useSearchParams();
-  const [role, setRole] = useState(searchParams.get("role") || "donor");
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -36,7 +20,8 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
-  const usesPhone = role === "donor" || role === "patient";
+
+  const isEmail = identifier.includes("@");
 
   async function handleSubmit(event) {
     event.preventDefault();
@@ -44,18 +29,13 @@ export default function Login() {
     setSuccess("");
 
     if (!identifier.trim() || !password) {
-      setError(`Please enter your ${usesPhone ? "phone number" : "email address"} and password.`);
-      return;
-    }
-
-    if (!usesPhone && !/^\S+@\S+\.\S+$/.test(identifier)) {
-      setError("Please enter a valid email address.");
+      setError("Please enter your email or phone number and password.");
       return;
     }
 
     setLoading(true);
     try {
-      const authData = await loginUser({ identifier, password, role });
+      const authData = await loginUser({ identifier, password });
       login(authData, true);
       setSuccess("Login successful. Redirecting you now...");
       window.setTimeout(() => navigate(dashboardPathForRole(authData.user.role), { replace: true }), 500);
@@ -78,45 +58,32 @@ export default function Login() {
             <span className="text-xl font-bold text-slate-900 tracking-wide">BLOOD NET</span>
           </div>
 
-          {/* Role Tabs */}
-          <div className="flex mb-6 bg-slate-100 rounded-lg p-1">
-            {roles.map((r) => (
-              <button
-                key={r.value}
-                type="button"
-                onClick={() => { setRole(r.value); setIdentifier(""); setError(""); }}
-                className={`flex-1 py-2 text-sm font-semibold rounded-md transition-all ${
-                  role === r.value
-                    ? "bg-white text-red shadow-sm"
-                    : "text-slate-500 hover:text-slate-700"
-                }`}
-              >
-                {r.label}
-              </button>
-            ))}
-          </div>
-
           {/* Heading */}
           <h1 className="text-2xl md:text-3xl font-bold text-slate-900 text-center mb-2">
-            {roleLabel[role]} Login
+            Welcome Back
           </h1>
 
           {/* Description */}
           <p className="text-sm text-slate-500 text-center mb-8">
-            {usesPhone ? "Sign in with your registered mobile number and password." : "Sign in with your registered email address and password."}
+            Sign in with your registered email address or phone number.
           </p>
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-5">
+            <div className="relative">
               <Input
-                label={usesPhone ? "PHONE NUMBER" : "EMAIL ADDRESS"}
+                label="EMAIL OR PHONE NUMBER"
                 name="identifier"
-                type={usesPhone ? "tel" : "email"}
+                type="text"
                 value={identifier}
                 onChange={(e) => setIdentifier(e.target.value)}
-                placeholder={usesPhone ? "+91 98765 43210" : "name@example.com"}
+                placeholder="name@example.com or +91 98765 43210"
                 autoComplete="off" required
               />
+              <div className="absolute right-3 top-9 text-slate-400">
+                {isEmail ? <Mail size={16} /> : <Phone size={16} />}
+              </div>
+            </div>
 
             <div>
               <label className="block" htmlFor="password">

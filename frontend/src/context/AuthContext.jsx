@@ -8,6 +8,7 @@ export function AuthProvider({ children }) {
   const storedAuth = getStoredAuth();
   const [user, setUser] = useState(storedAuth?.user || null);
   const [token, setToken] = useState(storedAuth?.token || null);
+  const [refreshToken, setRefreshToken] = useState(storedAuth?.refreshToken || null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -27,15 +28,10 @@ export function AuthProvider({ children }) {
         if (active) {
           setUser(currentUser);
           setToken(savedAuth.token);
-          saveAuth({ token: savedAuth.token, user: currentUser });
+          saveAuth({ token: savedAuth.token, refreshToken: savedAuth.refreshToken, user: currentUser });
         }
       } catch {
-        clearAuth();
-        clearAuthToken();
-        if (active) {
-          setUser(null);
-          setToken(null);
-        }
+        return;
       } finally {
         if (active) setLoading(false);
       }
@@ -49,6 +45,7 @@ export function AuthProvider({ children }) {
     const handleUnauthorized = () => {
       setUser(null);
       setToken(null);
+      setRefreshToken(null);
       clearAuthToken();
       setLoading(false);
     };
@@ -59,10 +56,18 @@ export function AuthProvider({ children }) {
       }
     };
 
+    const handleTokenRefreshed = (e) => {
+      if (e.detail?.token) {
+        setToken(e.detail.token);
+      }
+    };
+
     window.addEventListener("auth:unauthorized", handleUnauthorized);
+    window.addEventListener("auth:token-refreshed", handleTokenRefreshed);
     window.addEventListener("storage", handleStorageChange);
     return () => {
       window.removeEventListener("auth:unauthorized", handleUnauthorized);
+      window.removeEventListener("auth:token-refreshed", handleTokenRefreshed);
       window.removeEventListener("storage", handleStorageChange);
     };
   }, []);
@@ -70,13 +75,15 @@ export function AuthProvider({ children }) {
   const login = (authData, remember = true) => {
     setUser(authData.user || null);
     setToken(authData.token || null);
+    setRefreshToken(authData.refreshToken || null);
     setAuthToken(authData.token || null);
-    saveAuth({ user: authData.user, token: authData.token }, remember);
+    saveAuth({ user: authData.user, token: authData.token, refreshToken: authData.refreshToken }, remember);
   };
 
   const logout = () => {
     setUser(null);
     setToken(null);
+    setRefreshToken(null);
     clearAuthToken();
     clearAuth();
   };
@@ -84,12 +91,13 @@ export function AuthProvider({ children }) {
   const value = useMemo(() => ({
     user,
     token,
+    refreshToken,
     role: user?.role || null,
     loading,
     isAuthenticated: Boolean(user && token),
     login,
     logout,
-  }), [user, token, loading]);
+  }), [user, token, refreshToken, loading]);
 
   return (
     <AuthContext.Provider value={value}>

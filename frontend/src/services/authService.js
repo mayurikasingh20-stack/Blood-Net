@@ -1,24 +1,13 @@
 import api from "./api";
 import { backendRoleToUiRole, uiRoleToBackendRole } from "../utils/roleHelpers";
 
-// Sends login data exactly as the Flask backend expects.
-export async function loginUser({ identifier, password, role }) {
-  const payload = {
-    password,
-    role: uiRoleToBackendRole(role),
-  };
-
-  if (role === "donor" || role === "patient") {
-    payload.phone = identifier;
-  } else {
-    payload.email = identifier;
-  }
-
-  const response = await api.post("/auth/login", payload);
+export async function loginUser({ identifier, password }) {
+  const response = await api.post("/auth/login", { identifier, password });
   const backendUser = response.data.user || {};
 
   return {
     token: response.data.access_token,
+    refreshToken: response.data.refresh_token,
     user: {
       ...backendUser,
       role: backendRoleToUiRole(backendUser.role),
@@ -76,6 +65,13 @@ export async function getCurrentUser() {
     role: backendRoleToUiRole(user.role),
     name: `${user.first_name || ""} ${user.last_name || ""}`.trim(),
   };
+}
+
+export async function refreshAccessToken(refreshToken) {
+  const response = await api.post("/auth/refresh", null, {
+    headers: { Authorization: `Bearer ${refreshToken}` },
+  });
+  return response.data.access_token;
 }
 
 // Makes backend and network errors safe to show in the interface.

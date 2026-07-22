@@ -23,3 +23,13 @@ export function clearAuth() {
   localStorage.removeItem(AUTH_STORAGE_KEY);
   sessionStorage.removeItem(AUTH_STORAGE_KEY);
 }
+
+export function getStoredRefreshToken() {
+  try {
+    const data = JSON.parse(localStorage.getItem(AUTH_STORAGE_KEY)) ||
+                 JSON.parse(sessionStorage.getItem(AUTH_STORAGE_KEY));
+    return data?.refreshToken || null;
+  } catch {
+    return null;
+  }
+}
