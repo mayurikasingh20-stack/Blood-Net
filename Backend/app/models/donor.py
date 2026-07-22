@@ -1,22 +1,46 @@
 from app.extensions import db
 
+
 class Donor(db.Model):
     __tablename__ = "donors"
-    
+
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False, unique=True)
-    blood_group = db.Column(db.String(100), nullable=False)
-    age = db.Column(db.Integer , nullable=False)
-    gender = db.Column(db.String(10), nullable=False)
-    phone = db.Column(db.String(15), nullable=False)
-    city = db.Column(db.String(100),nullable=False)
-    state = db.Column(db.String(100),nullable=False)
-    address = db.Column(db.String(250),nullable=False)
-    pincode = db.Column(db.String(10), nullable=False)
-    last_donation = db.Column(db.Date)
-    available = db.Column(db.Boolean, default=True)
-    latitude = db.Column(db.Float)
-    longitude = db.Column(db.Float)
+    user_id = db.Column(
+        db.Integer,
+        db.ForeignKey("users.id"),
+        nullable=False,
+        unique=True
+    )
+    user = db.relationship(
+        "User",
+        back_populates="donor",
+        lazy=True
+    )
+    blood_group = db.Column(db.String(5), nullable=False)
+    weight = db.Column(db.Float, nullable=False)
+    last_donation_date = db.Column(db.Date)
+    has_chronic_condition = db.Column(
+        db.Boolean,
+        default=False
+    )
+    on_medication = db.Column(
+        db.Boolean,
+        default=False
+    )
+    is_eligible = db.Column(
+    db.Boolean,
+    default=True,
+    nullable=False
+)
+    available = db.Column(
+        db.Boolean,
+        default=True
+    )
+    donations = db.relationship(
+    "Donation",
+    back_populates="donor",
+    cascade="all, delete-orphan"
+)
     
     def __repr__(self):
-        return f"<Donor {self.id}>"
+        return f"<Donor {self.user.email}>"

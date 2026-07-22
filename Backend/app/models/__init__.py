@@ -3,4 +3,6 @@ from .donor import Donor
 from .patient import Patient
 from .blood_request import BloodRequest
 from .blood_bank import BloodBank
-from .notification import Notification 
+from .notification import Notification
+from .public_blood_bank import PublicBloodBank
+from .camp import Camp

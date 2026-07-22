@@ -1,0 +1,3 @@
+import Button from "../ui/Button";
+/** Explains an empty collection and offers an optional next action. */
+export default function EmptyState({ title = "Nothing here yet", description, actionLabel, onAction, icon = "○", className = "" }) { return <section className={`rounded-xl border border-dashed border-ink/20 bg-paper px-6 py-10 text-center ${className}`}><div aria-hidden="true" className="mb-3 text-3xl text-red">{icon}</div><h3 className="font-serif text-xl font-bold">{title}</h3>{description && <p className="mx-auto mt-2 max-w-md text-sm text-ink-soft">{description}</p>}{actionLabel && <Button className="mt-5" onClick={onAction}>{actionLabel}</Button>}</section>; }

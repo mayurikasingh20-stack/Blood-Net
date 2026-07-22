@@ -1,0 +1,3 @@
+import Button from "../ui/Button";
+/** Controlled pager; parent owns current page and data fetching. */
+export default function Pagination({ page = 1, totalPages = 1, onPageChange, className = "" }) { if (totalPages <= 1) return null; return <nav aria-label="Pagination" className={`flex items-center justify-between gap-3 ${className}`}><Button variant="outline" size="sm" disabled={page <= 1} onClick={() => onPageChange(page - 1)}>Previous</Button><span className="text-sm text-ink-soft">Page {page} of {totalPages}</span><Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => onPageChange(page + 1)}>Next</Button></nav>; }

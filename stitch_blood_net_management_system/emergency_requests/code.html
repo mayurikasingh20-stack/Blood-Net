@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Blood Net | Emergency Request</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        .step-transition {
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        @keyframes pulse-red {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .animate-pulse-slow {
+            animation: pulse-red 3s infinite;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "error": "#ba1a1a",
+                        "on-secondary-fixed-variant": "#003ea8",
+                        "on-secondary-container": "#fefcff",
+                        "secondary": "#0051d5",
+                        "surface-variant": "#dae2fd",
+                        "surface-container-high": "#e2e7ff",
+                        "on-primary-container": "#fff6f5",
+                        "surface-container": "#eaedff",
+                        "surface-bright": "#faf8ff",
+                        "on-secondary-fixed": "#00174b",
+                        "tertiary-fixed-dim": "#62df7d",
+                        "on-error-container": "#93000a",
+                        "on-tertiary-container": "#e7ffe4",
+                        "tertiary": "#00682b",
+                        "primary-fixed-dim": "#ffb4ab",
+                        "inverse-primary": "#ffb4ab",
+                        "outline": "#916f6b",
+                        "tertiary-fixed": "#7ffc97",
+                        "on-tertiary-fixed-variant": "#005320",
+                        "surface-dim": "#d2d9f4",
+                        "primary": "#b70011",
+                        "inverse-on-surface": "#eef0ff",
+                        "surface": "#faf8ff",
+                        "error-container": "#ffdad6",
+                        "on-primary-fixed": "#410002",
+                        "primary-fixed": "#ffdad6",
+                        "secondary-fixed": "#dbe1ff",
+                        "on-background": "#131b2e",
+                        "surface-container-highest": "#dae2fd",
+                        "on-tertiary": "#ffffff",
+                        "secondary-fixed-dim": "#b4c5ff",
+                        "on-tertiary-fixed": "#002109",
+                        "background": "#faf8ff",
+                        "on-surface-variant": "#5c403c",
+                        "inverse-surface": "#283044",
+                        "on-error": "#ffffff",
+                        "secondary-container": "#316bf3",
+                        "on-primary-fixed-variant": "#93000b",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-container-low": "#f2f3ff",
+                        "tertiary-container": "#008438",
+                        "on-surface": "#131b2e",
+                        "on-secondary": "#ffffff",
+                        "on-primary": "#ffffff",
+                        "surface-tint": "#bf0715",
+                        "outline-variant": "#e6bdb8",
+                        "primary-container": "#dc2626"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "stack-md": "16px",
+                        "base": "4px",
+                        "margin-desktop": "32px",
+                        "margin-mobile": "16px",
+                        "gutter": "24px",
+                        "stack-sm": "8px",
+                        "container-max": "1280px",
+                        "stack-lg": "24px"
+                    },
+                    "fontFamily": {
+                        "headline-md": ["Inter"],
+                        "headline-sm": ["Inter"],
+                        "body-md": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "display": ["Inter"],
+                        "label-md": ["Inter"],
+                        "headline-lg-mobile": ["Inter"],
+                        "body-sm": ["Inter"],
+                        "headline-lg": ["Inter"]
+                    },
+                    "fontSize": {
+                        "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                        "headline-sm": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                        "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                        "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "600"}],
+                        "display": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "label-md": ["14px", {"lineHeight": "20px", "fontWeight": "500"}],
+                        "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                        "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "600"}]
+                    }
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-background text-on-surface font-body-md min-h-screen pb-20 lg:pb-0 lg:pl-64">
+<!-- Top App Bar -->
+<header class="fixed top-0 right-0 left-0 lg:left-64 z-50 bg-surface/80 backdrop-blur-md border-b border-outline-variant/30 shadow-sm h-16 flex items-center justify-between px-margin-mobile md:px-margin-desktop">
+<div class="flex items-center gap-base">
+<span class="material-symbols-outlined text-primary text-headline-md">bloodtype</span>
+<h1 class="font-headline-md text-headline-md font-bold text-primary tracking-tight">Blood Net</h1>
+</div>
+<button class="bg-primary-container text-on-primary-container px-6 py-2 rounded-full font-label-md transition-transform active:scale-95 shadow-lg">
+            Donate Now
+        </button>
+</header>
+<!-- Navigation Drawer (Desktop) -->
+<aside class="fixed left-0 top-0 h-full w-64 hidden lg:flex flex-col bg-surface-container-low border-r border-outline-variant/20 p-stack-md gap-base z-50">
+<div class="flex items-center gap-3 mb-stack-lg px-2">
+<div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary">medical_services</span>
+</div>
+<div>
+<p class="font-label-md text-on-surface font-bold">Admin Portal</p>
+<p class="text-[10px] text-on-surface-variant uppercase tracking-wider">Central Region HQ</p>
+</div>
+</div>
+<nav class="flex-1 flex flex-col gap-1">
+<a class="flex items-center gap-3 px-4 py-3 bg-secondary-container text-on-secondary-container rounded-lg font-bold" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-label-md">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-variant/50 rounded-lg transition-all" href="#">
+<span class="material-symbols-outlined">bloodtype</span>
+<span class="font-label-md">Inventory</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-variant/50 rounded-lg transition-all" href="#">
+<span class="material-symbols-outlined">group</span>
+<span class="font-label-md">Donors</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-variant/50 rounded-lg transition-all" href="#">
+<span class="material-symbols-outlined">monitoring</span>
+<span class="font-label-md">Analytics</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-variant/50 rounded-lg transition-all" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-label-md">Settings</span>
+</a>
+</nav>
+<div class="mt-auto p-4 bg-surface-bright rounded-xl border border-outline-variant/10">
+<div class="flex items-center gap-3 mb-2">
+<img class="w-10 h-10 rounded-full object-cover border-2 border-primary/20" data-alt="A professional medical administrator headshot, clean studio lighting, wearing a white lab coat, friendly and trustworthy expression, minimalist medical background, soft focus." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDRtydJzDAM4iTWpH18svoze1bbN6ZtMjGjIwiT7K-H7mQnIQpRC_rZDvAZuIW6f7l_ycM2rXR_RC_HeiXsbe6fWrmmgUZEtLhj7YZlMN8Li4NBEMo46EKVjN_8G1IJll7n_FLyZ3jeLFec3bCMqdrknweTTNvy0isfBahjMvVJopUznk0AykVDHu7uxk_aV59LJtOCq9R-DrNGACDeE1GYM1b4_Xx8HFvd0eL8fiU80l9rO5INHsBKgw"/>
+<div class="overflow-hidden">
+<p class="font-label-md text-on-surface truncate">Dr. Sarah Chen</p>
+<p class="text-xs text-on-surface-variant">Chief Coordinator</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- Bottom Navigation (Mobile) -->
+<nav class="lg:hidden fixed bottom-0 left-0 w-full z-50 bg-surface/90 backdrop-blur-lg border-t border-outline-variant/30 flex justify-around items-center h-16 pb-safe px-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
+<a class="flex flex-col items-center justify-center text-on-surface-variant active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined">home</span>
+<span class="font-label-sm text-[10px]">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-xl py-1 px-3 active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined">opacity</span>
+<span class="font-label-sm text-[10px]">Stock</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined">volunteer_activism</span>
+<span class="font-label-sm text-[10px]">Donors</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined">account_circle</span>
+<span class="font-label-sm text-[10px]">Profile</span>
+</a>
+</nav>
+<!-- Main Content -->
+<main class="pt-24 px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto pb-12">
+<!-- Header Section -->
+<section class="mb-stack-lg">
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+<div>
+<h2 class="font-headline-lg text-headline-lg text-on-surface tracking-tight">Emergency Support</h2>
+<p class="text-on-surface-variant mt-2 max-w-xl">Create a high-priority blood request or track an ongoing emergency delivery in real-time.</p>
+</div>
+<div class="flex items-center gap-2 px-4 py-2 bg-error-container text-on-error-container rounded-full animate-pulse-slow">
+<span class="material-symbols-outlined text-sm">emergency</span>
+<span class="font-label-sm uppercase tracking-tighter">System Alert: Critical O- Shortage</span>
+</div>
+</div>
+</section>
+<!-- Bento Grid Layout -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-gutter">
+<!-- Step Form / Tracking Card -->
+<div class="lg:col-span-7 flex flex-col gap-gutter">
+<!-- Multi-Step Form Container -->
+<div class="bg-white rounded-3xl p-stack-lg shadow-sm border border-outline-variant/10 overflow-hidden relative min-h-[480px]" id="requestForm">
+<!-- Progress Bar -->
+<div class="flex gap-2 mb-stack-lg">
+<div class="h-1.5 flex-1 rounded-full bg-primary transition-all duration-500" id="stepBar1"></div>
+<div class="h-1.5 flex-1 rounded-full bg-surface-container transition-all duration-500" id="stepBar2"></div>
+<div class="h-1.5 flex-1 rounded-full bg-surface-container transition-all duration-500" id="stepBar3"></div>
+</div>
+<!-- Step 1: Blood Type -->
+<div class="step-transition" id="step1">
+<div class="mb-stack-md">
+<span class="text-primary font-bold text-sm uppercase tracking-widest">Step 01</span>
+<h3 class="font-headline-sm text-headline-sm mt-1">Select Blood Type</h3>
+<p class="text-on-surface-variant text-sm">Please specify the required blood group for the patient.</p>
+</div>
+<div class="grid grid-cols-4 gap-3 mb-8">
+<button class="aspect-square flex flex-col items-center justify-center border-2 border-outline-variant/20 rounded-2xl hover:border-primary/40 hover:bg-primary/5 transition-all group" onclick="selectType(this)">
+<span class="font-display text-2xl group-hover:text-primary">A+</span>
+</button>
+<button class="aspect-square flex flex-col items-center justify-center border-2 border-outline-variant/20 rounded-2xl hover:border-primary/40 hover:bg-primary/5 transition-all group" onclick="selectType(this)">
+<span class="font-display text-2xl group-hover:text-primary">A-</span>
+</button>
+<button class="aspect-square flex flex-col items-center justify-center border-2 border-outline-variant/20 rounded-2xl hover:border-primary/40 hover:bg-primary/5 transition-all group" onclick="selectType(this)">
+<span class="font-display text-2xl group-hover:text-primary">B+</span>
+</button>
+<button class="aspect-square flex flex-col items-center justify-center border-2 border-outline-variant/20 rounded-2xl hover:border-primary/40 hover:bg-primary/5 transition-all group" onclick="selectType(this)">
+<span class="font-display text-2xl group-hover:text-primary">B-</span>
+</button>
+<button class="aspect-square flex flex-col items-center justify-center border-2 border-outline-variant/20 rounded-2xl hover:border-primary/40 hover:bg-primary/5 transition-all group" onclick="selectType(this)">
+<span class="font-display text-2xl group-hover:text-primary">O+</span>
+</button>
+<button class="aspect-square flex flex-col items-center justify-center border-2 border-primary bg-primary/5 rounded-2xl shadow-inner group" onclick="selectType(this)">
+<span class="font-display text-2xl text-primary">O-</span>
+</button>
+<button class="aspect-square flex flex-col items-center justify-center border-2 border-outline-variant/20 rounded-2xl hover:border-primary/40 hover:bg-primary/5 transition-all group" onclick="selectType(this)">
+<span class="font-display text-2xl group-hover:text-primary">AB+</span>
+</button>
+<button class="aspect-square flex flex-col items-center justify-center border-2 border-outline-variant/20 rounded-2xl hover:border-primary/40 hover:bg-primary/5 transition-all group" onclick="selectType(this)">
+<span class="font-display text-2xl group-hover:text-primary">AB-</span>
+</button>
+</div>
+<button class="w-full py-4 bg-primary text-on-primary rounded-2xl font-headline-sm shadow-xl shadow-primary/20 active:scale-[0.98] transition-transform" onclick="nextStep(2)">Continue</button>
+</div>
+<!-- Step 2: Hospital & Location -->
+<div class="step-transition hidden" id="step2">
+<div class="mb-stack-md">
+<span class="text-primary font-bold text-sm uppercase tracking-widest">Step 02</span>
+<h3 class="font-headline-sm text-headline-sm mt-1">Hospital Details</h3>
+<p class="text-on-surface-variant text-sm">Where should the delivery be coordinated?</p>
+</div>
+<div class="space-y-4 mb-8">
+<div class="relative">
+<label class="absolute -top-2 left-3 bg-white px-1 text-xs font-bold text-on-surface-variant">Search Hospital</label>
+<div class="flex items-center px-4 py-3 rounded-xl border border-outline-variant/30 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 transition-all">
+<span class="material-symbols-outlined text-on-surface-variant mr-3">local_hospital</span>
+<input class="bg-transparent border-none focus:ring-0 w-full text-on-surface" placeholder="Start typing hospital name..." type="text"/>
+</div>
+</div>
+<div class="relative">
+<label class="absolute -top-2 left-3 bg-white px-1 text-xs font-bold text-on-surface-variant">Wards / Unit</label>
+<div class="flex items-center px-4 py-3 rounded-xl border border-outline-variant/30 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 transition-all">
+<span class="material-symbols-outlined text-on-surface-variant mr-3">meeting_room</span>
+<input class="bg-transparent border-none focus:ring-0 w-full text-on-surface" placeholder="e.g. ICU, Room 402" type="text"/>
+</div>
+</div>
+<div class="p-4 bg-surface-container-low rounded-2xl border border-outline-variant/20 flex gap-3">
+<span class="material-symbols-outlined text-secondary">info</span>
+<p class="text-xs text-on-surface-variant leading-relaxed">System will automatically notify the duty hematologist at the selected facility.</p>
+</div>
+</div>
+<div class="flex gap-4">
+<button class="flex-1 py-4 bg-surface-container-highest text-on-surface rounded-2xl font-label-md" onclick="nextStep(1)">Back</button>
+<button class="flex-[2] py-4 bg-primary text-on-primary rounded-2xl font-headline-sm shadow-xl shadow-primary/20 transition-all active:scale-95" onclick="nextStep(3)">Verify & Submit</button>
+</div>
+</div>
+<!-- Step 3: Success / Tracking Placeholder -->
+<div class="step-transition hidden text-center py-12" id="step3">
+<div class="w-20 h-20 bg-tertiary/10 rounded-full flex items-center justify-center mx-auto mb-6">
+<span class="material-symbols-outlined text-tertiary text-4xl">check_circle</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm mb-2">Request Created</h3>
+<p class="text-on-surface-variant mb-8 px-8">Order #BL-8829 is now being processed. We are scanning nearby donors and central inventory.</p>
+<div class="space-y-3">
+<button class="w-full py-4 bg-primary text-on-primary rounded-2xl font-headline-sm shadow-xl shadow-primary/20 transition-all" onclick="showTracking()">Go to Live Tracker</button>
+<button class="text-primary font-bold text-sm" onclick="location.reload()">Create Another Request</button>
+</div>
+</div>
+</div>
+<!-- Live Tracking View (Initially Hidden) -->
+<div class="hidden bg-white rounded-3xl p-stack-lg shadow-sm border border-outline-variant/10 overflow-hidden relative" id="trackingView">
+<div class="flex justify-between items-start mb-stack-lg">
+<div>
+<span class="bg-secondary-container text-on-secondary-container px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">Active Request</span>
+<h3 class="font-headline-sm text-headline-sm mt-2">Request #BL-8829</h3>
+</div>
+<div class="text-right">
+<p class="text-xs text-on-surface-variant">Est. Delivery</p>
+<p class="font-display text-2xl text-primary">14 mins</p>
+</div>
+</div>
+<!-- Status Timeline -->
+<div class="relative py-4">
+<div class="absolute left-4 top-0 bottom-0 w-0.5 bg-surface-container-highest"></div>
+<!-- Requested -->
+<div class="relative pl-12 pb-8">
+<div class="absolute left-2.5 top-0 w-3.5 h-3.5 rounded-full bg-tertiary border-2 border-white ring-4 ring-tertiary/20"></div>
+<p class="font-label-md text-on-surface">Requested</p>
+<p class="text-xs text-on-surface-variant">10:45 AM • Request Broadcasted</p>
+</div>
+<!-- Matching -->
+<div class="relative pl-12 pb-8">
+<div class="absolute left-2.5 top-0 w-3.5 h-3.5 rounded-full bg-tertiary border-2 border-white ring-4 ring-tertiary/20"></div>
+<p class="font-label-md text-on-surface">Matching Found</p>
+<p class="text-xs text-on-surface-variant">10:48 AM • Central Bank A+ Reservoir</p>
+</div>
+<!-- Dispatched -->
+<div class="relative pl-12 pb-8">
+<div class="absolute left-2.5 top-0 w-3.5 h-3.5 rounded-full bg-primary border-2 border-white ring-4 ring-primary/20 animate-pulse"></div>
+<p class="font-label-md text-on-surface font-bold">Dispatched</p>
+<p class="text-xs text-on-surface-variant">10:55 AM • Courier: RapidMed #449</p>
+<div class="mt-4 p-3 bg-surface-container-low rounded-xl flex items-center justify-between">
+<div class="flex items-center gap-3">
+<img class="w-10 h-10 rounded-lg object-cover" data-alt="Close up photo of a professional medical delivery driver wearing a clean uniform with a medical logistics logo, daytime natural lighting, professional and focused demeanor." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC3JZ88X525qA4Grg_u5O0P5ySdUyKWTAlaGd6y1RBF10Gr4OPrPmwkTcRuNNA2yMYtvd3TocYKgbd3UhMi3BRNcdroqIGS-Bfz8NOtYZOqz9veCBPXYhO8sMlp32rMxCad7Ogg1gXjouArhqjNXGZQh3jpyXOtT7wsXeQ5ekPzMiUSfvqPnimSoP5_hGdGBF5JfFQebSqR9gXl6nZbtrvlWdMTxJlpMAjk9dD62QdRKUlqeb1-psLXbw"/>
+<div>
+<p class="text-sm font-bold">Marcus Thorne</p>
+<p class="text-[10px] text-on-surface-variant">Toyota Hiace • ABC 123</p>
+</div>
+</div>
+<button class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-base">call</span>
+</button>
+</div>
+</div>
+<!-- Arrived -->
+<div class="relative pl-12 opacity-40">
+<div class="absolute left-2.5 top-0 w-3.5 h-3.5 rounded-full bg-surface-container-highest border-2 border-white"></div>
+<p class="font-label-md text-on-surface">Arrived</p>
+<p class="text-xs text-on-surface-variant">Estimated 11:15 AM</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Map and Sidebar Cards -->
+<div class="lg:col-span-5 flex flex-col gap-gutter">
+<!-- Map View -->
+<div class="bg-white rounded-3xl overflow-hidden shadow-sm border border-outline-variant/10 min-h-[320px] flex flex-col">
+<div class="p-4 flex justify-between items-center bg-white/80 backdrop-blur z-10 border-b border-outline-variant/10">
+<h4 class="font-label-md">Nearby Supply Map</h4>
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer">fullscreen</span>
+</div>
+<div class="flex-1 relative bg-surface-container">
+<!-- Simulated Map -->
+<div class="absolute inset-0 bg-cover bg-center" data-location="New York Medical District" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDQyUFoH8tDdk2wClEglfuVFVIfb2dg_gUwy2YdQcWpday_j-8eqayMxrJyNY9hVBYr3MPHYYP7obeJCUgR-AciTwaqDvzQm4f_-9BLcixL4olhYA9iBYTcKD1TY4s-CdYkbCnl2yfwsQ___5R6QRmE1jfXzNLLasFBvABcctzFX5RczjHBfByCxfHMZqwkiEf3Kjg0jUGO4iN-3G0wjC7uWlCpoe5YY-5NivKdnrz3S8O7OiZP8zVnSw')"></div>
+<!-- Map Pins -->
+<div class="absolute top-1/2 left-1/3 group cursor-pointer">
+<div class="w-10 h-10 bg-primary rounded-full flex items-center justify-center shadow-lg border-2 border-white animate-bounce">
+<span class="material-symbols-outlined text-white">local_hospital</span>
+</div>
+<div class="absolute bottom-12 left-1/2 -translate-x-1/2 bg-white px-3 py-1 rounded shadow-md whitespace-nowrap hidden group-hover:block transition-all">
+<p class="text-[10px] font-bold">St. Mary's (3.2km)</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Nearby Banks List -->
+<div class="bg-white rounded-3xl p-stack-lg shadow-sm border border-outline-variant/10">
+<h4 class="font-headline-sm text-headline-sm mb-4">Stock Overview</h4>
+<div class="space-y-4">
+<div class="flex items-center justify-between p-3 rounded-2xl hover:bg-surface-variant/20 transition-colors cursor-pointer border border-transparent hover:border-outline-variant/20">
+<div class="flex items-center gap-3">
+<div class="w-12 h-12 bg-secondary/10 rounded-xl flex items-center justify-center">
+<span class="material-symbols-outlined text-secondary">location_on</span>
+</div>
+<div>
+<p class="font-label-md text-on-surface">Central Blood Center</p>
+<p class="text-xs text-on-surface-variant">Distance: 1.2 km</p>
+</div>
+</div>
+<div class="text-right">
+<span class="text-[10px] font-bold text-tertiary bg-tertiary/10 px-2 py-0.5 rounded uppercase">High Stock</span>
+</div>
+</div>
+<div class="flex items-center justify-between p-3 rounded-2xl hover:bg-surface-variant/20 transition-colors cursor-pointer border border-transparent hover:border-outline-variant/20">
+<div class="flex items-center gap-3">
+<div class="w-12 h-12 bg-secondary/10 rounded-xl flex items-center justify-center">
+<span class="material-symbols-outlined text-secondary">location_on</span>
+</div>
+<div>
+<p class="font-label-md text-on-surface">City General Lab</p>
+<p class="text-xs text-on-surface-variant">Distance: 4.8 km</p>
+</div>
+</div>
+<div class="text-right">
+<span class="text-[10px] font-bold text-error bg-error/10 px-2 py-0.5 rounded uppercase">Low Stock</span>
+</div>
+</div>
+<div class="flex items-center justify-between p-3 rounded-2xl hover:bg-surface-variant/20 transition-colors cursor-pointer border border-transparent hover:border-outline-variant/20">
+<div class="flex items-center gap-3">
+<div class="w-12 h-12 bg-secondary/10 rounded-xl flex items-center justify-center">
+<span class="material-symbols-outlined text-secondary">location_on</span>
+</div>
+<div>
+<p class="font-label-md text-on-surface">Red Cross Annex</p>
+<p class="text-xs text-on-surface-variant">Distance: 7.1 km</p>
+</div>
+</div>
+<div class="text-right">
+<span class="text-[10px] font-bold text-secondary bg-secondary/10 px-2 py-0.5 rounded uppercase">Moderate</span>
+</div>
+</div>
+</div>
+<button class="w-full mt-6 py-3 border border-outline-variant text-on-surface-variant rounded-xl font-label-md hover:bg-surface-variant/10 transition-colors">
+                        View Detailed Inventory
+                    </button>
+</div>
+</div>
+</div>
+</main>
+<!-- Footer -->
+<footer class="w-full py-8 bg-surface-container-lowest border-t border-outline-variant/10 mt-12">
+<div class="w-full flex flex-col md:flex-row justify-between items-center px-margin-mobile md:px-margin-desktop gap-stack-md max-w-container-max mx-auto">
+<div class="flex flex-col items-center md:items-start">
+<span class="text-label-md font-bold text-primary">Blood Net Logistics</span>
+<p class="text-on-surface-variant font-body-sm text-center md:text-left mt-1">© 2024 Secure Healthcare Protocol Enabled.</p>
+</div>
+<div class="flex gap-6 flex-wrap justify-center">
+<a class="text-on-surface-variant hover:text-primary transition-all font-body-sm" href="#">Privacy Policy</a>
+<a class="text-on-surface-variant hover:text-primary transition-all font-body-sm" href="#">Terms of Service</a>
+<a class="text-on-surface-variant hover:text-primary transition-all font-body-sm" href="#">Contact Support</a>
+<a class="text-on-surface-variant hover:text-primary transition-all font-body-sm" href="#">Global Inventory</a>
+</div>
+</div>
+</footer>
+<script>
+        function selectType(btn) {
+            // UI only selection logic
+            const allBtns = btn.parentElement.querySelectorAll('button');
+            allBtns.forEach(b => {
+                b.classList.remove('border-primary', 'bg-primary/5', 'shadow-inner');
+                b.classList.add('border-outline-variant/20');
+                b.querySelector('span').classList.remove('text-primary');
+            });
+            btn.classList.remove('border-outline-variant/20');
+            btn.classList.add('border-primary', 'bg-primary/5', 'shadow-inner');
+            btn.querySelector('span').classList.add('text-primary');
+        }
+
+        function nextStep(step) {
+            const steps = [1, 2, 3];
+            steps.forEach(s => {
+                const stepEl = document.getElementById(`step${s}`);
+                const barEl = document.getElementById(`stepBar${s}`);
+                
+                if (s === step) {
+                    stepEl.classList.remove('hidden');
+                    barEl.classList.remove('bg-surface-container');
+                    barEl.classList.add('bg-primary');
+                } else if (s < step) {
+                    stepEl.classList.add('hidden');
+                    barEl.classList.remove('bg-surface-container');
+                    barEl.classList.add('bg-primary');
+                } else {
+                    stepEl.classList.add('hidden');
+                    barEl.classList.remove('bg-primary');
+                    barEl.classList.add('bg-surface-container');
+                }
+            });
+        }
+
+        function showTracking() {
+            document.getElementById('requestForm').classList.add('hidden');
+            document.getElementById('trackingView').classList.remove('hidden');
+            document.getElementById('trackingView').classList.add('animate-in', 'fade-in', 'slide-in-from-bottom-4', 'duration-500');
+        }
+    </script>
+</body></html>

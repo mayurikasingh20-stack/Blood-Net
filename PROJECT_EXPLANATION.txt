@@ -1,0 +1,584 @@
+================================================================================
+  BLOOD NET - BLOOD DONATION MANAGEMENT PLATFORM
+  Project Explanation for Presentation
+================================================================================
+
+TABLE OF CONTENTS
+  1. Project Overview
+  2. Tech Stack & Why We Used It
+  3. Project Structure
+  4. User Roles & Their Capabilities
+  5. Key Features & How They Work
+  6. Database Models (Tables)
+  7. API Endpoints Overview
+  8. Frontend Pages & Components
+  9. Important Code Changes Made
+  10. How to Run the Project
+
+
+================================================================================
+1. PROJECT OVERVIEW
+================================================================================
+
+Blood Net is a full-stack web application that connects blood donors, patients
+who need blood, blood banks, and administrators on a single platform. It allows:
+
+  - Patients to raise blood requests
+  - Donors to view and accept matching requests
+  - Blood banks to manage inventory and fulfill requests
+  - Admins to oversee everything (approve blood banks, verify donations)
+
+The project has two parts:
+  - Backend (Flask/Python) - handles data, logic, authentication, APIs
+  - Frontend (React) - handles the user interface, maps, forms, dashboards
+
+Database: SQLite (simple file-based database, no setup needed)
+
+
+================================================================================
+2. TECH STACK & WHY WE USED IT
+================================================================================
+
+BACKEND (Python):
+╔═══════════════════╤══════════════════════════════════════════════════════╗
+║ Technology        │ Why We Used It                                     ║
+╠═══════════════════╪══════════════════════════════════════════════════════╣
+║ Flask             │ Lightweight Python web framework. Easy to set up    ║
+║                   │ and perfect for REST APIs. No unnecessary bloat.    ║
+╟───────────────────┼──────────────────────────────────────────────────────╢
+║ Flask-SQLAlchemy  │ ORM (Object Relational Mapper) - lets us work with  ║
+║                   │ database tables as Python classes/objects. Safer    ║
+║                   │ than writing raw SQL.                              ║
+╟───────────────────┼──────────────────────────────────────────────────────╢
+║ Flask-JWT-Extended│ Handles authentication. Creates a "token" when     ║
+║                   │ user logs in. Token is sent with every API request  ║
+║                   │ to verify identity without sending passwords.       ║
+╟───────────────────┼──────────────────────────────────────────────────────╢
+║ Flask-Cors        │ Allows the frontend (running on a different port)   ║
+║                   │ to talk to the backend API without browser errors.  ║
+╟───────────────────┼──────────────────────────────────────────────────────╢
+║ SQLite            │ File-based database - no installation needed.       ║
+║                   │ Good for development/demo. Stores in bloodnet.db   ║
+╚═══════════════════╧══════════════════════════════════════════════════════╝
+
+FRONTEND (JavaScript/React):
+╔═══════════════════╤══════════════════════════════════════════════════════╗
+║ Technology        │ Why We Used It                                     ║
+╠═══════════════════╪══════════════════════════════════════════════════════╣
+║ React 19          │ Component-based UI framework. Makes building       ║
+║                   │ interactive dashboards easy and organized.         ║
+╟───────────────────┼──────────────────────────────────────────────────────╢
+║ Vite              │ Fast build tool and dev server. Hot module          ║
+║                   │ replacement means changes show instantly.          ║
+╟───────────────────┼──────────────────────────────────────────────────────╢
+║ React Router v7   │ Client-side routing. Navigates between pages       ║
+║                   │ without full page reload. Protected routes for     ║
+║                   │ role-based access control.                         ║
+╟───────────────────┼──────────────────────────────────────────────────────╢
+║ Axios             │ HTTP client for API calls. Handles request/        ║
+║                   │ response interceptors (e.g., auto-attach token,    ║
+║                   │ handle 401 errors globally).                      ║
+╟───────────────────┼──────────────────────────────────────────────────────╢
+║ Tailwind CSS v4   │ Utility-first CSS framework. Fast styling without  ║
+║                   │ writing custom CSS. All styles in className.       ║
+╟───────────────────┼──────────────────────────────────────────────────────╢
+║ Framer Motion     │ Animation library. Used for page transitions,      ║
+║                   │ modal animations, staggered list animations.       ║
+╟───────────────────┼──────────────────────────────────────────────────────╢
+║ Leaflet +         │ Interactive maps showing blood banks and camps     ║
+║ react-leaflet     │ with their locations. Custom icons for different   ║
+║                   │ entity types.                                      ║
+╟───────────────────┼──────────────────────────────────────────────────────╢
+║ Lucide React      │ Icon library. Clean, consistent icons throughout   ║
+║                   │ the UI (bell, droplet, menu, etc.).               ║
+╚═══════════════════╧══════════════════════════════════════════════════════╝
+
+
+================================================================================
+3. PROJECT STRUCTURE
+================================================================================
+
+BLOOD-NET-LAST-TRY/
+│
+├── Backend/                        # Flask backend
+│   ├── run.py                      # Entry point - starts the server
+│   └── app/
+│       ├── __init__.py             # App factory - creates Flask app
+│       ├── config.py               # Settings (database, secret keys)
+│       ├── extensions.py           # Initializes db & jwt objects
+│       ├── models/                 # Database models (10 files)
+│       │   ├── user.py             # Users table
+│       │   ├── donor.py            # Donor profiles
+│       │   ├── patient.py          # Patient profiles
+│       │   ├── blood_bank.py       # Blood bank profiles
+│       │   ├── blood_request.py    # Blood requests
+│       │   ├── donation.py         # Donations (acceptances)
+│       │   ├── inventory.py        # Blood inventory items
+│       │   ├── notification.py     # Notifications
+│       │   ├── camp.py             # Blood donation camps
+│       │   └── public_blood_bank.py    # eRaktKosh imported data
+│       ├── routes/                 # API route handlers (12 files)
+│       │   ├── auth.py             # Login, register, profile
+│       │   ├── admin.py            # Admin operations
+│       │   ├── donor.py            # Donor operations
+│       │   ├── patient.py          # Patient operations
+│       │   ├── blood_bank.py       # Blood bank operations
+│       │   ├── blood_request.py    # Blood request CRUD
+│       │   ├── donation.py         # Donation accept/cancel
+│       │   ├── inventory.py        # Inventory CRUD
+│       │   ├── notification.py     # Notifications list/read
+│       │   ├── public_blood_bank.py # Public blood bank list
+│       │   ├── map.py              # Map data (banks + camps)
+│       │   └── camps.py            # Camp CRUD
+│       ├── services/               # Business logic (11 files)
+│       │   ├── auth_service.py     # Registration, login logic
+│       │   ├── admin_service.py    # Admin dashboard, approve/reject
+│       │   ├── donor_service.py    # Donor profile, dashboard
+│       │   ├── patient_service.py  # Patient profile, dashboard
+│       │   ├── blood_bank_service.py  # Bank profile, fulfill requests
+│       │   ├── blood_request_service.py # Create, notify, list, cancel
+│       │   ├── donation_service.py # Accept request, cancel donation
+│       │   ├── inventory_service.py    # Add/update/delete inventory
+│       │   ├── notification_service.py # Get/read notifications
+│       │   ├── camp_service.py     # Camp CRUD
+│       │   └── public_blood_bank_service.py  # List/search public banks
+│       └── utils/                  # Helper functions
+│           ├── helpers.py          # create_notification(), get_missing_fields()
+│           ├── validators.py       # Email, phone, blood group validation
+│           ├── password.py         # Password hashing/verifying
+│           ├── decorator.py        # @role_required decorator
+│           └── file_upload.py      # File saving for doctor notes
+│
+├── frontend/                       # React frontend
+│   └── src/
+│       ├── main.jsx                # Entry point
+│       ├── App.jsx                 # Root component (AuthProvider + Router)
+│       ├── routes/
+│       │   ├── AppRoutes.jsx       # All routes + sidebar items per role
+│       │   ├── ProtectedRoute.jsx  # Redirects if not logged in
+│       │   └── RoleBasedRoute.jsx  # Redirects if wrong role
+│       ├── context/
+│       │   ├── AuthContext.jsx      # Login/logout/token management
+│       │   ├── AuthContextObject.js # createContext
+│       │   └── useAuth.js          # Custom hook for auth
+│       ├── services/
+│       │   ├── api.js              # Axios instance, interceptors
+│       │   ├── authService.js      # Login/register API calls
+│       │   └── dashboardService.js # All other API calls
+│       ├── layouts/
+│       │   ├── DashboardLayout.jsx # Auth layout (header + sidebar + content)
+│       │   ├── PublicLayout.jsx    # Public pages layout
+│       │   └── AuthLayout.jsx      # Auth form layout
+│       ├── pages/                  # 20+ page components
+│       │   ├── Landing.jsx         # Homepage
+│       │   ├── Login.jsx           # Multi-role login
+│       │   ├── Register.jsx        # Multi-role registration
+│       │   ├── DonorDashboard.jsx  # Donor home
+│       │   ├── PatientDashboard.jsx # Patient home
+│       │   ├── Bloodbank.jsx       # Blood bank home
+│       │   ├── AdminDashboard.jsx  # Admin home
+│       │   └── ... (many more)
+│       ├── components/             # Reusable components
+│       │   ├── shared/             # BloodMap, NotificationPanel, etc.
+│       │   ├── navigation/         # Sidebar, Navbar, Footer
+│       │   ├── ui/                 # Button, Card, Badge, etc.
+│       │   ├── forms/              # Input, Select, etc.
+│       │   └── ...
+│       └── utils/
+│           ├── constants.js        # Blood groups, status styles
+│           ├── roleHelpers.js      # Role mapping functions
+│           ├── authStorage.js      # Token storage (localStorage + sessionStorage)
+│           └── donationCycles.js   # Donation eligibility rules
+│
+└── (data scripts, datasets)        # eRaktKosh data import scripts
+
+
+================================================================================
+4. USER ROLES & THEIR CAPABILITIES
+================================================================================
+
+╔═══════════╤══════════════════════╤══════════════════════════════════════════╗
+║ Role      │ Login Method         │ What They Can Do                       ║
+╠═══════════╪══════════════════════╪══════════════════════════════════════════╣
+║ DONOR     │ Phone + Password     │ - View open blood requests             ║
+║           │                      │ - Accept/reject matching requests      ║
+║           │                      │ - Toggle availability (available/busy) ║
+║           │                      │ - View donation history                ║
+║           │                      │ - See blood banks and camps on map     ║
+╟───────────┼──────────────────────┼──────────────────────────────────────────╢
+║ PATIENT   │ Email + Password     │ - Raise blood requests                 ║
+║           │                      │ - Track request status (Pending/       ║
+║           │                      │   Responded/Completed/Cancelled)       ║
+║           │                      │ - See which donors accepted            ║
+║           │                      │ - Cancel own requests                  ║
+║           │                      │ - View nearby blood banks on map       ║
+╟───────────┼──────────────────────┼──────────────────────────────────────────╢
+║ BLOOD BANK│ Email + Password     │ - Manage blood inventory (add/edit/    ║
+║           │ (after admin         │   delete blood group stock)            ║
+║           │  approval)           │ - Fulfill requests from inventory      ║
+║           │                      │ - Create/manage blood donation camps   ║
+║           │                      │ - View own requests and open requests  ║
+║           │                      │ - See all banks/camps on map           ║
+╟───────────┼──────────────────────┼──────────────────────────────────────────╢
+║ ADMIN     │ Email + Password     │ - Approve/reject blood bank registrations║
+║           │ (seeded on startup)  │ - Verify/reject donations              ║
+║           │                      │ - Complete/cancel any blood request    ║
+║           │                      │ - View all camps                       ║
+║           │                      │ - Full system oversight                ║
+╚═══════════╧══════════════════════╧══════════════════════════════════════════╝
+
+Important: Blood banks must be approved by an admin before they can log in.
+If rejected, they cannot access the system at all.
+
+
+================================================================================
+5. KEY FEATURES & HOW THEY WORK
+================================================================================
+
+5.1 AUTHENTICATION SYSTEM
+─────────────────────────
+  - When a user registers, their password is hashed (using werkzeug.security)
+    and stored in the database. We never store plain-text passwords.
+  - When a user logs in, the server creates a JWT (JSON Web Token) which is
+    a signed token containing the user's ID. The token expires after some time.
+  - The frontend stores this token and sends it with every API request in the
+    header: Authorization: Bearer <token>
+  - The backend verifies the token on every protected route using the
+    @jwt_required() decorator.
+  - For multi-tab support: tokens are stored in BOTH localStorage (persists
+    across browser restarts) and sessionStorage (per-tab). When making API
+    calls, the in-memory variable "activeToken" is checked first, then
+    sessionStorage, then localStorage. This way each tab keeps its own login
+    without interfering with other tabs.
+  - Auth error messages are deliberately vague ("Credentials not matched")
+    for both login and registration to prevent hackers from guessing
+    which accounts exist.
+
+5.2 BLOOD REQUEST FLOW
+──────────────────────
+  1. PATIENT creates a request: blood group, units needed, hospital, city,
+     urgency level, required-by date, contact info.
+  2. On creation, the backend automatically:
+     a) Sends a notification to ALL eligible donors in the SAME city with
+        the SAME blood group.
+     b) Sends a notification to ALL approved blood banks.
+     c) Sends a notification to ALL admins.
+  3. DONORS see open requests on their dashboard. They can click "Accept"
+     to respond to a request.
+  4. When a donor accepts, the PATIENT gets a notification saying
+     "[Donor Name] has accepted your request".
+  5. On the patient's dashboard, the request status changes from
+     "Pending" to "Responded" when at least one donor accepts.
+  6. BLOOD BANKS can also see open requests and click "Fulfill" to directly
+     fulfill them from their inventory. This deducts units from the bank's
+     stock and marks the request as Completed.
+  7. ADMIN can verify donations (confirming the donor actually donated),
+     which adds units to the blood bank's inventory.
+
+5.3 NOTIFICATION SYSTEM
+───────────────────────
+  - Notifications are stored in the database (notifications table).
+  - Every action that affects another user creates a notification:
+    * Request created   -> notifies donors, banks, admins
+    * Donor accepts     -> notifies the patient
+    * Donation verified -> notifies the donor
+    * Request fulfilled -> notifies the patient
+    * Bank approved     -> notifies the blood bank
+  - The frontend polls for new notifications every 15 seconds.
+  - A bell icon in the top header shows the unread count with a red badge.
+  - Clicking the bell opens a dropdown showing unread notifications.
+  - "Clear All" marks all as read.
+
+5.4 INVENTORY SYSTEM
+────────────────────
+  - Each blood bank has its own inventory, organized by blood group.
+  - Only one record per blood group per bank (unique constraint).
+  - When adding inventory, if a record for that blood group already exists,
+    the units are ADDED to the existing stock (accumulated).
+  - Status is auto-calculated:
+    * units == 0 -> OUT_OF_STOCK
+    * units <= 5 -> LOW_STOCK (shown in amber)
+    * units > 5  -> AVAILABLE (shown in green)
+  - When a blood bank fulfills a request, units are deducted from inventory.
+  - Anyone can view a blood bank's inventory without logging in (used for
+    the map popup feature).
+
+5.5 MAP SYSTEM (Leaflet)
+────────────────────────
+  - Interactive map showing blood banks with their locations.
+  - Each bank's marker shows a popup with its name, city, and inventory
+    (lazy-loaded when you click the marker).
+  - Upcoming blood donation camps are also shown on the map.
+  - Uses OpenStreetMap tiles (free).
+  - Different colored markers for different entity types.
+
+5.6 CAMP SYSTEM
+───────────────
+  - Blood banks can create camps (title, date, time, venue, location).
+  - Camps appear on all maps across the platform.
+  - The admin also has a Camps tab to view all camps.
+  - Camps are informational - donors can see them but there's no sign-up.
+    The idea is donors just show up at the camp location.
+
+5.7 AUTO-REFRESH
+────────────────
+  - Dashboards auto-refresh every 30 seconds to show latest data.
+  - Notifications poll every 15 seconds.
+  - Users can also manually click a "Refresh" button.
+
+5.8 MULTI-TAB SUPPORT
+─────────────────────
+  - Users can be logged into different accounts in different browser tabs.
+  - Each tab stores its own token in sessionStorage (per-tab) + an in-memory
+    JavaScript variable.
+  - localStorage is only used as a fallback.
+  - When you log out in one tab, other tabs detect it via the "storage" event
+    and log out too.
+
+
+================================================================================
+6. DATABASE MODELS (TABLES)
+================================================================================
+
+These are the 10 database tables (each is a Python class in models/):
+
+1. users
+   - Stores ALL users regardless of role
+   - Fields: id, first_name, last_name, email (unique), phone (unique),
+     password_hash, role (donor/patient/blood_bank/admin), gender, dob,
+     city, address, is_active, created_at, updated_at
+
+2. donors
+   - Extended profile for users with role="donor"
+   - Fields: id, user_id (FK), blood_group, weight, last_donation_date,
+     has_chronic_condition, on_medication, is_eligible, available
+
+3. patients
+   - Extended profile for users with role="patient"
+   - Fields: id, user_id (FK), blood_group_needed, hospital_name,
+     condition_description, urgency_level, doctor_note_file_path, etc.
+
+4. blood_banks
+   - Extended profile for users with role="blood_bank"
+   - Fields: id, user_id (FK), facility_name, status (pending/approved/
+     rejected), contact_person, address, operating_hours, website, etc.
+
+5. blood_requests
+   - A request for blood raised by a patient or blood bank
+   - Fields: id, created_by (FK->users), blood_group, units, hospital,
+     city, urgency_level, required_before, status (pending/completed/
+     cancelled), fulfilled_units, etc.
+
+6. donations
+   - A record of a donor accepting a blood request
+   - Fields: id, blood_request_id (FK), donor_id (FK), status (accepted/
+     verified/rejected/cancelled), donated_units, accepted_at, etc.
+
+7. inventory
+   - Blood bank's stock of each blood group
+   - Fields: id, blood_bank_id (FK), blood_group, units, collection_date,
+     expiry_date, status (AVAILABLE/LOW_STOCK/OUT_OF_STOCK)
+   - Unique constraint: one record per blood_group per blood_bank
+
+8. notifications
+   - In-app notifications for users
+   - Fields: id, user_id (FK), title, message, notification_type,
+     status (UNREAD/READ), reference_id, created_at
+
+9. camps
+   - Blood donation camps created by blood banks
+   - Fields: id, blood_bank_id (FK), title, date, time, venue,
+     latitude, longitude, status
+
+10. public_blood_banks
+    - Blood bank data imported from eRaktKosh (Indian government API)
+    - Fields: id, name, address, phone, facility, latitude, longitude, etc.
+
+
+================================================================================
+7. API ENDPOINTS OVERVIEW
+================================================================================
+
+The backend has 12 route files (blueprints) with approximately 50+ endpoints.
+
+├── /api/auth/        → Register, login, get/update profile, change password
+├── /api/admin/       → Dashboard, approve/reject banks, verify/reject donations
+├── /api/donor/       → Donor profile, availability, dashboard, search
+├── /api/patient/     → Patient profile, dashboard
+├── /api/blood-bank/  → Bank profile, dashboard, fulfill request
+├── /api/blood-request/ → Create, list, update, cancel, matching donors
+├── /api/donations/   → Accept request, cancel, history
+├── /api/inventory/   → Add/edit/delete/list inventory items
+├── /api/notifications/ → List notifications, mark as read
+├── /api/public-blood-banks/ → List/search (public, no auth)
+├── /api/map/         → Blood banks with coords, camps for map
+└── /api/camps/       → CRUD camps, upcoming/current
+
+Most endpoints require JWT authentication (except public blood banks and map).
+
+
+================================================================================
+8. FRONTEND PAGES & COMPONENTS
+================================================================================
+
+PUBLIC PAGES (accessible without login):
+  - Landing.jsx      → Marketing homepage with hero, stats, features
+  - Login.jsx        → Role-based login form
+  - Register.jsx     → Multi-step registration
+  - BloodBankRegister.jsx → 2-step registration for blood banks
+  - BloodBankLogin.jsx → Dedicated blood bank login
+  - MapPage.jsx      → Public map with blood banks and camps
+  - Camps.jsx        → Public camp listing
+  - PublicBloodBanks.jsx → List of public blood banks
+  - About.jsx, Contact.jsx → Info pages
+
+DASHBOARD PAGES (require login + correct role):
+  - DonorDashboard.jsx     → Donor home: stats, open requests, donations
+  - PatientDashboard.jsx   → Patient home: requests, raise new request
+  - Bloodbank.jsx          → Blood bank home: inventory, requests, camps
+  - AdminDashboard.jsx     → Admin: tabs for overview, banks, requests, camps
+
+KEY SHARED COMPONENTS:
+  - DashboardLayout.jsx  → Header with bell notification + sidebar + content
+  - Sidebar.jsx          → Navigation sidebar (red theme)
+  - Navbar.jsx           → Public navigation bar
+  - Footer.jsx           → Page footer
+  - BloodMap.jsx         → Leaflet map component
+  - NotificationPanel.jsx → Unread notifications dropdown
+  - RaiseRequestModal.jsx → Modal form for creating requests
+
+
+================================================================================
+9. IMPORTANT CODE CHANGES MADE
+================================================================================
+
+Here is a summary of what we changed and why:
+
+9.1 INVENTORY UNITS DISPLAY FIX
+    Files: Bloodbank.jsx, BloodBankInventory.jsx
+    What: Changed from .length (counting items) to sumUnits() (summing units)
+    Why: If a blood bank had "A+" with 10 units, .length gave 1 (1 record)
+         but sumUnits() correctly gives 10 (total units available).
+
+9.2 BLOOD GROUP PLACEHOLDER
+    File: BloodBankInventory.jsx
+    What: Added <option value="" disabled>Select blood group</option>
+    Why: Forces users to explicitly choose a blood group instead of
+         accidentally submitting with the default first option.
+
+9.3 VAGUE AUTH ERRORS
+    File: auth_service.py
+    What: Changed all auth error messages to "Credentials not matched"
+    Why: Prevents hackers from guessing which emails/phones are registered.
+         For security, you never reveal whether the email exists or the
+         password was wrong - just say "Credentials not matched" for both.
+
+9.4 MULTI-TAB LOGIN
+    Files: api.js, AuthContext.jsx, authStorage.js
+    What: Added in-memory activeToken, sessionStorage priority, storage event
+          listener
+    Why: Previously, all tabs shared the same localStorage token. Logging into
+         a different account on Tab B would overwrite Tab A's token. Now each
+         tab keeps its own login using sessionStorage (per-tab storage).
+
+9.5 NOTIFICATION TYPE FILTER FIX
+    File: NotificationPanel.jsx
+    What: Changed from showing only "blood_request" type to showing ALL
+          unread notification types
+    Why: When a donor accepted a request, the notification type was
+         "donation_acceptance" which was filtered OUT. Patients never saw
+         donor responses. Now all notification types are shown.
+
+9.6 ADMIN DASHBOARD NOTIFICATIONS
+    File: AdminDashboard.jsx
+    What: Added notification fetching + NotificationPanel component
+    Why: Admin had no way to see notifications previously.
+
+9.7 REQUEST STATUS - "RESPONDED" DISPLAY
+    Files: constants.js, PatientDashboard.jsx
+    What: When accepted_count > 0, the status displays as "Responded"
+          with a teal color instead of "Pending" with amber color.
+    Why: Patients were confused seeing "Pending" even when donors had
+         already accepted. Now if at least one donor responded, it
+         clearly shows "Responded".
+
+9.8 BLOOD BANK - FULFILLED REQUESTS
+    File: Bloodbank.jsx
+    What: Added respondedIds state to track fulfilled requests
+    Why: After fulfilling a request, it disappears from the open requests
+         list (since it's no longer pending). The respondedIds set ensures
+         the blood bank can see which requests they've already acted on.
+
+9.9 AUTO-REFRESH
+    Files: PatientDashboard, DonorDashboard, AdminDashboard, PatientBloodRequests
+    What: Added 30-second polling intervals using setInterval + useCallback
+    Why: Dashboards now show latest data without manual refresh.
+
+9.10 CAMP MODEL & CRUD
+    Files: camp.py, camp_service.py, camps.py, __init__.py
+    What: Created the full Camp model, service, and routes
+    Why: Blood donation camps were being shown from static data. Now blood
+         banks can create and manage their own camps, and they appear on maps
+         in real-time.
+
+9.11 NOTIFICATION ON DONOR ACCEPTANCE
+    File: donation_service.py
+    What: Added create_notification() call when donor accepts a request
+    Why: The patient wasn't being notified when a donor responded to their
+         request. Now they get a "Donation Accepted" notification.
+
+9.12 NOTIFICATION BROADCAST ON REQUEST CREATION
+    File: blood_request_service.py
+    What: Added notification creation for matching donors, all blood banks,
+          and all admins when a request is created
+    Why: Previously no one was notified when a new request was raised. Now
+         the right people get notified immediately.
+
+9.13 SIDEBAR & HEADER UI IMPROVEMENTS
+    Files: Sidebar.jsx, DashboardLayout.jsx, Footer.jsx, Navbar.jsx
+    What: Redesigned sidebar with light red gradient theme, improved header
+          with gradient logo, cleaner footer with matching branding
+    Why: Better visual design, consistent branding across all pages.
+
+9.14 30-SECOND DASHBOARD AUTO-REFRESH
+    Files: DonorDashboard.jsx, PatientDashboard.jsx, AdminDashboard.jsx,
+           PatientBloodRequests.jsx, Bloodbank.jsx
+    What: Added useCallback + useEffect with setInterval for auto-refresh
+    Why: Users see live data without having to manually refresh the page.
+
+
+================================================================================
+10. HOW TO RUN THE PROJECT
+================================================================================
+
+REQUIREMENTS:
+  - Python 3.x installed
+  - Node.js installed
+
+STEP 1: Start the Backend
+  Open terminal in Backend/ folder:
+    cd Backend
+    pip install -r requirements.txt
+    python run.py
+
+  The server starts at http://127.0.0.1:5000
+  Two admin users are auto-created on first run:
+    - admin@bloodnet.com / Admin@123
+    - superadmin@bloodnet.com / Admin@123
+
+STEP 2: Start the Frontend
+  Open a SECOND terminal in frontend/ folder:
+    cd frontend
+    npm install
+    npm run dev
+
+  The app opens at http://localhost:5173
+
+STEP 3: Use the App
+  - Register as a donor, patient, or blood bank
+  - For blood bank: register, then log in as admin to approve it
+  - Raise requests as patient, accept as donor, manage inventory as bank
+
+================================================================================
+END OF DOCUMENT
+================================================================================

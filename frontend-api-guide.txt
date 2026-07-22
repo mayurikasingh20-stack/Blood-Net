@@ -1,0 +1,405 @@
+FRONTEND API GUIDE - Blood Net / NOVARED
+=========================================
+
+Base URL: http://127.0.0.1:5000/api
+
+All JWT-protected endpoints require header: Authorization: Bearer <token>
+
+---
+
+AUTH (/api/auth)
+================
+
+POST /api/auth/register  (No Auth)
+  Registers a new user. If role=donor, also creates donor profile.
+
+  Body (JSON):
+    first_name       string  required
+    last_name        string  required
+    email            string  required  (unique)
+    phone            string  required  (unique)
+    password         string  required  (min 6 chars)
+    role             string  required  donor | patient | blood_bank | admin
+    gender           string  required  Male | Female | Other
+    dob              string  required  YYYY-MM-DD
+    city             string  required
+    address          string  optional
+
+  Donor-only fields:
+    blood_group              string  required if role=donor  A+|A-|B+|B-|AB+|AB-|O+|O-
+    weight                   number  required if role=donor
+    last_donation_date       string  optional  YYYY-MM-DD
+    has_chronic_condition    bool    optional
+    on_medication            bool    optional
+    available                bool    optional  default true
+
+  Response 201: { "message": "registered successfully" }
+  Response 400: { "message": "...", "missing_fields": [...] }
+
+---
+
+POST /api/auth/login  (No Auth)
+  Returns JWT token. Donor logs in with phone; others with email.
+
+  Blood bank login is BLOCKED (401) if profile status is pending or rejected.
+
+  Body for donor:
+    { "phone": "+911234567890", "password": "...", "role": "donor" }
+
+  Body for others:
+    { "email": "user@example.com", "password": "...", "role": "blood_bank" }
+
+  Response 200:
+    {
+      "access_token": "jwt...",
+      "name": "First Last",
+      "user": { "id", "first_name", "last_name", "email", "phone", "role" }
+    }
+  Response 401 (blood bank pending):
+    { "message": "Your blood bank registration is pending admin approval. You will be able to log in once approved." }
+  Response 401 (blood bank rejected):
+    { "message": "Your blood bank registration has been rejected. Reason: ..." }
+
+---
+
+GET /api/auth/profile  (JWT)
+  Returns current user info.
+
+  Response: { "id", "first_name", "last_name", "email", "phone", "role", "gender", "city" }
+
+---
+
+PATCH /api/auth/profile  (JWT)
+  Update profile fields. All fields optional.
+
+  Body (JSON): first_name, last_name, email, phone, city
+
+  Response: { "message": "Profile updated successfully" }
+
+---
+
+POST /api/auth/change-password  (JWT)
+  Body: { "current_password": "...", "new_password": "..." }  (new min 6 chars)
+
+  Response: { "message": "Password changed successfully." }
+
+---
+
+BLOOD BANK (/api/blood-bank)
+=============================
+
+POST /api/blood-bank/register  (JWT + blood_bank role)
+  Register blood bank facility details. Status set to "pending".
+
+  Body (JSON):
+    facility_name     string  required
+    contact_person    string  required
+    address           string  required
+    operating_hours   string  optional  e.g. "9 AM - 6 PM"
+    website           string  optional
+    available_24x7    bool    optional  default false
+
+  Response 201: { "message": "Blood bank registered successfully. Waiting for admin verification." }
+
+---
+
+GET /api/blood-bank/profile  (JWT + blood_bank role)
+  Response:
+    { "id", "user_id", "facility_name", "verification_status",
+      "verified_at", "rejection_reason", "contact_person",
+      "address", "operating_hours", "available_24x7",
+      "website", "created_at", "updated_at" }
+
+---
+
+PUT /api/blood-bank/profile  (JWT + blood_bank role)
+  Update profile. Same fields as register (all optional).
+
+  Response: { "message": "Blood bank profile updated successfully." }
+
+---
+
+GET /api/blood-bank/dashboard  (JWT + blood_bank role)
+  Response:
+    { "verification_status", "total_requests", "active_requests",
+      "completed_requests", "total_units_requested",
+      "total_units_fulfilled" }
+
+---
+
+ADMIN (/api/admin)
+==================
+
+All endpoints require JWT + admin role.
+
+GET /api/admin/dashboard
+  Response:
+    { "total_users", "total_donors", "total_patients",
+      "total_blood_banks", "active_requests", "completed_requests",
+      "pending_blood_banks", "verified_donations", "pending_donations" }
+
+---
+
+GET /api/admin/blood-banks
+  Response:
+    { "blood_banks": [
+        { "id", "facility_name", "contact_person",
+          "verification_status", "city", "email", "phone" }
+      ] }
+
+---
+
+GET /api/admin/blood-banks/:id
+  Response:
+    { "blood_bank": { "id", "facility_name", "verification_status",
+        "verified_at", "rejection_reason", "contact_person",
+        "address", "operating_hours", "available_24x7",
+        "website", "created_at", "updated_at",
+        "user": { "id", "first_name", "last_name", "email", "phone", "city", "address" }
+      } }
+
+---
+
+PATCH /api/admin/blood-banks/:id/approve
+  Response: { "message": "Blood bank approved successfully." }
+
+PATCH /api/admin/blood-banks/:id/reject
+  Body: { "rejection_reason": "..." }
+  Response: { "message": "Blood bank rejected successfully." }
+
+---
+
+GET /api/admin/blood-requests
+  Response: { "blood_requests": [...] }
+
+GET /api/admin/blood-requests/:id
+  Response: { "blood_request": { ... } }
+
+PATCH /api/admin/blood-requests/:id/complete
+  Response: { "message": "..." }
+
+---
+
+GET /api/admin/donations
+  Response: { "donations": [...] }
+
+GET /api/admin/donations/:id
+  Response: { "donation": { ... } }
+
+PATCH /api/admin/donations/:id/verify
+  Body: { "donated_units": <number> }
+  Response: { "message", "fulfilled_units", "required_units", "request_status" }
+
+PATCH /api/admin/donations/:id/reject
+  Body: { "rejection_reason": "..." }
+  Response: { "message" }
+
+---
+
+DONOR (/api/donor)
+==================
+
+POST /api/donor/register  (JWT + donor role)
+  Body: blood_group, weight, last_donation_date?, has_chronic_condition?, on_medication?, available?
+  Response: { "message", "donor": { "id", "user_id", "blood_group", "weight", "available" } }
+
+GET /api/donor/profile  (JWT + donor role)
+  Response: { "user": {...}, "donor": { "blood_group", "weight", "last_donation_date", "has_chronic_condition", "on_medication", "available" } }
+
+PUT /api/donor/profile  (JWT + donor role)
+  Body: any optional fields
+  Response: { "message" }
+
+PATCH /api/donor/availability  (JWT + donor role)
+  Body: { "available": true/false }
+  Response: { "message", "available" }
+
+GET /api/donor/dashboard  (JWT + donor role)
+  Response: { "total_donations", "verified_donations", "pending_donations", "cancelled_donations", "availability", "blood_group" }
+
+GET /api/donor/all  (JWT)
+  Response: { "count", "donors": [...] }
+
+GET /api/donor/search?blood_group=O+  (JWT)
+  Response: { "count", "donors": [...] }
+
+GET /api/donor/:id  (JWT)
+  Response: { "id", "first_name", "last_name", "blood_group", "city", "weight", "last_donation_date", "available", "has_chronic_condition", "on_medication" }
+
+---
+
+PATIENT (/api/patient)
+======================
+
+All endpoints require JWT + patient role.
+
+POST /api/patient/register
+  Multipart form:
+    blood_group_needed   string  required
+    hospital_name        string  required
+    condition_description string  required
+    relation_to_patient  string  required  Self | Family | Friend
+    urgency_level        string  optional  Critical | High | Moderate
+    additional_notes     string  optional
+    doctor_note          file    optional  pdf/jpg/jpeg/png
+
+  Response: { "message", "verification_status" }
+
+GET /api/patient/profile
+  Response: { "patient": { "id", "first_name", "last_name", "email", "phone",
+    "gender", "dob", "city", "address", "blood_group_needed", "hospital_name",
+    "condition_description", "urgency_level", "relation_to_patient",
+    "doctor_note_path", "verification_status", "verified_at",
+    "rejection_reason", "status", "additional_notes", "created_at", "updated_at" } }
+
+PUT /api/patient/profile
+  Multipart form: same fields as register (all optional) + doctor_note file
+
+  Response: { "message" }
+
+GET /api/patient/dashboard
+  Response: { "total_requests", "active_requests", "completed_requests",
+    "total_units_requested", "total_units_received" }
+
+---
+
+BLOOD REQUEST (/api/blood-request)
+===================================
+
+POST /api/blood-request/create  (JWT + patient/blood_bank role)
+  Body (JSON):
+    blood_group      string  required
+    units            number  required
+    hospital         string  required
+    hospital_address string  required
+    city             string  required
+    required_before  string  required  YYYY-MM-DD
+    contact_name     string  required
+    contact_phone    string  required
+    urgency_level    string  optional  Low | Moderate | High | Critical
+    purpose          string  optional
+
+  Response: { "message", "request_id" }
+
+---
+
+GET /api/blood-request/my-requests  (JWT + patient/blood_bank role)
+  Response: { "blood_requests": [...] }
+
+GET /api/blood-request/:id  (JWT + patient/blood_bank role)
+  Response: { "blood_request": { ... } }
+
+PUT /api/blood-request/:id  (JWT + patient/blood_bank role)
+  Body: same fields as create (all optional)
+  Response: { "message" }
+
+PATCH /api/blood-request/:id/cancel  (JWT + patient/blood_bank role)
+  Response: { "message" }
+
+GET /api/blood-request/:id/matching-donors  (JWT + patient/blood_bank/admin role)
+  Response: { "matching_donors": [{ "donor_id", "name", "blood_group", "city", "phone" }], "total_matches": N }
+
+---
+
+DONATION (/api/donations)
+=========================
+
+POST /api/donations/accept/:request_id  (JWT + donor role)
+  Response: { "message", "donation_id" }
+
+PATCH /api/donations/:donation_id/cancel  (JWT + donor role)
+  Response: { "message" }
+
+GET /api/donations/my-donations  (JWT + donor role)
+  Response: { "donations": [...] }
+
+---
+
+INVENTORY (/api/inventory)
+==========================
+
+All endpoints require JWT (auto-scoped to logged user's blood bank).
+
+POST /api/inventory/
+  Body: blood_group, units, collection_date (YYYY-MM-DD), expiry_date (YYYY-MM-DD)
+  Response: { "message" }
+
+GET /api/inventory/
+  Response: { "inventory": [{ "id", "blood_group", "units", "collection_date", "expiry_date", "status", "created_at", "updated_at" }] }
+
+GET /api/inventory/:id
+  Response: { "inventory": { ... } }
+
+PUT /api/inventory/:id
+  Body: any optional fields
+  Response: { "message" }
+
+DELETE /api/inventory/:id
+  Response: { "message" }
+
+GET /api/inventory/search?blood_group=
+  Response: { "inventory": [...] }
+
+GET /api/inventory/filter?status=AVAILABLE|LOW_STOCK|OUT_OF_STOCK|EXPIRED
+  Response: { "inventory": [...] }
+
+---
+
+NOTIFICATIONS (/api/notifications)
+===================================
+
+All endpoints require JWT.
+
+GET /api/notifications/
+  Response: { "notifications": [{ "id", "title", "message", "notification_type", "status", "reference_id", "created_at" }] }
+
+PATCH /api/notifications/:id/read
+  Response: { "message" }
+
+PATCH /api/notifications/read-all
+  Response: { "message" }
+
+---
+
+PUBLIC ENDPOINTS (No Auth)
+==========================
+
+GET /api/map/blood-banks?state_code=&dist_id=
+  Response: [{ "id", "lat", "lng", "name", "city", "address", "phone", "email", "hospital_type", "state_code", "dist_id" }]
+
+GET /api/map/camps
+  Response: [] (placeholder)
+
+GET /api/public-blood-banks/?state_code=&dist_id=&search=
+  Response: { "blood_banks": [{ "id", "name", "address", "phone", "email", "facility", "hospital_type", "latitude", "longitude", "dist_id", "state_code", "dist" }] }
+
+GET /api/public-blood-banks/:id
+  Response: { "blood_bank": { ... } }
+
+---
+
+ROLE MAPPING UTILITY
+====================
+
+Backend uses snake_case roles: blood_bank, donor, patient, admin
+Frontend UI uses: bloodbank, donor, patient, admin
+
+export const uiRoleToBackendRole = (role) => role === "bloodbank" ? "blood_bank" : role;
+export const backendRoleToUiRole = (role) => role === "blood_bank" ? "bloodbank" : role;
+export const dashboardPathForRole = (role) => {
+  if (role === "blood_bank" || role === "bloodbank") return "/bloodbank";
+  if (role === "admin") return "/admin";
+  return `/${role}-dashboard`;
+};
+
+---
+
+BLOOD BANK REGISTRATION FLOW
+=============================
+
+Step 1: POST /auth/register  → creates User with role=blood_bank
+Step 2: POST /auth/login     → gets JWT (allowed because no profile yet)
+Step 3: POST /blood-bank/register → creates BloodBank with status=pending
+Step 4: User redirected to login → login BLOCKED with "pending admin approval"
+Step 5: Admin approves via PATCH /admin/blood-banks/:id/approve
+Step 6: Blood bank can now login and access dashboard

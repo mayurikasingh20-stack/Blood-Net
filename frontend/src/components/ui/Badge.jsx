@@ -1,0 +1,2 @@
+/** Compact semantic label. */
+export default function Badge({ children, tone = "neutral", className = "" }) { const tones = { neutral: "bg-ink/10 text-ink", primary: "bg-red/10 text-red-deep", success: "bg-green/15 text-green", warning: "bg-amber/20 text-amber-900", danger: "bg-red-100 text-red-800" }; return <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-bold ${tones[tone]} ${className}`}>{children}</span>; }

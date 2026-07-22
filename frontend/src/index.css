@@ -1,0 +1,253 @@
+@import "tailwindcss";
+
+@theme {
+  /* ---- Brand palette: one warm, editorial system (cream / ink / blood-red)
+     used consistently across every page and component. Replaces a previous
+     cool blue-purple Material palette that clashed with the rest of the app. ---- */
+
+  /* Primary — blood red */
+  --color-primary: #b81f3a;
+  --color-on-primary: #ffffff;
+  --color-primary-container: #f7d9de;
+  --color-on-primary-container: #6b1220;
+  --color-primary-fixed: #f7d9de;
+  --color-on-primary-fixed: #3a0a12;
+  --color-primary-fixed-dim: #e8a6b2;
+  --color-on-primary-fixed-variant: #7a1029;
+  --color-inverse-primary: #ffb4ab;
+
+  /* Secondary — deep clinical teal (replaces an unrelated bright blue) */
+  --color-secondary: #3d6672;
+  --color-on-secondary: #ffffff;
+  --color-secondary-container: #dceef2;
+  --color-on-secondary-container: #163940;
+  --color-secondary-fixed: #dceef2;
+  --color-on-secondary-fixed: #102a30;
+  --color-secondary-fixed-dim: #a9cbd3;
+  --color-on-secondary-fixed-variant: #1f4d57;
+
+  /* Tertiary — success green */
+  --color-tertiary: #2e6e52;
+  --color-on-tertiary: #ffffff;
+  --color-tertiary-container: #dcefe4;
+  --color-on-tertiary-container: #143c29;
+  --color-tertiary-fixed: #dcefe4;
+  --color-on-tertiary-fixed: #143c29;
+  --color-tertiary-fixed-dim: #8fc7aa;
+  --color-on-tertiary-fixed-variant: #1f4d36;
+
+  /* Error */
+  --color-error: #b42318;
+  --color-on-error: #ffffff;
+  --color-error-container: #f9dedc;
+  --color-on-error-container: #601410;
+
+  /* Warning (new — Badge/Alert "warning" tone had no backing token before) */
+  --color-warning: #a55f0a;
+  --color-on-warning: #ffffff;
+  --color-warning-container: #f7e7c9;
+  --color-on-warning-container: #4a2e03;
+
+  /* Neutral surfaces — warm cream, not cool blue-white */
+  --color-background: #fbf6f1;
+  --color-on-background: #1d1512;
+  --color-surface: #fbf6f1;
+  --color-on-surface: #1d1512;
+  --color-surface-dim: #eee6dd;
+  --color-surface-bright: #fffdfb;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low: #f5eee7;
+  --color-surface-container: #f0e7de;
+  --color-surface-container-high: #e9ded3;
+  --color-surface-container-highest: #e2d5c7;
+  --color-surface-variant: #efdad3;
+  --color-on-surface-variant: #5c4f49;
+  --color-outline: #8e7a72;
+  --color-outline-variant: #e3d2c8;
+
+  /* Inverse (dark surfaces, e.g. tooltips/toasts on light pages) */
+  --color-inverse-surface: #362b26;
+  --color-inverse-on-surface: #fbf6f1;
+  --color-surface-tint: #b81f3a;
+
+  /* ---- Brand aliases used directly by components (Button, Badge, Card,
+     Navbar, forms, modals, etc.) — same palette, shorter names ---- */
+  --color-ink: #1d1512;
+  --color-ink-soft: #5c4f49;
+  --color-red: #b81f3a;
+  --color-red-deep: #7a1029;
+  --color-cream: #fbf6f1;
+  --color-paper: #ffffff;
+  --color-green: #2e6e52;
+  --color-amber: #a55f0a;
+  --color-maroon: #6b1220;
+
+  --font-display: "Inter", sans-serif;
+  --font-headline-lg: "Inter", sans-serif;
+  --font-headline-md: "Inter", sans-serif;
+  --font-headline-sm: "Inter", sans-serif;
+  --font-body-lg: "Inter", sans-serif;
+  --font-body-md: "Inter", sans-serif;
+  --font-body-sm: "Inter", sans-serif;
+  --font-label-md: "Inter", sans-serif;
+  --font-label-sm: "Inter", sans-serif;
+  --font-serif: "Lora", Georgia, "Times New Roman", serif;
+
+  --text-display: 48px;
+  --text-display--line-height: 56px;
+  --text-display--letter-spacing: -0.02em;
+  --text-display--font-weight: 700;
+  --text-headline-lg: 32px;
+  --text-headline-lg--line-height: 40px;
+  --text-headline-lg--letter-spacing: -0.02em;
+  --text-headline-lg--font-weight: 600;
+  --text-headline-md: 24px;
+  --text-headline-md--line-height: 32px;
+  --text-headline-md--font-weight: 600;
+  --text-headline-sm: 20px;
+  --text-headline-sm--line-height: 28px;
+  --text-headline-sm--font-weight: 600;
+  --text-body-lg: 18px;
+  --text-body-lg--line-height: 28px;
+  --text-body-lg--font-weight: 400;
+  --text-body-md: 16px;
+  --text-body-md--line-height: 24px;
+  --text-body-md--font-weight: 400;
+  --text-body-sm: 14px;
+  --text-body-sm--line-height: 20px;
+  --text-body-sm--font-weight: 400;
+  --text-label-md: 14px;
+  --text-label-md--line-height: 20px;
+  --text-label-md--font-weight: 500;
+  --text-label-sm: 12px;
+  --text-label-sm--line-height: 16px;
+  --text-label-sm--font-weight: 600;
+
+  --spacing-margin-mobile: 16px;
+  --spacing-margin-desktop: 32px;
+  --spacing-stack-sm: 8px;
+  --spacing-stack-md: 16px;
+  --spacing-stack-lg: 24px;
+  --spacing-gutter: 24px;
+  --spacing-base: 4px;
+  --spacing-container-max: 1280px;
+
+  --width-container-max: 1280px;
+
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.75rem;
+  --radius-2xl: 1rem;
+  --radius-3xl: 1.5rem;
+}
+
+body {
+  font-family: "Inter", sans-serif;
+  background: var(--color-background);
+  color: var(--color-on-surface);
+  margin: 0;
+  min-width: 320px;
+}
+
+::selection {
+  background: var(--color-primary-container);
+  color: var(--color-on-primary-container);
+}
+
+.glass {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.glass-panel {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.premium-shadow {
+  box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.1), 0px 10px 15px -3px rgba(0, 0, 0, 0.05);
+}
+
+.hero-gradient {
+  background: radial-gradient(circle at top right, rgba(183, 0, 17, 0.05), transparent),
+    radial-gradient(circle at bottom left, rgba(0, 81, 213, 0.03), transparent);
+}
+
+@keyframes pulse-red {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.animate-pulse-slow {
+  animation: pulse-red 3s infinite;
+}
+
+.step-transition {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #e2e8f0;
+  border-radius: 10px;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+button, input, select, textarea { font: inherit; }
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+  outline: 3px solid rgba(183, 0, 17, 0.35);
+  outline-offset: 2px;
+}
+
+/* Safe area padding for mobile devices with notches */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .safe-area-pb {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* Improved mobile tap targets */
+@media (max-width: 768px) {
+  button, a, input, select, textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Custom leaflet popup styles */
+.leaflet-popup-content-wrapper {
+  border-radius: 12px !important;
+  padding: 4px !important;
+}
+
+.leaflet-popup-content {
+  margin: 8px 12px !important;
+  font-family: 'Inter', sans-serif !important;
+}
+
+/* Leaflet z-index fix for navbar */
+.leaflet-container {
+  z-index: 0;
+}

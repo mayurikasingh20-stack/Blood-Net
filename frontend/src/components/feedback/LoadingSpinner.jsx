@@ -1,0 +1,2 @@
+/** Indicates that a local region is loading. */
+export default function LoadingSpinner({ size = "md", label = "Loading", className = "" }) { const sizes = { sm: "h-4 w-4", md: "h-7 w-7", lg: "h-10 w-10" }; return <span role="status" className={`inline-flex items-center gap-2 text-ink-soft ${className}`}><span aria-hidden="true" className={`${sizes[size]} animate-spin rounded-full border-2 border-red/25 border-t-red`} /><span className="sr-only">{label}</span></span>; }
