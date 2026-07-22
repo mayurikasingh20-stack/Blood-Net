@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Building2, CheckCircle, ArrowLeft, ArrowRight, Loader, Shield } from "lucide-react";
+import { Building2, CheckCircle, ArrowLeft, ArrowRight, Loader, Shield, Eye, EyeOff } from "lucide-react";
 import api from "../services/api";
 import { saveAuth } from "../utils/authStorage";
 
@@ -21,6 +21,8 @@ export default function BloodBankRegister() {
     facilityAddress: "", operatingHours: "", website: "",
     available24x7: false,
   });
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
@@ -100,7 +102,7 @@ export default function BloodBankRegister() {
       });
 
       setSuccess("Registration submitted! Your blood bank is pending admin approval. You'll be notified once approved.");
-      setTimeout(() => navigate("/bloodbank-login"), 3000);
+      setTimeout(() => navigate("/login"), 3000);
     } catch (err) {
       const msg = err.response?.data?.message || err.message || "Registration failed.";
       setError(msg);
@@ -173,7 +175,7 @@ export default function BloodBankRegister() {
                   <div>
                     <label className="text-sm font-semibold text-slate-700 block mb-1">Email *</label>
                     <input type="email" value={form.email} onChange={(e) => update("email", e.target.value)}
-                      placeholder="admin@bloodbank.org"
+                      placeholder="admin@bloodbank.org" autoComplete="off"
                       className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-red/20" />
                   </div>
                   <div>
@@ -186,13 +188,27 @@ export default function BloodBankRegister() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="text-sm font-semibold text-slate-700 block mb-1">Password *</label>
-                    <input type="password" value={form.password} onChange={(e) => update("password", e.target.value)}
-                      className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-red/20" />
+                    <div className="relative">
+                      <input type={showPassword ? "text" : "password"} value={form.password} onChange={(e) => update("password", e.target.value)}
+                        autoComplete="new-password"
+                        className="w-full px-3 py-2.5 pr-10 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-red/20" />
+                      <button type="button" onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                      </button>
+                    </div>
                   </div>
                   <div>
                     <label className="text-sm font-semibold text-slate-700 block mb-1">Confirm Password *</label>
-                    <input type="password" value={form.confirmPassword} onChange={(e) => update("confirmPassword", e.target.value)}
-                      className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-red/20" />
+                    <div className="relative">
+                      <input type={showConfirmPassword ? "text" : "password"} value={form.confirmPassword} onChange={(e) => update("confirmPassword", e.target.value)}
+                        autoComplete="new-password"
+                        className="w-full px-3 py-2.5 pr-10 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-red/20" />
+                      <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                        {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                      </button>
+                    </div>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
@@ -290,7 +306,7 @@ export default function BloodBankRegister() {
 
           <p className="mt-6 text-center text-sm text-slate-500">
             Already registered?{" "}
-            <Link to="/bloodbank-login" className="font-semibold text-red hover:underline">Sign in</Link>
+            <Link to="/login" className="font-semibold text-red hover:underline">Sign in</Link>
           </p>
         </div>
       </motion.div>

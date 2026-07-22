@@ -12,6 +12,7 @@ from app.models.blood_request import (
 from app.models.inventory import Inventory, InventoryStatus
 from app.models.camp import Camp
 from app.utils.helpers import create_notification
+from app.services.geocoding_service import geocode_address
 from datetime import date
 
 
@@ -98,6 +99,11 @@ def approve_blood_bank(blood_bank_id):
     blood_bank.status = "approved"
     blood_bank.verified_at = datetime.utcnow()
     blood_bank.rejection_reason = None
+
+    if blood_bank.latitude is None or blood_bank.longitude is None:
+        result = geocode_address(blood_bank.address)
+        if result is not None:
+            blood_bank.latitude, blood_bank.longitude = result
 
     create_notification(
         user_id=blood_bank.user_id,

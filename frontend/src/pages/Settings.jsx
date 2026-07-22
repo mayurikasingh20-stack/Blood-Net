@@ -34,6 +34,7 @@ export default function Settings({ role = "donor" }) {
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
 
   const [profile, setProfile] = useState({
@@ -297,7 +298,7 @@ export default function Settings({ role = "donor" }) {
                   value={passwordData.current_password}
                   onChange={(e) => updatePassword("current_password", e.target.value)}
                   className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-red/20 pr-10"
-                  required
+                  autoComplete="current-password" required
                 />
                 <button
                   type="button"
@@ -312,14 +313,19 @@ export default function Settings({ role = "donor" }) {
               <label className="block text-sm font-semibold text-slate-700 mb-1.5">
                 New Password
               </label>
-              <input
-                type="password"
-                value={passwordData.new_password}
-                onChange={(e) => updatePassword("new_password", e.target.value)}
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-red/20"
-                required
-                minLength={6}
-              />
+              <div className="relative">
+                <input
+                  type={showNew ? "text" : "password"}
+                  value={passwordData.new_password}
+                  onChange={(e) => updatePassword("new_password", e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-red/20 pr-10"
+                  autoComplete="new-password" required minLength={6}
+                />
+                <button type="button" onClick={() => setShowNew(!showNew)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">
+                  {showNew ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
             </div>
             <div>
               <label className="block text-sm font-semibold text-slate-700 mb-1.5">
@@ -331,7 +337,7 @@ export default function Settings({ role = "donor" }) {
                   value={passwordData.confirm_password}
                   onChange={(e) => updatePassword("confirm_password", e.target.value)}
                   className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-red/20 pr-10"
-                  required
+                  autoComplete="new-password" required
                 />
                 <button
                   type="button"

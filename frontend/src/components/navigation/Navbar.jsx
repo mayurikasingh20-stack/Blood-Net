@@ -39,7 +39,7 @@ export default function Navbar({
           {rightContent || (
             <>
               <Link
-                to="/bloodbank-login"
+                to="/login?role=bloodbank"
                 className="text-sm text-slate-500 hover:text-red transition-colors font-semibold"
               >
                 Blood Bank

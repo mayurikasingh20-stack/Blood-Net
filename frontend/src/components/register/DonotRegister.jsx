@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
 import axios from "axios";
 import StepProgress from "./StepProgress";
 
@@ -9,6 +10,8 @@ const labels = ["Basic Profile", "Health & Eligibility", "Preferences", "Verify 
 function DonorRegister() {
   const [step, setStep] = useState(1);
   const [submitting, setSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [formData, setFormData] = useState({
     firstName: "", lastName: "", email: "", countryCode: "+91", phone: "", password: "", confirmPassword: "",
     gender: "", dob: "",
@@ -33,7 +36,7 @@ function DonorRegister() {
   };
 
   const isStep1Valid = () => {
-    if (!formData.firstName || !formData.lastName || !formData.email || !formData.phone) return false;
+    if (!formData.firstName || !formData.lastName || !formData.phone) return false;
     if (passwordError()) return false;
     if (formData.password !== formData.confirmPassword) return false;
     if (!formData.gender || !formData.dob) return false;
@@ -92,10 +95,9 @@ function DonorRegister() {
   const handleSubmit = async () => {
     setSubmitting(true);
     try {
-      await axios.post("http://127.0.0.1:5000/api/auth/register", {
+      const payload = {
         first_name: formData.firstName,
         last_name: formData.lastName,
-        email: formData.email,
         phone: formData.countryCode + formData.phone,
         password: formData.password,
         gender: formData.gender.charAt(0).toUpperCase() + formData.gender.slice(1),
@@ -108,7 +110,9 @@ function DonorRegister() {
         on_medication: formData.onMedication,
         city: formData.city,
         address: formData.address,
-      });
+      };
+      if (formData.email) payload.email = formData.email;
+      await axios.post("http://127.0.0.1:5000/api/auth/register", payload);
       alert("Donor registered successfully! Please login.");
     } catch (err) {
       alert("Registration failed: " + (err.response?.data?.message || err.message));
@@ -144,7 +148,7 @@ function DonorRegister() {
           </div>
           <div>
             <label className={labelClass}>Email Address</label>
-            <input type="email" className={inputClass} value={formData.email} onChange={(e) => update("email", e.target.value)} placeholder="you@example.com" />
+            <input type="email" className={inputClass} value={formData.email} onChange={(e) => update("email", e.target.value)} placeholder="you@example.com" autoComplete="off" />
           </div>
           <div>
             <label className={labelClass}>Phone Number</label>
@@ -171,11 +175,23 @@ function DonorRegister() {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className={labelClass}>Password</label>
-              <input type="password" className={inputClass} value={formData.password} onChange={(e) => update("password", e.target.value)} />
+              <div className="relative mt-1">
+                <input type={showPassword ? "text" : "password"} className={inputClass + " pr-10"} value={formData.password} onChange={(e) => update("password", e.target.value)} autoComplete="new-password" />
+                <button type="button" onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
             </div>
             <div>
               <label className={labelClass}>Confirm Password</label>
-              <input type="password" className={inputClass} value={formData.confirmPassword} onChange={(e) => update("confirmPassword", e.target.value)} />
+              <div className="relative mt-1">
+                <input type={showConfirmPassword ? "text" : "password"} className={inputClass + " pr-10"} value={formData.confirmPassword} onChange={(e) => update("confirmPassword", e.target.value)} autoComplete="new-password" />
+                <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                  {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
             </div>
           </div>
           {passwordError() && <p className="text-xs text-red-600">{passwordError()}</p>}

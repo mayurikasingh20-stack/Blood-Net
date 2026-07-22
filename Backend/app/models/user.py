@@ -10,7 +10,7 @@ class User(db.Model):
 
     last_name = db.Column(db.String(50), nullable=False)
 
-    email = db.Column(db.String(150), unique=True, nullable=False)
+    email = db.Column(db.String(150), unique=True, nullable=True)
 
     phone = db.Column(db.String(20), unique=True, nullable=False)
 

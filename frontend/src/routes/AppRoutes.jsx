@@ -11,7 +11,6 @@ import Camps from "../pages/Camps";
 import Unauthorized from "../pages/Unauthorized";
 import NotFound from "../pages/NotFound";
 import BloodBankRegister from "../pages/BloodBankRegister";
-import BloodBankLogin from "../pages/BloodBankLogin";
 import DonorDashboard from "../pages/DonorDashboard";
 import DonorProfile from "../pages/DonorProfile";
 import PatientDashboard from "../pages/PatientDashboard";
@@ -120,7 +119,6 @@ export default function AppRoutes() {
       <Route path="/login" element={<PublicPage><Login /></PublicPage>} />
       <Route path="/register" element={<PublicPage><Register /></PublicPage>} />
       <Route path="/bloodbank-register" element={<BloodBankRegister />} />
-      <Route path="/bloodbank-login" element={<BloodBankLogin />} />
       <Route path="/unauthorized" element={<PublicPage><Unauthorized /></PublicPage>} />
 
       {/* Admin Routes */}

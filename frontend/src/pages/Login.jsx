@@ -36,7 +36,7 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
-  const isDonor = role === "donor";
+  const usesPhone = role === "donor" || role === "patient";
 
   async function handleSubmit(event) {
     event.preventDefault();
@@ -44,11 +44,11 @@ export default function Login() {
     setSuccess("");
 
     if (!identifier.trim() || !password) {
-      setError(`Please enter your ${isDonor ? "phone number" : "email address"} and password.`);
+      setError(`Please enter your ${usesPhone ? "phone number" : "email address"} and password.`);
       return;
     }
 
-    if (!isDonor && !/^\S+@\S+\.\S+$/.test(identifier)) {
+    if (!usesPhone && !/^\S+@\S+\.\S+$/.test(identifier)) {
       setError("Please enter a valid email address.");
       return;
     }
@@ -103,20 +103,20 @@ export default function Login() {
 
           {/* Description */}
           <p className="text-sm text-slate-500 text-center mb-8">
-            Sign in with your registered mobile number and password.
+            {usesPhone ? "Sign in with your registered mobile number and password." : "Sign in with your registered email address and password."}
           </p>
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-5">
-            <Input
-              label={isDonor ? "PHONE NUMBER" : "EMAIL ADDRESS"}
-              name="identifier"
-              type={isDonor ? "tel" : "email"}
-              value={identifier}
-              onChange={(e) => setIdentifier(e.target.value)}
-              placeholder={isDonor ? "+91 98765 43210" : "name@example.com"}
-              required
-            />
+              <Input
+                label={usesPhone ? "PHONE NUMBER" : "EMAIL ADDRESS"}
+                name="identifier"
+                type={usesPhone ? "tel" : "email"}
+                value={identifier}
+                onChange={(e) => setIdentifier(e.target.value)}
+                placeholder={usesPhone ? "+91 98765 43210" : "name@example.com"}
+                autoComplete="off" required
+              />
 
             <div>
               <label className="block" htmlFor="password">
@@ -128,7 +128,7 @@ export default function Login() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Enter your password"
-                    required
+                    autoComplete="new-password" required
                     className="w-full rounded-lg border border-ink/20 bg-paper px-3 py-2.5 text-sm transition placeholder:text-ink-soft/60 hover:border-ink/40 focus:border-red focus:outline-none pr-10"
                   />
                   <button

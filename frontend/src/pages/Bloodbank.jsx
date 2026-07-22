@@ -1,12 +1,82 @@
 import { useState, useEffect, useCallback } from "react";
+import { MapContainer, TileLayer, Marker, useMap, useMapEvents } from "react-leaflet";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
 import { motion } from "framer-motion";
-import { Droplets, AlertTriangle, Bell, CheckCircle, Activity, ThumbsUp, XCircle, MapPin, Calendar, Edit3, Trash2, Plus, X, RefreshCw } from "lucide-react";
+import { Droplets, AlertTriangle, Bell, CheckCircle, Activity, ThumbsUp, XCircle, MapPin, Calendar, Edit3, Trash2, Plus, X, RefreshCw, LocateFixed } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import useAuth from "../context/useAuth";
 import { getBloodBankDashboard, getInventory, getNotifications, getOpenRequests, getMyCamps, createCamp, updateCamp, deleteCamp, fulfillBloodRequest } from "../services/dashboardService";
 import BloodMap from "../components/shared/BloodMap";
 import api from "../services/api";
 import { BLOOD_GROUPS } from "../utils/constants";
 import NotificationPanel from "../components/shared/NotificationPanel";
+
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+});
+
+function CampLocationButton({ onLocationFound }) {
+  const map = useMap();
+  const [locating, setLocating] = useState(false);
+
+  const handleLocate = useCallback(() => {
+    if (!navigator.geolocation) {
+      alert("Geolocation is not supported by your browser.");
+      return;
+    }
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const { latitude, longitude } = pos.coords;
+        map.flyTo([latitude, longitude], 15);
+        onLocationFound({ lat: latitude, lng: longitude });
+        setLocating(false);
+      },
+      () => {
+        alert("Unable to access your location.");
+        setLocating(false);
+      },
+      { enableHighAccuracy: true, timeout: 8000, maximumAge: 5000 }
+    );
+  }, [map, onLocationFound]);
+
+  return (
+    <button
+      type="button"
+      onClick={handleLocate}
+      disabled={locating}
+      className="absolute top-3 right-3 z-[1000] bg-white rounded-lg shadow-md border border-slate-200 p-2 hover:bg-slate-50 transition disabled:opacity-60"
+      title="Use my current location"
+    >
+      <LocateFixed size={16} className={locating ? "text-red animate-pulse" : "text-slate-600"} />
+    </button>
+  );
+}
+
+function CampClickMarker({ position, onPositionChange }) {
+  useMapEvents({
+    click(e) {
+      onPositionChange({ lat: e.latlng.lat, lng: e.latlng.lng });
+    },
+  });
+
+  return position ? (
+    <Marker
+      draggable={true}
+      position={[position.lat, position.lng]}
+      eventHandlers={{
+        dragend(e) {
+          const { lat, lng } = e.target.getLatLng();
+          onPositionChange({ lat, lng });
+        },
+      }}
+    />
+  ) : null;
+}
 
 const fadeUp = {
   initial: { opacity: 0, y: 20 },
@@ -17,6 +87,7 @@ const fadeUp = {
 
 export default function BloodBankDashboard() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [dashboard, setDashboard] = useState(null);
   const [inventory, setInventory] = useState([]);
   const [requests, setRequests] = useState([]);
@@ -117,6 +188,14 @@ export default function BloodBankDashboard() {
     }
   }
 
+  const campPositionChange = useCallback((pos) => {
+    setCampForm((prev) => ({ ...prev, lat: pos.lat, lng: pos.lng }));
+  }, []);
+
+  const campMarkerPos = campForm.lat && campForm.lng
+    ? { lat: parseFloat(campForm.lat), lng: parseFloat(campForm.lng) }
+    : null;
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -198,9 +277,15 @@ export default function BloodBankDashboard() {
 
           {(lowStock.length > 0 || nearExpiry.length > 0) && (
             <motion.div className="bg-white rounded-2xl p-4 md:p-6 border border-slate-100 shadow-sm" {...fadeUp}>
-              <h3 className="text-base font-bold text-slate-900 mb-3 flex items-center gap-2">
-                <AlertTriangle size={16} className="text-amber-500" /> Alerts
-              </h3>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                  <AlertTriangle size={16} className="text-amber-500" /> Alerts
+                </h3>
+                <button onClick={() => navigate("/bloodbank/emergency")}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-red text-white rounded-xl text-xs font-bold hover:bg-red-700 transition">
+                  Raise Request
+                </button>
+              </div>
               <div className="space-y-2">
                 {lowStock.map((bg) => (
                   <div key={bg} className="flex items-center justify-between text-sm px-3 py-2 bg-amber-50 rounded-xl">
@@ -215,6 +300,12 @@ export default function BloodBankDashboard() {
                   </div>
                 ))}
               </div>
+              {lowStock.length > 0 && (
+                <button onClick={() => navigate("/bloodbank/emergency")}
+                  className="mt-3 w-full py-2 bg-amber-50 text-amber-700 rounded-xl text-sm font-semibold hover:bg-amber-100 transition border border-amber-200">
+                  Request blood from donors
+                </button>
+              )}
             </motion.div>
           )}
 
@@ -438,17 +529,29 @@ export default function BloodBankDashboard() {
                 <textarea value={campForm.address} onChange={(e) => setCampForm({ ...campForm, address: e.target.value })}
                   className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-red/20" rows={2} />
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs font-semibold text-slate-600 mb-1 block">Latitude</label>
-                  <input value={campForm.lat} onChange={(e) => setCampForm({ ...campForm, lat: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-red/20" placeholder="26.2389" />
+              <div>
+                <label className="text-xs font-semibold text-slate-600 mb-1 block">Location on Map</label>
+                <p className="text-xs text-slate-400 mb-2">Click on the map to place a marker or drag to adjust.</p>
+                <div className="relative rounded-xl overflow-hidden border border-slate-200" style={{ height: "220px" }}>
+                  <MapContainer
+                    center={[20.5937, 78.9629]}
+                    zoom={5}
+                    style={{ height: "100%", width: "100%" }}
+                    zoomControl={true}
+                  >
+                    <TileLayer
+                      attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                      url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                    />
+                    <CampClickMarker position={campMarkerPos} onPositionChange={campPositionChange} />
+                    <CampLocationButton onLocationFound={campPositionChange} />
+                  </MapContainer>
                 </div>
-                <div>
-                  <label className="text-xs font-semibold text-slate-600 mb-1 block">Longitude</label>
-                  <input value={campForm.lng} onChange={(e) => setCampForm({ ...campForm, lng: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-red/20" placeholder="73.0243" />
-                </div>
+                {campForm.lat && campForm.lng && (
+                  <p className="text-xs text-stone-500 mt-1">
+                    Selected: {parseFloat(campForm.lat).toFixed(6)}, {parseFloat(campForm.lng).toFixed(6)}
+                  </p>
+                )}
               </div>
               <div className="flex items-center gap-3 pt-2">
                 <button type="submit" disabled={campSaving}

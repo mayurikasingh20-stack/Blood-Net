@@ -204,7 +204,7 @@ export default function Landing() {
                 <span className="flex items-center gap-1"><CheckCircle size={12} /> Real-time Tracking</span>
                 <span className="flex items-center gap-1"><CheckCircle size={12} /> Free to Join</span>
                 <span className="text-slate-500 mx-1">|</span>
-                <Link to="/bloodbank-login" className="hover:text-white transition font-medium">Blood Bank Login</Link>
+                <Link to="/login?role=bloodbank" className="hover:text-white transition font-medium">Blood Bank Login</Link>
                 <span className="text-slate-500">·</span>
                 <Link to="/bloodbank-register" className="hover:text-white transition font-medium">Register Facility</Link>
               </motion.div>

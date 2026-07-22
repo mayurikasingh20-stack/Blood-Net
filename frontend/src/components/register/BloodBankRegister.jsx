@@ -1,16 +1,88 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
+import { MapContainer, TileLayer, Marker, useMap, useMapEvents } from "react-leaflet";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
+import { LocateFixed, Eye, EyeOff } from "lucide-react";
 import axios from "axios";
 import StepProgress from "./StepProgress";
 
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+});
+
 const labels = ["Facility Info", "License & Address", "Verify Phone"];
+
+function LocationButton({ onLocationFound }) {
+  const map = useMap();
+  const [locating, setLocating] = useState(false);
+
+  const handleLocate = useCallback(() => {
+    if (!navigator.geolocation) {
+      alert("Geolocation is not supported by your browser.");
+      return;
+    }
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const { latitude, longitude } = pos.coords;
+        map.flyTo([latitude, longitude], 15);
+        onLocationFound({ lat: latitude, lng: longitude });
+        setLocating(false);
+      },
+      () => {
+        alert("Unable to access your location. Please enable location permissions.");
+        setLocating(false);
+      },
+      { enableHighAccuracy: true, timeout: 8000, maximumAge: 5000 }
+    );
+  }, [map, onLocationFound]);
+
+  return (
+    <button
+      type="button"
+      onClick={handleLocate}
+      disabled={locating}
+      className="absolute top-3 right-3 z-[1000] bg-white rounded-lg shadow-md border border-stone-200 p-2 hover:bg-stone-50 transition disabled:opacity-60"
+      title="Use my current location"
+    >
+      <LocateFixed size={16} className={locating ? "text-red animate-pulse" : "text-stone-600"} />
+    </button>
+  );
+}
+
+function ClickMarker({ position, onPositionChange }) {
+  useMapEvents({
+    click(e) {
+      onPositionChange({ lat: e.latlng.lat, lng: e.latlng.lng });
+    },
+  });
+
+  return position ? (
+    <Marker
+      draggable={true}
+      position={[position.lat, position.lng]}
+      eventHandlers={{
+        dragend(e) {
+          const { lat, lng } = e.target.getLatLng();
+          onPositionChange({ lat, lng });
+        },
+      }}
+    />
+  ) : null;
+}
 
 function BloodBankRegister() {
   const [step, setStep] = useState(1);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [formData, setFormData] = useState({
     facilityName: "", email: "", phone: "", password: "", confirmPassword: "",
-    city: "", address: "",
+    city: "", address: "", lat: "", lng: "",
   });
   const [licenseFile, setLicenseFile] = useState(null);
 
@@ -55,6 +127,15 @@ function BloodBankRegister() {
     else alert("Incorrect OTP. Please try again.");
   };
 
+  const handlePositionChange = useCallback((pos) => {
+    update("lat", pos.lat);
+    update("lng", pos.lng);
+  }, []);
+
+  const markerPos = formData.lat && formData.lng
+    ? { lat: parseFloat(formData.lat), lng: parseFloat(formData.lng) }
+    : null;
+
   const handleSubmit = async () => {
     setSubmitting(true);
     try {
@@ -69,6 +150,8 @@ function BloodBankRegister() {
         city: formData.city,
         address: formData.address,
         role: "blood_bank",
+        lat: formData.lat || undefined,
+        lng: formData.lng || undefined,
       };
 
       await axios.post("http://127.0.0.1:5000/api/auth/register", payload);
@@ -116,7 +199,7 @@ function BloodBankRegister() {
           </div>
           <div>
             <label className={labelClass}>Official Email</label>
-            <input type="email" className={inputClass} value={formData.email} onChange={(e) => update("email", e.target.value)} />
+            <input type="email" className={inputClass} value={formData.email} onChange={(e) => update("email", e.target.value)} autoComplete="off" />
           </div>
           <div>
             <label className={labelClass}>Phone Number</label>
@@ -125,11 +208,23 @@ function BloodBankRegister() {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className={labelClass}>Password</label>
-              <input type="password" className={inputClass} value={formData.password} onChange={(e) => update("password", e.target.value)} />
+              <div className="relative mt-1">
+                <input type={showPassword ? "text" : "password"} className={inputClass + " pr-10"} value={formData.password} onChange={(e) => update("password", e.target.value)} autoComplete="new-password" />
+                <button type="button" onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
             </div>
             <div>
               <label className={labelClass}>Confirm Password</label>
-              <input type="password" className={inputClass} value={formData.confirmPassword} onChange={(e) => update("confirmPassword", e.target.value)} />
+              <div className="relative mt-1">
+                <input type={showConfirmPassword ? "text" : "password"} className={inputClass + " pr-10"} value={formData.confirmPassword} onChange={(e) => update("confirmPassword", e.target.value)} autoComplete="new-password" />
+                <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                  {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
             </div>
           </div>
           {formData.password && formData.confirmPassword && formData.password !== formData.confirmPassword && (
@@ -148,6 +243,32 @@ function BloodBankRegister() {
           <div>
             <label className={labelClass}>Full Address</label>
             <input className={inputClass} value={formData.address} onChange={(e) => update("address", e.target.value)} />
+          </div>
+          <div>
+            <label className="text-sm font-medium text-stone-700 block">
+              Pin Location on Map <span className="text-xs text-stone-400 font-normal">(recommended)</span>
+            </label>
+            <p className="text-xs text-stone-400 mt-0.5 mb-2">Click on the map to place a marker, drag to adjust, or use the location button.</p>
+            <div className="relative rounded-xl overflow-hidden border border-stone-200" style={{ height: "220px" }}>
+              <MapContainer
+                center={[20.5937, 78.9629]}
+                zoom={5}
+                style={{ height: "100%", width: "100%" }}
+                zoomControl={true}
+              >
+                <TileLayer
+                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                />
+                <ClickMarker position={markerPos} onPositionChange={handlePositionChange} />
+                <LocationButton onLocationFound={handlePositionChange} />
+              </MapContainer>
+            </div>
+            {formData.lat && formData.lng && (
+              <p className="text-xs text-stone-500 mt-1">
+                Selected: {parseFloat(formData.lat).toFixed(6)}, {parseFloat(formData.lng).toFixed(6)}
+              </p>
+            )}
           </div>
           <div>
             <label className={labelClass}>Upload License / Registration Document</label>

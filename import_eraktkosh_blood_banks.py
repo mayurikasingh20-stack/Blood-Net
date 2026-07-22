@@ -1,9 +1,3 @@
-"""
-Import fresh eRaktkosh blood bank data from static JSON into the database.
-
-Usage:  python import_eraktkosh_blood_banks.py
-"""
-
 import os
 import sys
 import json
@@ -35,17 +29,13 @@ MAPPING = {
 }
 
 app = create_app()
-
 with app.app_context():
     with open(JSON_PATH, encoding="utf-8") as f:
         records = json.load(f)
-
     print(f"Loaded {len(records)} records from JSON")
-
     imported = 0
     skipped = 0
     updated = 0
-
     for item in records:
         hospital_code = item.get("hospitalCode")
         if not hospital_code:

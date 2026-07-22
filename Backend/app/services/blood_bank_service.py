@@ -7,6 +7,7 @@ from app.models.inventory import Inventory, InventoryStatus
 from sqlalchemy import func
 from app.models.blood_request import BloodRequest, RequestStatus
 from app.utils.helpers import create_notification
+from app.services.geocoding_service import geocode_address
 
 def register_blood_bank(data):
     user_id = get_jwt_identity()
@@ -32,8 +33,19 @@ def register_blood_bank(data):
         "available_24x7",
         False
     ),
-    website=data.get("website")
+    website=data.get("website"),
 )
+
+    explicit_lat = data.get("lat") or data.get("latitude")
+    explicit_lng = data.get("lng") or data.get("longitude")
+
+    if explicit_lat is not None and explicit_lng is not None:
+        blood_bank.latitude = explicit_lat
+        blood_bank.longitude = explicit_lng
+    else:
+        result = geocode_address(blood_bank.address)
+        if result is not None:
+            blood_bank.latitude, blood_bank.longitude = result
     db.session.add(blood_bank)
     db.session.commit()
     
@@ -69,6 +81,8 @@ def get_blood_bank_profile():
         "rejection_reason": blood_bank.rejection_reason,
         "contact_person": blood_bank.contact_person,
         "address": blood_bank.address,
+        "latitude": blood_bank.latitude,
+        "longitude": blood_bank.longitude,
         "operating_hours": blood_bank.operating_hours,
         "available_24x7": blood_bank.available_24x7,
         "website": blood_bank.website,
@@ -103,10 +117,6 @@ def update_blood_bank_profile(data):
         "contact_person",
         blood_bank.contact_person
     )
-    blood_bank.address = data.get(
-        "address",
-        blood_bank.address
-    )
     blood_bank.operating_hours = data.get(
         "operating_hours",
         blood_bank.operating_hours
@@ -119,6 +129,25 @@ def update_blood_bank_profile(data):
         "available_24x7",
         blood_bank.available_24x7
     )
+
+    incoming_address = data.get("address")
+    address_changed = (
+        incoming_address is not None and
+        incoming_address != blood_bank.address
+    )
+    if address_changed:
+        blood_bank.address = incoming_address
+
+    explicit_lat = data.get("lat") or data.get("latitude")
+    explicit_lng = data.get("lng") or data.get("longitude")
+
+    if explicit_lat is not None and explicit_lng is not None:
+        blood_bank.latitude = explicit_lat
+        blood_bank.longitude = explicit_lng
+    elif address_changed:
+        result = geocode_address(blood_bank.address)
+        if result is not None:
+            blood_bank.latitude, blood_bank.longitude = result
 
     db.session.commit()
 

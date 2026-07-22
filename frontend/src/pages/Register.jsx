@@ -60,9 +60,9 @@ export default function Register() {
 
   function validateStep(stepNum) {
     if (stepNum === 1) {
-      if (!formData.firstName.trim() || !formData.lastName.trim() || !formData.email.trim() || !formData.phone.trim())
+      if (!formData.firstName.trim() || !formData.lastName.trim() || !formData.phone.trim())
         return "Please fill in all required fields.";
-      if (!/^\S+@\S+\.\S+$/.test(formData.email)) return "Please enter a valid email address.";
+      if (formData.email.trim() && !/^\S+@\S+\.\S+$/.test(formData.email)) return "Please enter a valid email address.";
       if (!/^[+\d][\d\s-]{7,}$/.test(formData.phone)) return "Please enter a valid phone number.";
     }
     if (stepNum === 2) {
@@ -164,7 +164,7 @@ export default function Register() {
                   <Input label="Last name" name="lastName" value={formData.lastName}
                     onChange={(e) => update("lastName", e.target.value)} required />
                   <Input label="Email address" name="email" type="email" value={formData.email}
-                    onChange={(e) => update("email", e.target.value)} placeholder="name@example.com" required />
+                    onChange={(e) => update("email", e.target.value)} placeholder="name@example.com" autoComplete="off" hint="Optional for donors & patients" />
                   <Input label="Phone number" name="phone" type="tel" value={formData.phone}
                     onChange={(e) => update("phone", e.target.value)} placeholder="+91 98765 43210" required />
                   <Select label="Gender" value={formData.gender}
@@ -188,9 +188,9 @@ export default function Register() {
                 </h2>
                 <div className="grid gap-4 md:grid-cols-2">
                   <PasswordInput label="Password" name="password" value={formData.password}
-                    onChange={(e) => update("password", e.target.value)} required />
+                    onChange={(e) => update("password", e.target.value)} autoComplete="new-password" required />
                   <PasswordInput label="Confirm password" name="confirmPassword" value={formData.confirmPassword}
-                    onChange={(e) => update("confirmPassword", e.target.value)} required />
+                    onChange={(e) => update("confirmPassword", e.target.value)} autoComplete="new-password" required />
                   <Input label="Date of birth" name="dob" type="date" value={formData.dob}
                     onChange={(e) => update("dob", e.target.value)} required />
                   <Input label="City" name="city" value={formData.city}

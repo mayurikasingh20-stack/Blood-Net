@@ -8,7 +8,7 @@ export async function loginUser({ identifier, password, role }) {
     role: uiRoleToBackendRole(role),
   };
 
-  if (role === "donor") {
+  if (role === "donor" || role === "patient") {
     payload.phone = identifier;
   } else {
     payload.email = identifier;
@@ -33,7 +33,6 @@ export async function registerUser(formData) {
   const payload = {
     first_name: formData.firstName.trim(),
     last_name: formData.lastName.trim(),
-    email: formData.email.trim(),
     phone: formData.phone.trim(),
     password: formData.password,
     role: uiRoleToBackendRole(formData.role),
@@ -41,6 +40,10 @@ export async function registerUser(formData) {
     dob: formData.dob,
     city: formData.city.trim(),
   };
+
+  if (formData.email?.trim()) {
+    payload.email = formData.email.trim();
+  }
 
   if (formData.address?.trim()) {
     payload.address = formData.address.trim();

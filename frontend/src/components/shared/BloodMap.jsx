@@ -107,11 +107,12 @@ export default function BloodMap({
   height = "480px",
 }) {
   const [banks, setBanks] = useState([]);
+  const [registeredBanks, setRegisteredBanks] = useState([]);
   const [camps, setCamps] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [userLocation, setUserLocation] = useState(null);
-  const [searchCity, setSearchCity] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
   const [searchBloodGroup, setSearchBloodGroup] = useState("");
   const [mapCenter, setMapCenter] = useState(DEFAULT_CENTER);
   const [inventoryCache, setInventoryCache] = useState({});
@@ -125,13 +126,22 @@ export default function BloodMap({
       try {
         const baseUrl = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:5000/api";
         if (showBank) {
-          const url = searchCity
-            ? `${baseUrl}/map/blood-banks?city=${encodeURIComponent(searchCity)}`
-            : `${baseUrl}/map/blood-banks`;
-          const res = await fetch(url);
-          if (!res.ok) throw new Error("Failed to load blood banks");
-          const data = await res.json();
-          if (!cancelled) setBanks(data);
+          const params = new URLSearchParams();
+          if (searchQuery) params.set("q", searchQuery);
+          const qs = params.toString();
+          const url = `${baseUrl}/map/blood-banks${qs ? `?${qs}` : ""}`;
+          const regUrl = `${baseUrl}/map/registered-blood-banks${qs ? `?${qs}` : ""}`;
+          const [publicRes, regRes] = await Promise.all([
+            fetch(url),
+            fetch(regUrl),
+          ]);
+          if (!publicRes.ok) throw new Error("Failed to load blood banks");
+          const allData = await publicRes.json();
+          const regData = regRes.ok ? await regRes.json() : [];
+          if (!cancelled) {
+            setBanks(allData.filter((b) => b.source === "public"));
+            setRegisteredBanks(regData);
+          }
         }
         if (showCamps) {
           const res = await fetch(`${baseUrl}/map/camps`);
@@ -148,7 +158,7 @@ export default function BloodMap({
 
     fetchData();
     return () => { cancelled = true; };
-  }, [showBank, showCamps, searchCity]);
+  }, [showBank, showCamps, searchQuery]);
 
   async function loadBankInventory(bankId) {
     if (inventoryCache[bankId]) return;
@@ -169,7 +179,7 @@ export default function BloodMap({
 
   const handleSearchBloodGroup = useCallback(() => {
     if (!searchBloodGroup) return;
-    const filtered = banks.filter((b) => {
+    const filtered = [...banks, ...registeredBanks].filter((b) => {
       const bg = (b.blood_groups || b.available_groups || "").toLowerCase();
       return bg.includes(searchBloodGroup.toLowerCase());
     });
@@ -178,7 +188,7 @@ export default function BloodMap({
       const avgLng = filtered.reduce((s, b) => s + b.lng, 0) / filtered.length;
       setMapCenter([avgLat, avgLng]);
     }
-  }, [searchBloodGroup, banks]);
+  }, [searchBloodGroup, banks, registeredBanks]);
 
   const getBloodGroupColor = (bg) => {
     return BLOOD_GROUP_COLORS[bg] || "#DC2626";
@@ -188,12 +198,12 @@ export default function BloodMap({
     <div className={`space-y-3 ${className}`}>
       {/* Search Controls */}
       <div className="flex flex-col sm:flex-row gap-2">
-        <div className="relative flex-1">
+        <div className="relative flex-[2]">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
-            value={searchCity}
-            onChange={(e) => setSearchCity(e.target.value)}
-            placeholder="Search by city..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search by city, facility name, or address..."
             className="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-red/20"
           />
         </div>
@@ -310,6 +320,59 @@ export default function BloodMap({
                           </div>
                         )}
                       </div>
+                    </div>
+                    <a
+                      href={`https://www.google.com/maps/dir/?api=1&destination=${bank.lat},${bank.lng}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-3 w-full flex items-center justify-center gap-1.5 px-3 py-2 bg-red text-white rounded-lg text-xs font-bold hover:bg-red-700 transition"
+                    >
+                      <Navigation size={12} /> Navigate
+                    </a>
+                  </div>
+                </Popup>
+              </Marker>
+            );
+          })}
+
+          {registeredBanks.map((bank) => {
+            if (!bank.lat || !bank.lng) return null;
+            const dist = userLocation
+              ? calculateDistance(userLocation.lat, userLocation.lng, bank.lat, bank.lng)
+              : null;
+            return (
+              <Marker key={`reg-${bank.id}`} position={[bank.lat, bank.lng]} icon={ICONS.bank}>
+                <Popup>
+                  <div className="text-sm min-w-[220px]">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="w-8 h-8 rounded-lg bg-red/10 flex items-center justify-center text-red font-bold text-xs">BB</div>
+                      <div>
+                        <p className="font-bold text-slate-900 text-sm">{bank.name}</p>
+                        <p className="text-[10px] text-slate-500">Blood Bank</p>
+                      </div>
+                    </div>
+                    <div className="space-y-1.5 text-xs text-slate-600">
+                      {bank.contact_person && (
+                        <p className="flex items-center gap-1">
+                          <span>&#128100;</span> {bank.contact_person}
+                        </p>
+                      )}
+                      {bank.operating_hours && (
+                        <p className="flex items-center gap-1">
+                          <span>&#128338;</span> {bank.operating_hours}
+                        </p>
+                      )}
+                      {bank.available_24x7 && (
+                        <span className="inline-block px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded-full text-[10px] font-bold">24x7</span>
+                      )}
+                      {dist !== null && (
+                        <p className="flex items-center gap-1">
+                          <span>&#128205;</span> Distance: <span className="font-semibold">{formatDistance(dist)}</span>
+                        </p>
+                      )}
+                      {bank.address && (
+                        <p className="text-slate-400 text-[10px] leading-relaxed mt-1">{bank.address}</p>
+                      )}
                     </div>
                     <a
                       href={`https://www.google.com/maps/dir/?api=1&destination=${bank.lat},${bank.lng}`}

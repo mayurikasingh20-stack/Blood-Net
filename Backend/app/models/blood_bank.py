@@ -44,6 +44,8 @@ class BloodBank(db.Model):
     db.Text,
     nullable=False
 )
+    latitude = db.Column(db.Float, nullable=True)
+    longitude = db.Column(db.Float, nullable=True)
     operating_hours = db.Column(
     db.String(100),
     nullable=True

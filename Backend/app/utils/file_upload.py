@@ -19,11 +19,6 @@ def allowed_file(filename):
 
 
 def save_uploaded_file(file, folder_name):
-    """
-    Save an uploaded file inside the given folder.
-    Returns the relative file path.
-    """
-
     if file is None:
         return None
 

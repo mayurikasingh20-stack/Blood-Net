@@ -6,7 +6,6 @@ from app.extensions import db
 from app.models.user import User
 from app.models.donor import Donor
 from app.models.patient import Patient
-from app.models.blood_bank import BloodBank
 from app.utils.password import hash_password, verify_password
 from app.utils.validators import is_valid_email, normalize_phone
 
@@ -27,7 +26,6 @@ def register_user(data):
     required_fields = [
         "first_name",
         "last_name",
-        "email",
         "phone",
         "password",
         "role",
@@ -35,6 +33,8 @@ def register_user(data):
         "dob",
         "city",
     ]
+    if data.get("role") in ("blood_bank", "admin"):
+        required_fields.append("email")
 
     missing_fields = get_missing_fields(data, required_fields)
     if missing_fields:
@@ -43,16 +43,18 @@ def register_user(data):
             "missing_fields": missing_fields,
         }, 400
 
-    email = data["email"].strip().lower()
-    if not is_valid_email(email):
-        return {"message": "Invalid email address"}, 400
+    email = None
+    if data.get("email"):
+        email = data["email"].strip().lower()
+        if not is_valid_email(email):
+            return {"message": "Invalid email address"}, 400
+        if User.query.filter_by(email=email).first():
+            return {"message": "Credentials not matched"}, 409
 
     normalized_phone = normalize_phone(data["phone"])
     if not normalized_phone:
         return {"message": "Invalid phone number"}, 400
 
-    if User.query.filter_by(email=email).first():
-        return {"message": "Credentials not matched"}, 409
     if User.query.filter_by(phone=normalized_phone).first():
         return {"message": "Credentials not matched"}, 409
 
@@ -141,7 +143,8 @@ def login_user(data):
     if not data:
         return {"message": "No JSON data received"}, 400
 
-    if data.get("role") == "donor":
+    role = data.get("role")
+    if role in ("donor", "patient"):
         required_fields = ["phone", "password"]
     else:
         required_fields = ["email", "password"]
@@ -155,7 +158,7 @@ def login_user(data):
         }, 400
 
     user = None
-    if data.get("role") == "donor":
+    if role in ("donor", "patient"):
         normalized_phone = normalize_phone(data["phone"])
         if normalized_phone:
             user = User.query.filter_by(phone=normalized_phone).first()
@@ -176,14 +179,6 @@ def login_user(data):
         return {
             "message": "Credentials not matched"
         }, 401
-
-    if user.role == "blood_bank":
-        blood_bank = BloodBank.query.filter_by(user_id=user.id).first()
-        if blood_bank:
-            if blood_bank.status in ("pending", "rejected"):
-                return {
-                    "message": "Credentials not matched"
-                }, 401
 
     access_token = create_access_token(identity=str(user.id))
 

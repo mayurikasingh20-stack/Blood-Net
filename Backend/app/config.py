@@ -1,3 +1,4 @@
+from datetime import timedelta
 import os
 
 BASE_DIR = os.path.abspath(
@@ -8,6 +9,7 @@ class Config:
     SQLALCHEMY_DATABASE_URI = "sqlite:///bloodnet.db"
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     JWT_SECRET_KEY = "your-jwt-secret-key"
+    JWT_ACCESS_TOKEN_EXPIRES = timedelta(days=7)
     UPLOAD_FOLDER = os.path.join(
         BASE_DIR,
         "uploads"
