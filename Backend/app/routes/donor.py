@@ -11,6 +11,11 @@ from app.services.donor_service import (
     get_donor_by_id,
     donor_dashboard
 )
+from app.services.screening_service import (
+    check_donation_interval,
+    submit_screening,
+    get_screening_questions
+)
 donor_bp = Blueprint(
     "donor",__name__,url_prefix="/api/donor"
 )
@@ -74,6 +79,25 @@ def donor_details(donor_id):
     response, status = get_donor_by_id(donor_id)
 
     return jsonify(response), status
+
+@donor_bp.get("/screening-questions")
+@jwt_required()
+@role_required("donor")
+def screening_questions():
+    return get_screening_questions()
+
+@donor_bp.post("/check-eligibility")
+@jwt_required()
+@role_required("donor")
+def eligibility_check():
+    return check_donation_interval()
+
+@donor_bp.post("/submit-screening")
+@jwt_required()
+@role_required("donor")
+def screening_submit():
+    data = request.get_json()
+    return submit_screening(data)
 
 @donor_bp.get("/dashboard")
 @jwt_required()

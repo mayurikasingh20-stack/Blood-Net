@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, date
 from app.utils.helpers import get_missing_fields
 from flask_jwt_extended import create_access_token, create_refresh_token
 
@@ -8,6 +8,11 @@ from app.models.donor import Donor
 from app.models.patient import Patient
 from app.utils.password import hash_password, verify_password
 from app.utils.validators import is_valid_email, normalize_phone
+
+
+def calculate_age(dob):
+    today = date.today()
+    return today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
 
 
 def get_missing_fields(data, required_fields):
@@ -64,6 +69,20 @@ def register_user(data):
         dob = datetime.strptime(data["dob"], "%Y-%m-%d").date()
     except ValueError:
         return {"message": "Invalid date format: use yyyy-mm-dd"}, 400
+
+    if dob > date.today():
+        return {"message": "Date of birth cannot be in the future."}, 400
+
+    if data["role"] == "donor":
+        age = calculate_age(dob)
+        if age < 18:
+            return {
+                "message": "You must be at least 18 years old to register as a blood donor."
+            }, 400
+        if age > 65:
+            return {
+                "message": "People above 65 years of age are not eligible for blood donation. Please consult a medical professional if you have any questions."
+            }, 400
 
     new_user = User(
         first_name=data["first_name"],
@@ -168,8 +187,8 @@ def login_user(data):
     if not user or not verify_password(user.password_hash, password):
         return {"message": "Credentials not matched"}, 401
 
-    access_token = create_access_token(identity=user.id)
-    refresh_token = create_refresh_token(identity=user.id)
+    access_token = create_access_token(identity=str(user.id))
+    refresh_token = create_refresh_token(identity=str(user.id))
 
     return {
         "message": "Login successful",

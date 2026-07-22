@@ -9,6 +9,7 @@ import {
 import useAuth from "../context/useAuth";
 import BloodMap from "../components/shared/BloodMap";
 import NotificationPanel from "../components/shared/NotificationPanel";
+import DonorScreeningModal from "../components/donor/DonorScreeningModal";
 import { DONATION_STATUS_STYLES } from "../utils/constants";
 import {
   getDonorDashboard, getMyDonations, getDonorProfile,
@@ -27,8 +28,10 @@ function computeNextEligible(lastDate) {
   if (!lastDate) return "Today";
   const last = new Date(lastDate);
   const next = new Date(last);
-  next.setDate(next.getDate() + 90);
-  return next.toLocaleDateString();
+  next.setDate(next.getDate() + 56);
+  const now = new Date();
+  if (next <= now) return "Today";
+  return next.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
 }
 
 export default function DonorDashboard() {
@@ -87,6 +90,7 @@ export default function DonorDashboard() {
   }
 
   const [acceptingId, setAcceptingId] = useState(null);
+  const [screeningRequest, setScreeningRequest] = useState(null);
 
   async function handleAccept(requestId) {
     setAcceptingId(requestId);
@@ -97,6 +101,13 @@ export default function DonorDashboard() {
       alert(err.response?.data?.message || "Could not accept request.");
     } finally {
       setAcceptingId(null);
+    }
+  }
+
+  function handleScreeningComplete(requestId, result) {
+    setScreeningRequest(null);
+    if (result?.donation_id) {
+      setOpenRequests((prev) => prev.filter((r) => r.id !== requestId));
     }
   }
 
@@ -210,7 +221,7 @@ export default function DonorDashboard() {
                         {req.urgency_level}
                       </span>
                       <button
-                        onClick={() => handleAccept(req.id)}
+                        onClick={() => setScreeningRequest(req)}
                         disabled={acceptingId === req.id}
                         className="flex items-center gap-1 px-3 py-1.5 bg-red text-white rounded-full text-xs font-bold hover:bg-red-700 transition disabled:opacity-50"
                       >
@@ -311,6 +322,15 @@ export default function DonorDashboard() {
           />
         </div>
       </div>
+      {/* Screening Modal */}
+      {screeningRequest && (
+        <DonorScreeningModal
+          requestId={screeningRequest.id}
+          requestBloodGroup={screeningRequest.blood_group}
+          onComplete={(result) => handleScreeningComplete(screeningRequest.id, result)}
+          onClose={() => setScreeningRequest(null)}
+        />
+      )}
     </div>
   );
 }

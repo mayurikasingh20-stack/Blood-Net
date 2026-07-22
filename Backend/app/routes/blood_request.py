@@ -10,7 +10,8 @@ from app.services.blood_request_service import (
     get_accepted_donors,
     update_blood_request,
     cancel_blood_request,
-    get_matching_donors
+    get_matching_donors,
+    patient_update_request_status
 )
 
 blood_request_bp = Blueprint(
@@ -72,6 +73,13 @@ def update(request_id):
 @role_required("patient", "blood_bank")
 def cancel(request_id):
     return cancel_blood_request(request_id)
+
+@blood_request_bp.patch("/<int:request_id>/patient-update")
+@jwt_required()
+@role_required("patient")
+def patient_update(request_id):
+    data = request.get_json()
+    return patient_update_request_status(request_id, data)
 
 @blood_request_bp.get("/<int:request_id>/matching-donors")
 @jwt_required()

@@ -429,13 +429,7 @@ export default function BloodMap({
           <span className="w-3 h-3 rounded-full bg-red" /> Blood Bank
         </span>
         <span className="flex items-center gap-1">
-          <span className="w-3 h-3 rounded-full bg-blue-600" /> Donor
-        </span>
-        <span className="flex items-center gap-1">
           <span className="w-3 h-3 rounded-full bg-green" /> Hospital / Camp
-        </span>
-        <span className="flex items-center gap-1">
-          <span className="w-3 h-3 rounded-full bg-amber" /> Your Location
         </span>
       </div>
 

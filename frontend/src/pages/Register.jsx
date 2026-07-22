@@ -14,6 +14,20 @@ import SuccessMessage from "../components/feedback/SuccessMessage";
 import { getAuthErrorMessage, registerUser } from "../services/authService";
 import { BLOOD_GROUPS } from "../utils/constants";
 
+function calculateAge(dobString) {
+  if (!dobString) return null;
+  const parts = dobString.split("-");
+  if (parts.length !== 3) return null;
+  const birth = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+  const today = new Date();
+  let age = today.getFullYear() - birth.getFullYear();
+  const monthDiff = today.getMonth() - birth.getMonth();
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+    age--;
+  }
+  return age;
+}
+
 const roles = [
   { value: "donor", label: "Donor" },
   { value: "patient", label: "Patient" },
@@ -70,6 +84,15 @@ export default function Register() {
         return "Please fill in all required fields.";
       if (formData.password.length < 6) return "Password must be at least 6 characters.";
       if (formData.password !== formData.confirmPassword) return "Passwords do not match.";
+      if (formData.dob) {
+        const dobDate = new Date(formData.dob + "T00:00:00");
+        if (dobDate > new Date()) return "Date of birth cannot be in the future.";
+        if (donor) {
+          const age = calculateAge(formData.dob);
+          if (age < 18) return "You must be at least 18 years old to register as a blood donor.";
+          if (age > 65) return "People above 65 years of age are not eligible for blood donation. Please consult a medical professional if you have any questions.";
+        }
+      }
     }
     if (stepNum === 3) {
       if (donor && (!formData.bloodGroup || !formData.weight || Number(formData.weight) <= 0))
@@ -97,6 +120,11 @@ export default function Register() {
     setSuccess("");
     const validationError = validateStep(3);
     if (validationError) { setError(validationError); return; }
+    if (donor && formData.dob) {
+      const age = calculateAge(formData.dob);
+      if (age < 18) { setError("You must be at least 18 years old to register as a blood donor."); return; }
+      if (age > 65) { setError("People above 65 years of age are not eligible for blood donation. Please consult a medical professional if you have any questions."); return; }
+    }
     setLoading(true);
     try {
       await registerUser(formData);

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Droplets, Plus, XCircle, Search, Loader, ChevronDown, ChevronUp, Phone, User } from "lucide-react";
 import api from "../services/api";
+import { patientUpdateRequestStatus } from "../services/dashboardService";
 import RaiseRequestModal from "../components/shared/RaiseRequestModal";
 
 const statusStyles = {
@@ -39,6 +40,17 @@ export default function PatientBloodRequests() {
     const interval = setInterval(loadRequests, 30000);
     return () => clearInterval(interval);
   }, [loadRequests]);
+
+  async function handlePatientUpdate(requestId, action) {
+    const label = action === "fulfilled" ? "fulfilled" : "not fulfilled";
+    if (!confirm(`Mark this request as ${label}? This will ${action === "fulfilled" ? "complete the request and verify all donors" : "cancel all pending donor acceptances"} .`)) return;
+    try {
+      await patientUpdateRequestStatus(requestId, action);
+      loadRequests();
+    } catch (err) {
+      alert(err.response?.data?.message || `Could not mark as ${label}.`);
+    }
+  }
 
   async function handleCancel(id) {
     if (!confirm("Cancel this request?")) return;
@@ -144,6 +156,20 @@ export default function PatientBloodRequests() {
                       </motion.div>
                     )}
                   </AnimatePresence>
+                  <div className="flex gap-2 mt-3 pt-3 border-t border-slate-100">
+                    <button
+                      onClick={() => handlePatientUpdate(req.id, "fulfilled")}
+                      className="flex-1 py-1.5 bg-emerald-500 text-white rounded-full text-[10px] font-bold hover:bg-emerald-600 transition"
+                    >
+                      Mark Fulfilled
+                    </button>
+                    <button
+                      onClick={() => handlePatientUpdate(req.id, "not_fulfilled")}
+                      className="flex-1 py-1.5 border border-red/30 text-red rounded-full text-[10px] font-bold hover:bg-red-50 transition"
+                    >
+                      Not Fulfilled
+                    </button>
+                  </div>
                 </div>
               )}
             </motion.div>
@@ -151,7 +177,32 @@ export default function PatientBloodRequests() {
         </div>
       )}
 
-      {showModal && <RaiseRequestModal isOpen={showModal} onClose={() => setShowModal(false)} onSuccess={loadRequests} />}
+      {showModal && (
+        <RaiseRequestModal
+          requesterName="Patient"
+          onClose={() => setShowModal(false)}
+          onSubmit={async (formData) => {
+            try {
+              await api.post("/blood-request/create", {
+                blood_group: formData.bloodGroup,
+                units: formData.unitsNeeded,
+                hospital: formData.hospital,
+                hospital_address: formData.hospitalAddress || formData.hospital,
+                city: formData.city,
+                urgency_level: formData.urgency,
+                required_before: formData.requiredBefore,
+                purpose: formData.condition || "",
+                contact_name: formData.contactName,
+                contact_phone: formData.contactPhone,
+              });
+              setShowModal(false);
+              loadRequests();
+            } catch (err) {
+              alert(err.response?.data?.message || err.response?.data?.errors || "Could not create request.");
+            }
+          }}
+        />
+      )}
     </div>
   );
 }

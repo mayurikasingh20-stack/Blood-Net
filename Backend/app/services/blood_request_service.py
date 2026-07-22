@@ -210,11 +210,14 @@ def get_my_requests():
             )
             item["accepted_donors"] = [
                 {
+                    "donation_id": d.id,
                     "donor_id": d.donor.id,
                     "name": f"{d.donor.user.first_name} {d.donor.user.last_name}",
                     "blood_group": d.donor.blood_group,
                     "phone": d.donor.user.phone,
                     "city": d.donor.user.city,
+                    "status": d.status.value,
+                    "donated_units": d.donated_units,
                     "accepted_at": d.accepted_at.isoformat() if d.accepted_at else None,
                 }
                 for d in donations if d.donor
@@ -253,7 +256,16 @@ def get_open_requests():
             "accepted_count": accepted_count,
         })
 
-    data.sort(key=lambda r: (URGENCY_ORDER.get(r["urgency_level"], 99), r["created_at"] or ""))
+    def sort_key(r):
+        urgency = URGENCY_ORDER.get(r["urgency_level"], 99)
+        created = r.get("created_at") or ""
+        try:
+            ts = datetime.fromisoformat(created).timestamp()
+        except Exception:
+            ts = 0
+        return (urgency, -ts)
+
+    data.sort(key=sort_key)
 
     return {"blood_requests": data}, 200
 
@@ -482,6 +494,84 @@ def cancel_blood_request(request_id):
         "message": "Blood request cancelled successfully."
     }, 200
     
+
+def patient_update_request_status(request_id, data):
+    user_id = get_jwt_identity()
+    user = db.session.get(User, user_id)
+    if user is None:
+        return {"message": "User not found."}, 404
+
+    if user.role != "patient":
+        return {"message": "Only patients can perform this action."}, 403
+
+    blood_request = db.session.get(BloodRequest, request_id)
+    if blood_request is None:
+        return {"message": "Blood request not found."}, 404
+
+    if blood_request.created_by != user.id:
+        return {"message": "Unauthorized access."}, 403
+
+    if blood_request.status != RequestStatus.PENDING:
+        return {"message": "This request cannot be updated in its current state."}, 400
+
+    action = data.get("action")
+    if action not in ("fulfilled", "not_fulfilled"):
+        return {"message": "Invalid action. Use 'fulfilled' or 'not_fulfilled'."}, 400
+
+    accepted_donations = Donation.query.filter_by(
+        blood_request_id=blood_request.id,
+        status=DonationStatus.ACCEPTED
+    ).all()
+
+    if not accepted_donations:
+        return {"message": "No donors have accepted this request yet."}, 400
+
+    if action == "fulfilled":
+        blood_request.status = RequestStatus.COMPLETED
+        blood_request.fulfilled_units = blood_request.units
+
+        for donation in accepted_donations:
+            donation.status = DonationStatus.VERIFIED
+            donation.donated_units = 1
+            donation.verified_at = datetime.utcnow()
+
+            donor_name = f"{donation.donor.user.first_name} {donation.donor.user.last_name}"
+            create_notification(
+                user_id=donation.donor.user_id,
+                title="Donation Verified",
+                message=f"Your donation for {blood_request.blood_group} request at {blood_request.hospital} has been marked as fulfilled.",
+                notification_type="donation_verified",
+                reference_id=donation.id
+            )
+
+        create_notification(
+            user_id=blood_request.created_by,
+            title="Blood Request Completed",
+            message=f"Your {blood_request.blood_group} blood request has been marked as fulfilled!",
+            notification_type="blood_request_completed",
+            reference_id=blood_request.id
+        )
+
+    elif action == "not_fulfilled":
+        for donation in accepted_donations:
+            donation.status = DonationStatus.CANCELLED
+
+            donor_name = f"{donation.donor.user.first_name} {donation.donor.user.last_name}"
+            create_notification(
+                user_id=donation.donor.user_id,
+                title="Donation Not Fulfilled",
+                message=f"The patient marked your acceptance for {blood_request.blood_group} request at {blood_request.hospital} as not fulfilled.",
+                notification_type="donation_cancelled",
+                reference_id=donation.id
+            )
+
+    db.session.commit()
+
+    return {
+        "message": f"Blood request marked as {action} successfully.",
+        "status": blood_request.status.value
+    }, 200
+
 
 def get_matching_donors(request_id):
 

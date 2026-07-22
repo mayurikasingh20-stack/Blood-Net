@@ -6,7 +6,8 @@ from app.utils.decorator import role_required
 from app.services.donation_service import (
     accept_blood_request,
     cancel_donation,
-    get_my_donations
+    get_my_donations,
+    verify_fulfillment
 )
 donation_bp = Blueprint(
     "donation",
@@ -26,6 +27,15 @@ def accept_request(request_id):
 @role_required("donor")
 def cancel_donation_route(donation_id):
     return cancel_donation(donation_id)
+
+@donation_bp.post("/<int:donation_id>/fulfill")
+@jwt_required()
+@role_required("patient")
+def fulfill_donation(donation_id):
+    from flask import request
+    data = request.get_json()
+    return verify_fulfillment(donation_id, data)
+
 
 @donation_bp.get("/my-donations")
 @jwt_required()

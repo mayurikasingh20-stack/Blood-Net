@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import useAuth from "../context/useAuth";
 import api from "../services/api";
+import DonorScreeningModal from "../components/donor/DonorScreeningModal";
 import { BLOOD_GROUPS } from "../utils/constants";
 
 const urgencyLevels = [
@@ -12,10 +13,14 @@ const urgencyLevels = [
 
 export default function EmergencyRequest() {
   const { user } = useAuth();
-  const isDonor = user?.role === "donor";
+  const role = user?.role;
+  const isDonor = role === "donor";
+  const isBloodBank = role === "bloodbank";
+  const totalSteps = isBloodBank ? 2 : 3;
   const [step, setStep] = useState(1);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [screeningRequest, setScreeningRequest] = useState(null);
   const [loading, setLoading] = useState(false);
   const [requests, setRequests] = useState([]);
   const [form, setForm] = useState({
@@ -45,8 +50,8 @@ export default function EmergencyRequest() {
 
   function validate() {
     if (!form.blood_group) return "Select a blood group";
-    if (!form.hospital.trim()) return "Hospital name is required";
-    if (!form.hospital_address.trim()) return "Hospital address is required";
+    if (!isBloodBank && !form.hospital.trim()) return "Hospital name is required";
+    if (!isBloodBank && !form.hospital_address.trim()) return "Hospital address is required";
     if (!form.city.trim()) return "City is required";
     if (!form.required_before) return "Required by date is required";
     if (!form.contact_name.trim()) return "Contact name is required";
@@ -61,9 +66,12 @@ export default function EmergencyRequest() {
     setSuccess("");
     const err = validate();
     if (err) { setError(err); return; }
+    const payload = isBloodBank
+      ? { ...form, hospital: form.hospital || user?.name || "Blood Bank", hospital_address: form.hospital_address || user?.city || form.city }
+      : form;
     setLoading(true);
     try {
-      await api.post("/blood-request/create", form);
+      await api.post("/blood-request/create", payload);
       setSuccess("Emergency request created successfully! Donors in your area will be notified.");
       setTimeout(() => {
         setStep(1);
@@ -107,14 +115,7 @@ export default function EmergencyRequest() {
                 <p className="text-sm text-slate-600">{req.hospital} - {req.city}</p>
                 <p className="text-xs text-slate-400 mt-1">{req.units} unit(s) needed</p>
                 <button
-                  onClick={async () => {
-                    try {
-                      await api.post(`/donations/accept/${req.id}`);
-                      setRequests((prev) => prev.filter((r) => r.id !== req.id));
-                    } catch (err) {
-                      alert(err.response?.data?.message || "Failed to accept");
-                    }
-                  }}
+                  onClick={() => setScreeningRequest(req)}
                   className="mt-3 px-4 py-2 bg-red text-white rounded-full text-sm font-bold hover:bg-red-700 transition"
                 >
                   Accept & Donate
@@ -124,8 +125,22 @@ export default function EmergencyRequest() {
           </div>
         )}
       </div>
-    );
-  }
+
+      {screeningRequest && (
+        <DonorScreeningModal
+          requestId={screeningRequest.id}
+          requestBloodGroup={screeningRequest.blood_group}
+          onComplete={(result) => {
+            if (result?.donation_id) {
+              setRequests((prev) => prev.filter((r) => r.id !== screeningRequest.id));
+            }
+            setScreeningRequest(null);
+          }}
+          onClose={() => setScreeningRequest(null)}
+        />
+      )}
+    </div>
+  );
 
   return (
     <div className="max-w-2xl mx-auto">
@@ -143,7 +158,7 @@ export default function EmergencyRequest() {
 
       <div className="bg-white rounded-3xl p-6 shadow-xl border border-slate-100">
         <div className="flex gap-2 mb-6">
-          {[1, 2, 3].map((s) => (
+          {Array.from({ length: totalSteps }, (_, i) => i + 1).map((s) => (
             <div key={s} className={`h-1.5 flex-1 rounded-full transition-all ${s <= step ? "bg-red" : "bg-slate-200"}`} />
           ))}
         </div>
@@ -173,13 +188,43 @@ export default function EmergencyRequest() {
                 <label className="text-sm font-semibold text-slate-700 block mb-1">Required By *</label>
                 <input type="date" value={form.required_before} onChange={(e) => update("required_before", e.target.value)} className={inputClass} />
               </div>
+              {isBloodBank && (
+                <div>
+                  <label className="text-sm font-semibold text-slate-700 block mb-1">City *</label>
+                  <input value={form.city} onChange={(e) => update("city", e.target.value)} placeholder="e.g. Mumbai" className={inputClass} />
+                </div>
+              )}
               <button type="button" onClick={() => { setError(""); setStep(2); }} className="w-full py-3 bg-red text-white rounded-full text-sm font-bold hover:bg-red-700 transition">
                 Next
               </button>
             </div>
           )}
 
-          {step === 2 && (
+          {step === 2 && isBloodBank && (
+            <div className="space-y-4">
+              <h3 className="text-base font-bold text-slate-900">Step 2: Contact Info</h3>
+              <div>
+                <label className="text-sm font-semibold text-slate-700 block mb-1">Contact Person *</label>
+                <input value={form.contact_name} onChange={(e) => update("contact_name", e.target.value)} placeholder="Full name" className={inputClass} />
+              </div>
+              <div>
+                <label className="text-sm font-semibold text-slate-700 block mb-1">Contact Phone *</label>
+                <input value={form.contact_phone} onChange={(e) => update("contact_phone", e.target.value)} placeholder="+91 98765 43210" className={inputClass} />
+              </div>
+              <div>
+                <label className="text-sm font-semibold text-slate-700 block mb-1">Purpose (Optional)</label>
+                <textarea rows={2} value={form.purpose} onChange={(e) => update("purpose", e.target.value)} placeholder="e.g. Low stock, urgent requirement" className={inputClass} />
+              </div>
+              <div className="flex gap-3">
+                <button type="button" onClick={() => setStep(1)} className="flex-1 py-3 border border-slate-200 rounded-full text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">Back</button>
+                <button type="submit" disabled={loading} className="flex-[2] py-3 bg-red text-white rounded-full text-sm font-bold hover:bg-red-700 transition disabled:opacity-60">
+                  {loading ? "Submitting..." : "Submit Emergency Request"}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {step === 2 && !isBloodBank && (
             <div className="space-y-4">
               <h3 className="text-base font-bold text-slate-900">Step 2: Hospital Details</h3>
               <div>
@@ -201,7 +246,7 @@ export default function EmergencyRequest() {
             </div>
           )}
 
-          {step === 3 && (
+          {step === 3 && !isBloodBank && (
             <div className="space-y-4">
               <h3 className="text-base font-bold text-slate-900">Step 3: Contact Info</h3>
               <div>

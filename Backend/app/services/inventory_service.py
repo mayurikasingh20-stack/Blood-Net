@@ -1,10 +1,11 @@
-from datetime import datetime
+from datetime import date, datetime, timedelta
 from flask_jwt_extended import get_jwt_identity
 from app.extensions import db
 from app.models.blood_bank import BloodBank
 from app.models.inventory import Inventory, InventoryStatus
+from app.models.inventory_history import InventoryHistory, InventoryAction
 from app.models.user import User
-from app.utils.validators import validate_inventory_data
+from app.utils.validators import validate_inventory_data, validate_inventory_adjustment
 
 
 def get_inventory_by_blood_bank(blood_bank_id):
@@ -87,7 +88,105 @@ def add_inventory(data):
     return {
         "message": "Inventory added successfully."
     }, 201
-    
+
+
+def adjust_inventory(data):
+    errors = validate_inventory_adjustment(data)
+    if errors:
+        return {"errors": errors}, 400
+
+    user_id = get_jwt_identity()
+    user = db.session.get(User, user_id)
+    if not user:
+        return {"error": "User not found."}, 404
+
+    blood_bank = BloodBank.query.filter_by(user_id=user.id).first()
+    if not blood_bank:
+        return {"error": "Blood bank profile not found."}, 404
+
+    action = data["action"]
+    blood_group = data["blood_group"]
+    units = int(data["units"])
+
+    existing = Inventory.query.filter_by(
+        blood_bank_id=blood_bank.id,
+        blood_group=blood_group,
+    ).first()
+
+    if action == "Add Units":
+        if existing:
+            existing.units += units
+        else:
+            today = date.today()
+            existing = Inventory(
+                blood_bank_id=blood_bank.id,
+                blood_group=blood_group,
+                units=units,
+                collection_date=today,
+                expiry_date=today + timedelta(days=42),
+            )
+            db.session.add(existing)
+
+        if existing.units == 0:
+            existing.status = InventoryStatus.OUT_OF_STOCK
+        elif existing.units <= 5:
+            existing.status = InventoryStatus.LOW_STOCK
+        else:
+            existing.status = InventoryStatus.AVAILABLE
+
+        history = InventoryHistory(
+            blood_bank_id=blood_bank.id,
+            blood_group=blood_group,
+            action=InventoryAction.ADDED,
+            units=units,
+        )
+        db.session.add(history)
+        db.session.commit()
+
+        return {
+            "message": f"{units} units of {blood_group} blood added successfully.",
+            "blood_group": blood_group,
+            "total_units": existing.units,
+            "status": existing.status.value,
+        }, 200
+
+    elif action == "Reduce Units":
+        if not existing:
+            return {
+                "error": f"No inventory found for {blood_group}."
+            }, 404
+
+        if existing.units < units:
+            return {
+                "error": "Cannot reduce more units than are currently available."
+            }, 400
+
+        existing.units -= units
+
+        if existing.units == 0:
+            existing.status = InventoryStatus.OUT_OF_STOCK
+        elif existing.units <= 5:
+            existing.status = InventoryStatus.LOW_STOCK
+        else:
+            existing.status = InventoryStatus.AVAILABLE
+
+        history = InventoryHistory(
+            blood_bank_id=blood_bank.id,
+            blood_group=blood_group,
+            action=InventoryAction.REDUCED,
+            units=units,
+        )
+        db.session.add(history)
+        db.session.commit()
+
+        return {
+            "message": f"{units} units of {blood_group} blood removed successfully.",
+            "blood_group": blood_group,
+            "total_units": existing.units,
+            "status": existing.status.value,
+        }, 200
+
+
 def get_inventory():
     """
     Return all inventory belonging to the logged-in blood bank.
@@ -116,11 +215,11 @@ def get_inventory():
             "id": item.id,
             "blood_group": item.blood_group,
             "units": item.units,
-            "collection_date": item.collection_date.isoformat(),
-            "expiry_date": item.expiry_date.isoformat(),
+            "collection_date": item.collection_date.isoformat() if item.collection_date else None,
+            "expiry_date": item.expiry_date.isoformat() if item.expiry_date else None,
             "status": item.status.value,
-            "created_at": item.created_at.isoformat(),
-            "updated_at": item.updated_at.isoformat()
+            "created_at": item.created_at.isoformat() if item.created_at else None,
+            "updated_at": item.updated_at.isoformat() if item.updated_at else None
         })
 
     return {

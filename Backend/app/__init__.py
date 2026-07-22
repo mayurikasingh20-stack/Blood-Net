@@ -17,6 +17,7 @@ from app.routes.public_blood_bank import public_bb_bp
 from app.routes.map import map_bp
 from app.routes.camps import camps_bp
 from app.models.user import User
+from app.models.inventory_history import InventoryHistory
 from app.utils.password import hash_password
 
 

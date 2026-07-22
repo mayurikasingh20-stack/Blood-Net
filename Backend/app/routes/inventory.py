@@ -2,6 +2,7 @@ from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required
 from app.services.inventory_service import (
     add_inventory,
+    adjust_inventory,
     get_inventory,
     get_inventory_by_id,
     update_inventory,
@@ -24,6 +25,16 @@ def create_inventory():
     data = request.get_json()
 
     response, status = add_inventory(data)
+
+    return jsonify(response), status
+
+
+@inventory_bp.post("/adjust")
+@jwt_required()
+def adjust_stock():
+    data = request.get_json()
+
+    response, status = adjust_inventory(data)
 
     return jsonify(response), status
 

@@ -92,6 +92,13 @@ class BloodBank(db.Model):
         cascade="all, delete-orphan",
         lazy=True
     )
-    
+
+    inventory_history = db.relationship(
+        "InventoryHistory",
+        back_populates="blood_bank",
+        cascade="all, delete-orphan",
+        lazy=True
+    )
+
     def __repr__(self):
         return f"<BloodBank {self.facility_name}>"

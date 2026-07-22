@@ -21,8 +21,8 @@ export default function RaiseRequestModal({ onClose, onSubmit, requesterName = "
   const update = (field, value) => setForm((p) => ({ ...p, [field]: value }));
 
   const handleSubmit = () => {
-    if (!form.bloodGroup || !form.unitsNeeded || !form.hospital || !form.city || !form.contactName) {
-      setError("Please fill in blood group, units, hospital, city, and contact name.");
+    if (!form.bloodGroup || !form.unitsNeeded || !form.hospital || !form.city || !form.contactName || !form.contactPhone) {
+      setError("Please fill in blood group, units, hospital, city, contact name, and contact phone.");
       return;
     }
     if (!form.requiredBefore) {
@@ -148,7 +148,7 @@ export default function RaiseRequestModal({ onClose, onSubmit, requesterName = "
               />
             </div>
             <div>
-              <label className="text-sm font-semibold text-slate-700 block mb-1.5">Contact Phone</label>
+              <label className="text-sm font-semibold text-slate-700 block mb-1.5">Contact Phone <span className="text-red">*</span></label>
               <input value={form.contactPhone} onChange={(e) => update("contactPhone", e.target.value)}
                 placeholder="+91 98765 43210"
                 className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-red/20"

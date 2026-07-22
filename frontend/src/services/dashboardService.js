@@ -137,6 +137,16 @@ export async function cancelBloodRequest(id) {
   return res.data;
 }
 
+export async function verifyDonationFulfillment(donationId, donatedUnits) {
+  const res = await api.post(`/donations/${donationId}/fulfill`, { donated_units: donatedUnits });
+  return res.data;
+}
+
+export async function patientUpdateRequestStatus(requestId, action) {
+  const res = await api.patch(`/blood-request/${requestId}/patient-update`, { action });
+  return res.data;
+}
+
 export async function getMatchingDonors(requestId) {
   const res = await api.get(`/blood-request/${requestId}/matching-donors`);
   return res.data; // { matching_donors: [...], total_matches }
@@ -173,6 +183,11 @@ export async function getInventory() {
 
 export async function addInventoryItem(data) {
   const res = await api.post("/inventory/", data);
+  return res.data;
+}
+
+export async function adjustInventory(data) {
+  const res = await api.post("/inventory/adjust", data);
   return res.data;
 }
 

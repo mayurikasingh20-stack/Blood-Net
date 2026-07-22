@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from flask_jwt_extended import get_jwt_identity
 from app.extensions import db
 from app.models.user import User
@@ -24,6 +24,19 @@ def accept_blood_request(request_id):
     if not donor.available:
         return {
             "message": "You are currently unavailable for donation."
+        }, 400
+
+    # Validate screening was completed and passed
+    if not donor.screening_completed or donor.screening_result != "passed":
+        return {
+            "message": "You must complete the eligibility screening before accepting a request."
+        }, 400
+
+    # Validate donation interval on backend
+    eligible_interval, _ = donor.check_donation_interval()
+    if not eligible_interval:
+        return {
+            "message": "You are not eligible due to donation interval. A minimum of 56 days is required since your last donation."
         }, 400
 
     blood_request = db.session.get(
@@ -120,6 +133,69 @@ def cancel_donation(donation_id):
         "message": "Donation cancelled successfully."
     }, 200
     
+def verify_fulfillment(donation_id, data):
+    user_id = get_jwt_identity()
+    user = db.session.get(User, user_id)
+    if user is None:
+        return {"message": "User not found."}, 404
+
+    donation = db.session.get(Donation, donation_id)
+    if donation is None:
+        return {"message": "Donation not found."}, 404
+
+    blood_request = donation.blood_request
+    if blood_request.created_by != user.id:
+        return {"message": "Unauthorized access."}, 403
+
+    if donation.status != DonationStatus.ACCEPTED:
+        return {"message": "Donation is not in accepted state."}, 400
+
+    donated_units = data.get("donated_units")
+    if donated_units is None or donated_units <= 0:
+        return {"message": "Invalid donated units."}, 400
+
+    remaining = blood_request.units - blood_request.fulfilled_units
+    if donated_units > remaining:
+        return {"message": f"Only {remaining} unit(s) still required."}, 400
+
+    donation.donated_units = donated_units
+    donation.status = DonationStatus.VERIFIED
+    donation.verified_at = datetime.utcnow()
+    blood_request.fulfilled_units += donated_units
+
+    completed = False
+    if blood_request.fulfilled_units >= blood_request.units:
+        blood_request.status = RequestStatus.COMPLETED
+        completed = True
+
+    donor_name = f"{donation.donor.user.first_name} {donation.donor.user.last_name}"
+    create_notification(
+        user_id=donation.donor.user_id,
+        title="Donation Verified",
+        message=f"{user.first_name} {user.last_name} confirmed your donation of {donated_units} unit(s) for request #{blood_request.id}.",
+        notification_type="donation_verified",
+        reference_id=donation.id
+    )
+
+    if completed:
+        create_notification(
+            user_id=blood_request.created_by,
+            title="Blood Request Completed",
+            message=f"Your {blood_request.blood_group} blood request has been fulfilled!",
+            notification_type="blood_request_completed",
+            reference_id=blood_request.id
+        )
+
+    db.session.commit()
+
+    return {
+        "message": "Donation verified successfully.",
+        "fulfilled_units": blood_request.fulfilled_units,
+        "required_units": blood_request.units,
+        "request_status": blood_request.status.value
+    }, 200
+
+
 def get_my_donations():
 
     user_id = get_jwt_identity()

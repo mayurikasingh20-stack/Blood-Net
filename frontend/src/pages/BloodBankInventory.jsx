@@ -4,23 +4,20 @@ import {
   Droplets,
   AlertTriangle,
   Clock,
-  TrendingUp,
   Plus,
   Search,
-  ChevronRight,
   Activity,
   CalendarX,
   CheckCircle,
   XCircle,
-  Edit,
   Trash2,
   AlertCircle,
+  Loader,
 } from "lucide-react";
 import useAuth from "../context/useAuth";
 import {
   getInventory,
-  addInventoryItem,
-  updateInventoryItem,
+  adjustInventory,
   deleteInventoryItem,
 } from "../services/dashboardService";
 import { BLOOD_GROUPS } from "../utils/constants";
@@ -46,20 +43,25 @@ const statusLabels = {
   EXPIRED: "Expired",
 };
 
+const ACTIONS = [
+  { value: "Add Units", label: "Add Units" },
+  { value: "Reduce Units", label: "Reduce Units" },
+];
+
 export default function BloodBankInventory() {
   const { user } = useAuth();
   const [inventory, setInventory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
-  const [showAddForm, setShowAddForm] = useState(false);
-  const [editItem, setEditItem] = useState(null);
+  const [showModal, setShowModal] = useState(false);
   const [formErrors, setFormErrors] = useState({});
+  const [submitting, setSubmitting] = useState(false);
+  const [success, setSuccess] = useState("");
   const [formData, setFormData] = useState({
+    action: "Add Units",
     blood_group: "",
     units: 1,
-    collection_date: "",
-    expiry_date: "",
   });
 
   const fetchInventory = useCallback(async () => {
@@ -68,8 +70,9 @@ export default function BloodBankInventory() {
     try {
       const invData = await getInventory();
       setInventory(Array.isArray(invData?.inventory) ? invData.inventory : []);
-    } catch {
-      setError("Could not load inventory.");
+    } catch (err) {
+      const msg = err.response?.data?.error || err.response?.data?.message || "Could not load inventory.";
+      setError(msg);
     } finally {
       setLoading(false);
     }
@@ -111,20 +114,20 @@ export default function BloodBankInventory() {
   const totalUnits = sumUnits(inventory);
 
   function resetForm() {
-    setFormData({ blood_group: "", units: 1, collection_date: "", expiry_date: "" });
+    setFormData({ action: "Add Units", blood_group: "", units: 1 });
     setFormErrors({});
-    setEditItem(null);
+    setSuccess("");
   }
 
   function validateForm() {
     const errors = {};
     if (!formData.blood_group) errors.blood_group = "Select a blood group";
     const u = Number(formData.units);
-    if (!u || u < 1) errors.units = "Units must be at least 1";
-    if (!formData.collection_date) errors.collection_date = "Collection date is required";
-    if (!formData.expiry_date) errors.expiry_date = "Expiry date is required";
-    if (formData.collection_date && formData.expiry_date && formData.expiry_date < formData.collection_date)
-      errors.expiry_date = "Expiry must be after collection";
+    if (!u || u < 1 || !Number.isInteger(u)) errors.units = "Units must be a positive integer";
+    const currentUnits = sumUnits(inventory.filter((i) => i.blood_group === formData.blood_group && i.status === "AVAILABLE"));
+    if (formData.action === "Reduce Units" && currentUnits < u) {
+      errors.units = "Cannot reduce more units than are currently available.";
+    }
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   }
@@ -132,29 +135,29 @@ export default function BloodBankInventory() {
   async function handleSubmit(e) {
     e.preventDefault();
     setFormErrors({});
+    setSuccess("");
     if (!validateForm()) return;
+    setSubmitting(true);
     try {
       const payload = {
+        action: formData.action,
         blood_group: formData.blood_group,
         units: Number(formData.units),
-        collection_date: formData.collection_date,
-        expiry_date: formData.expiry_date,
       };
-      if (editItem) {
-        await updateInventoryItem(editItem.id, payload);
-      } else {
-        await addInventoryItem(payload);
-      }
+      const res = await adjustInventory(payload);
+      setSuccess(res.message || "Inventory updated successfully.");
       resetForm();
-      setShowAddForm(false);
       fetchInventory();
+      setTimeout(() => { setShowModal(false); setSuccess(""); }, 2000);
     } catch (err) {
       const data = err.response?.data;
       if (data?.errors) {
         setFormErrors(data.errors);
       } else {
-        alert(data?.message || "Could not save inventory item.");
+        setFormErrors({ general: data?.error || "Could not update inventory." });
       }
+    } finally {
+      setSubmitting(false);
     }
   }
 
@@ -168,15 +171,8 @@ export default function BloodBankInventory() {
     }
   }
 
-  function handleEdit(item) {
-    setEditItem(item);
-    setFormData({
-      blood_group: item.blood_group || BLOOD_GROUPS[0],
-      units: item.units ?? 1,
-      collection_date: item.collection_date || "",
-      expiry_date: item.expiry_date || "",
-    });
-    setShowAddForm(true);
+  function handleCurrentUnits(bg) {
+    return sumUnits(inventory.filter((i) => i.blood_group === bg && i.status === "AVAILABLE"));
   }
 
   if (loading) {
@@ -198,9 +194,9 @@ export default function BloodBankInventory() {
           <h1 className="text-2xl md:text-3xl font-bold text-slate-900">{user?.name || "Blood Bank"}</h1>
           <p className="text-sm text-slate-500 mt-1">Manage blood units, track stock levels, and monitor supply.</p>
         </div>
-        <button onClick={() => { resetForm(); setShowAddForm(true); }}
+        <button onClick={() => { resetForm(); setShowModal(true); }}
           className="px-5 py-2.5 bg-red text-white rounded-full text-sm font-bold hover:bg-red-700 transition flex items-center gap-2 shadow-lg shadow-red/20">
-          <Plus size={16} /> Add Blood Unit
+          <Plus size={16} /> Update Inventory
         </button>
       </div>
 
@@ -215,7 +211,7 @@ export default function BloodBankInventory() {
           { icon: Droplets, label: "Total Units", value: totalUnits, color: "text-red", bg: "bg-red/10" },
           { icon: CheckCircle, label: "Available", value: totalAvailable, color: "text-emerald-600", bg: "bg-emerald-50" },
           { icon: AlertTriangle, label: "Low Stock Types", value: lowStock.length, color: "text-amber-600", bg: "bg-amber-50" },
-          { icon: CalendarX, label: "Expiring Soon", value: nearExpiry.length, color: "text-red", bg: "bg-red-10" },
+          { icon: Clock, label: "Unique Types", value: inventory.length, color: "text-blue-600", bg: "bg-blue-50" },
         ].map((stat) => (
           <motion.div key={stat.label} variants={fadeUp}
             className="bg-white rounded-2xl p-4 md:p-5 border border-slate-100 shadow-sm">
@@ -292,7 +288,6 @@ export default function BloodBankInventory() {
                         </td>
                         <td className="px-4 md:px-6 py-3 text-right">
                           <div className="flex items-center justify-end gap-1">
-                            <button onClick={() => handleEdit(item)} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-blue-600 transition"><Edit size={14} /></button>
                             <button onClick={() => handleDelete(item.id)} className="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red transition"><Trash2 size={14} /></button>
                           </div>
                         </td>
@@ -344,49 +339,67 @@ export default function BloodBankInventory() {
         </div>
       </div>
 
-      {showAddForm && (
+      {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
           <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
             className="bg-white rounded-3xl p-6 md:p-8 w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-bold text-slate-900">{editItem ? "Edit Blood Unit" : "Add Blood Unit"}</h3>
-              <button onClick={() => { resetForm(); setShowAddForm(false); }} className="p-1.5 rounded-lg hover:bg-slate-100 transition"><XCircle size={20} className="text-slate-400" /></button>
+              <h3 className="text-lg font-bold text-slate-900">Update Blood Inventory</h3>
+              <button onClick={() => { resetForm(); setShowModal(false); }} className="p-1.5 rounded-lg hover:bg-slate-100 transition"><XCircle size={20} className="text-slate-400" /></button>
             </div>
+
+            {success && (
+              <div className="flex items-center gap-2 text-sm text-emerald-700 bg-emerald-50 px-4 py-3 rounded-xl border border-emerald-200 mb-4">
+                <CheckCircle size={16} /> {success}
+              </div>
+            )}
+
             <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Inventory Action <span className="text-red">*</span></label>
+                <select value={formData.action} onChange={(e) => { setFormData((p) => ({ ...p, action: e.target.value })); setFormErrors((p) => ({ ...p, action: "" })); }}
+                  className={`w-full px-3 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-red/20 ${formErrors.action ? "border-red" : "border-slate-200"}`} required>
+                  {ACTIONS.map((a) => <option key={a.value} value={a.value}>{a.label}</option>)}
+                </select>
+                {formErrors.action && <p className="text-xs text-red mt-1">{formErrors.action}</p>}
+              </div>
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-1.5">Blood Group <span className="text-red">*</span></label>
                 <select value={formData.blood_group} onChange={(e) => { setFormData((p) => ({ ...p, blood_group: e.target.value })); setFormErrors((p) => ({ ...p, blood_group: "" })); }}
                   className={`w-full px-3 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-red/20 ${formErrors.blood_group ? "border-red" : "border-slate-200"}`} required>
                   <option value="" disabled>Select blood group</option>
-                  {BLOOD_GROUPS.map((bg) => <option key={bg} value={bg}>{bg}</option>)}
+                  {BLOOD_GROUPS.map((bg) => (
+                    <option key={bg} value={bg}>
+                      {bg} {formData.action === "Reduce Units" ? `(Current: ${handleCurrentUnits(bg)} units)` : ""}
+                    </option>
+                  ))}
                 </select>
                 {formErrors.blood_group && <p className="text-xs text-red mt-1">{formErrors.blood_group}</p>}
               </div>
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-1.5">Units <span className="text-red">*</span></label>
-                <input type="number" min={1} value={formData.units} onChange={(e) => { setFormData((p) => ({ ...p, units: e.target.value })); setFormErrors((p) => ({ ...p, units: "" })); }}
+                <input type="number" min={1} step={1} value={formData.units} onChange={(e) => { setFormData((p) => ({ ...p, units: e.target.value })); setFormErrors((p) => ({ ...p, units: "" })); }}
                   className={`w-full px-3 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-red/20 ${formErrors.units ? "border-red" : "border-slate-200"}`} required />
                 {formErrors.units && <p className="text-xs text-red mt-1">{formErrors.units}</p>}
+                {formData.blood_group && formData.action === "Reduce Units" && (
+                  <p className="text-xs text-slate-400 mt-1">
+                    Available: {handleCurrentUnits(formData.blood_group)} units
+                  </p>
+                )}
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">Collection Date <span className="text-red">*</span></label>
-                  <input type="date" value={formData.collection_date} onChange={(e) => { setFormData((p) => ({ ...p, collection_date: e.target.value })); setFormErrors((p) => ({ ...p, collection_date: "" })); }}
-                    className={`w-full px-3 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-red/20 ${formErrors.collection_date ? "border-red" : "border-slate-200"}`} required />
-                  {formErrors.collection_date && <p className="text-xs text-red mt-1">{formErrors.collection_date}</p>}
+              {formErrors.general && (
+                <div className="flex items-center gap-2 text-sm text-red bg-red/10 px-4 py-3 rounded-xl">
+                  <AlertCircle size={16} /> {formErrors.general}
                 </div>
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">Expiry Date <span className="text-red">*</span></label>
-                  <input type="date" value={formData.expiry_date} onChange={(e) => { setFormData((p) => ({ ...p, expiry_date: e.target.value })); setFormErrors((p) => ({ ...p, expiry_date: "" })); }}
-                    className={`w-full px-3 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-red/20 ${formErrors.expiry_date ? "border-red" : "border-slate-200"}`} required />
-                  {formErrors.expiry_date && <p className="text-xs text-red mt-1">{formErrors.expiry_date}</p>}
-                </div>
-              </div>
+              )}
               <div className="flex gap-3 pt-2">
-                <button type="button" onClick={() => { resetForm(); setShowAddForm(false); }}
+                <button type="button" onClick={() => { resetForm(); setShowModal(false); }}
                   className="w-1/3 py-2.5 border border-slate-200 rounded-full text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">Cancel</button>
-                <button type="submit"
-                  className="w-2/3 py-2.5 bg-red text-white rounded-full text-sm font-bold hover:bg-red-700 transition">{editItem ? "Update Unit" : "Add Unit"}</button>
+                <button type="submit" disabled={submitting}
+                  className="w-2/3 py-2.5 bg-red text-white rounded-full text-sm font-bold hover:bg-red-700 transition disabled:opacity-60 flex items-center justify-center gap-2">
+                  {submitting ? <Loader size={16} className="animate-spin" /> : null}
+                  {submitting ? "Updating..." : "Update Inventory"}
+                </button>
               </div>
             </form>
           </motion.div>

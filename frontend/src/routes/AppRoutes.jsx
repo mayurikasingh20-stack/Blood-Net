@@ -29,14 +29,17 @@ import DonorDonationHistory from "../pages/DonorDonationHistory";
 import MapPage from "../pages/MapPage";
 import Notifications from "../pages/Notifications";
 import PublicBloodBanks from "../pages/PublicBloodBanks";
+import Education from "../pages/Education";
 import RoleBasedRoute from "./RoleBasedRoute";
 
 const publicLinks = [
   { label: "Home", to: "/" },
   { label: "About", to: "/about" },
+  { label: "Education", to: "/education" },
   { label: "Contact", to: "/contact" },
 ];
 
+const educationItem = { label: "Education", icon: "school", to: "/education" };
 const mapItem = { label: "Map", icon: "map", to: "/map" };
 
 const donorSidebar = [
@@ -44,6 +47,7 @@ const donorSidebar = [
   { label: "Emergency Requests", icon: "emergency", to: "/donor/requests" },
   { label: "Blood Banks", icon: "location_on", to: "/donor/blood-banks" },
   { label: "Donation History", icon: "history", to: "/donor/history" },
+  educationItem,
   mapItem,
   { label: "Settings", icon: "settings", to: "/donor/settings" },
 ];
@@ -53,6 +57,7 @@ const patientSidebar = [
   { label: "Blood Requests", icon: "bloodtype", to: "/patient/requests" },
   { label: "Nearby Donors", icon: "group", to: "/patient/donors" },
   { label: "Blood Banks", icon: "location_on", to: "/patient/blood-banks" },
+  educationItem,
   mapItem,
   { label: "Settings", icon: "settings", to: "/patient/settings" },
 ];
@@ -62,6 +67,7 @@ const bankSidebar = [
   { label: "Inventory", icon: "bloodtype", to: "/bloodbank/inventory" },
   { label: "Emergency", icon: "emergency", to: "/bloodbank/emergency" },
   { label: "Requests", icon: "notification_important", to: "/bloodbank/requests" },
+  educationItem,
   mapItem,
   { label: "Settings", icon: "settings", to: "/bloodbank/settings" },
 ];
@@ -71,6 +77,7 @@ const adminSidebar = [
   { label: "Blood Banks", icon: "location_city", to: "/admin/blood-banks" },
   { label: "Requests", icon: "bloodtype", to: "/admin/requests" },
   { label: "Donations", icon: "volunteer_activism", to: "/admin/donations" },
+  educationItem,
   mapItem,
   { label: "Settings", icon: "settings", to: "/admin/settings" },
 ];
@@ -120,6 +127,7 @@ export default function AppRoutes() {
       <Route path="/register" element={<PublicPage><Register /></PublicPage>} />
       <Route path="/bloodbank-register" element={<BloodBankRegister />} />
       <Route path="/unauthorized" element={<PublicPage><Unauthorized /></PublicPage>} />
+      <Route path="/education" element={<PublicPage><Education /></PublicPage>} />
 
       {/* Admin Routes */}
       <Route
@@ -316,6 +324,7 @@ export default function AppRoutes() {
           </RoleBasedRoute>
         }
       />
+
 
       {/* Blood Bank Routes */}
       <Route

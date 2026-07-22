@@ -239,7 +239,7 @@ export default function BloodBankDashboard() {
         initial="initial" whileInView="whileInView" viewport={{ once: true }}>
         {[
           { icon: Droplets, label: "Total Units", value: totalUnits, color: "text-red", bg: "bg-red/10" },
-          { icon: CheckCircle, label: "Available Types", value: totalAvailable, color: "text-emerald-600", bg: "bg-emerald-50" },
+          { icon: CheckCircle, label: "Blood Groups", value: 8, color: "text-emerald-600", bg: "bg-emerald-50" },
           { icon: AlertTriangle, label: "Low Stock", value: lowStock.length, color: "text-amber-600", bg: "bg-amber-50" },
           { icon: Bell, label: "Pending Requests", value: pendingRequests, color: "text-red", bg: "bg-red-10" },
         ].map((stat) => (

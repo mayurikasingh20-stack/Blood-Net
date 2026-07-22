@@ -65,3 +65,32 @@ def validate_inventory_data(data):
         errors["expiry_date"] = "Expiry date is required."
 
     return errors
+
+
+def validate_inventory_adjustment(data):
+    errors = {}
+
+    action = data.get("action")
+    if not action:
+        errors["action"] = "Action is required."
+    elif action not in ("Add Units", "Reduce Units"):
+        errors["action"] = "Action must be 'Add Units' or 'Reduce Units'."
+
+    blood_group = data.get("blood_group")
+    if not blood_group:
+        errors["blood_group"] = "Blood group is required."
+    elif blood_group not in VALID_BLOOD_GROUPS:
+        errors["blood_group"] = "Invalid blood group."
+
+    units = data.get("units")
+    if units is None:
+        errors["units"] = "Units are required."
+    else:
+        try:
+            units = int(units)
+            if units <= 0:
+                errors["units"] = "Units must be greater than 0."
+        except (TypeError, ValueError):
+            errors["units"] = "Units must be an integer."
+
+    return errors

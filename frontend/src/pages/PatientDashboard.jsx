@@ -7,6 +7,7 @@ import {
 import useAuth from "../context/useAuth";
 import {
   getPatientDashboard, getMyBloodRequests, createBloodRequest, cancelBloodRequest, getNotifications,
+  verifyDonationFulfillment, patientUpdateRequestStatus,
 } from "../services/dashboardService";
 import BloodMap from "../components/shared/BloodMap";
 import RaiseRequestModal from "../components/shared/RaiseRequestModal";
@@ -29,6 +30,9 @@ export default function PatientDashboard() {
   const [error, setError] = useState("");
   const [raiseOpen, setRaiseOpen] = useState(false);
   const [expandedRequest, setExpandedRequest] = useState(null);
+  const [verifyModal, setVerifyModal] = useState(null); // { donationId, donorName, requestId }
+  const [verifyUnits, setVerifyUnits] = useState(1);
+  const [verifying, setVerifying] = useState(false);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -74,8 +78,39 @@ export default function PatientDashboard() {
       setRaiseOpen(false);
       fetchData();
     } catch (err) {
-      const msg = err.response?.data?.message || err.response?.data?.errors?.required_before || "Could not create request.";
+      const errors = err.response?.data?.errors;
+      let msg = err.response?.data?.message || "Could not create request.";
+      if (errors) {
+        const fieldLabels = { blood_group: "Blood group", hospital_address: "Hospital address", contact_phone: "Contact phone", required_before: "Required by date", urgency_level: "Urgency level" };
+        const list = Object.entries(errors).map(([k, v]) => `${fieldLabels[k] || k}: ${v}`).join("\n");
+        msg = list || msg;
+      }
       alert(msg);
+    }
+  }
+
+  async function handleVerify(donationId, units) {
+    setVerifying(true);
+    try {
+      await verifyDonationFulfillment(donationId, units);
+      setVerifyModal(null);
+      setVerifyUnits(1);
+      fetchData();
+    } catch (err) {
+      alert(err.response?.data?.message || "Could not verify donation.");
+    } finally {
+      setVerifying(false);
+    }
+  }
+
+  async function handlePatientUpdate(requestId, action) {
+    const label = action === "fulfilled" ? "fulfilled" : "not fulfilled";
+    if (!window.confirm(`Mark this request as ${label}? This will ${action === "fulfilled" ? "complete the request and verify all donors" : "cancel all pending donor acceptances"} .`)) return;
+    try {
+      await patientUpdateRequestStatus(requestId, action);
+      fetchData();
+    } catch (err) {
+      alert(err.response?.data?.message || `Could not mark as ${label}.`);
     }
   }
 
@@ -207,15 +242,47 @@ export default function PatientDashboard() {
                                       </p>
                                       <p className="text-xs text-slate-500">{donor.blood_group} &middot; {donor.city || "—"}</p>
                                     </div>
-                                    <div className="flex items-center gap-2 text-xs text-slate-500">
-                                      <Phone size={12} className="text-slate-400" />
-                                      <span className="font-semibold text-slate-700">{donor.phone}</span>
-                                    </div>
+                                      <div className="flex items-center gap-2 text-xs text-slate-500">
+                                        <Phone size={12} className="text-slate-400" />
+                                        <span className="font-semibold text-slate-700">{donor.phone}</span>
+                                      </div>
+                                      <div className="flex items-center gap-1.5">
+                                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                                          donor.status === "verified" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"
+                                        }`}>
+                                          {donor.status === "verified" ? `Verified (${donor.donated_units} unit)` : "Accepted"}
+                                        </span>
+                                        {donor.status === "accepted" && (
+                                          <button
+                                            onClick={() => {
+                                              setVerifyModal({ donationId: donor.donation_id, donorName: donor.name, requestId: req.id });
+                                              setVerifyUnits(1);
+                                            }}
+                                            className="px-2 py-0.5 bg-emerald-500 text-white rounded-full text-[10px] font-bold hover:bg-emerald-600 transition"
+                                          >
+                                            Verify
+                                          </button>
+                                        )}
+                                      </div>
                                   </div>
                                 ))}
                               </motion.div>
                             )}
                           </AnimatePresence>
+                          <div className="flex gap-2 mt-3 pt-3 border-t border-slate-100">
+                            <button
+                              onClick={() => handlePatientUpdate(req.id, "fulfilled")}
+                              className="flex-1 py-1.5 bg-emerald-500 text-white rounded-full text-[10px] font-bold hover:bg-emerald-600 transition"
+                            >
+                              Mark Fulfilled
+                            </button>
+                            <button
+                              onClick={() => handlePatientUpdate(req.id, "not_fulfilled")}
+                              className="flex-1 py-1.5 border border-red/30 text-red rounded-full text-[10px] font-bold hover:bg-red-50 transition"
+                            >
+                              Not Fulfilled
+                            </button>
+                          </div>
                         </div>
                       )}
                       {req.fulfilled_units > 0 && (
@@ -256,6 +323,42 @@ export default function PatientDashboard() {
           onClose={() => setRaiseOpen(false)}
           onSubmit={handleCreateRequest}
         />
+      )}
+
+      {verifyModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white rounded-3xl p-6 w-full max-w-sm"
+          >
+            <h3 className="text-lg font-bold text-slate-900 mb-2">Verify Donation</h3>
+            <p className="text-sm text-slate-500 mb-4">
+              Confirm donation from <strong>{verifyModal.donorName}</strong>
+            </p>
+            <label className="text-sm font-semibold text-slate-700 block mb-1.5">Units Donated</label>
+            <input
+              type="number" min={1} value={verifyUnits}
+              onChange={(e) => setVerifyUnits(Math.max(1, parseInt(e.target.value) || 1))}
+              className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-red/20 mb-4"
+            />
+            <div className="flex gap-3">
+              <button
+                onClick={() => setVerifyModal(null)}
+                className="w-1/3 py-2.5 border border-slate-200 rounded-full text-sm font-semibold text-slate-600 hover:bg-slate-50 transition"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleVerify(verifyModal.donationId, verifyUnits)}
+                disabled={verifying}
+                className="w-2/3 py-2.5 bg-emerald-500 text-white rounded-full text-sm font-bold hover:bg-emerald-600 transition disabled:opacity-60"
+              >
+                {verifying ? "Verifying..." : "Confirm Fulfillment"}
+              </button>
+            </div>
+          </motion.div>
+        </div>
       )}
     </div>
   );
