@@ -30,9 +30,10 @@ export default function DonorDonationHistory() {
   }, []);
 
   const filtered = donations.filter((d) =>
-    !search || d.blood_group?.toLowerCase().includes(search.toLowerCase()) ||
-    d.hospital?.toLowerCase().includes(search.toLowerCase()) ||
-    d.city?.toLowerCase().includes(search.toLowerCase())
+    !search ||
+    (d.blood_group || "").toLowerCase().includes(search.toLowerCase()) ||
+    (d.hospital || "").toLowerCase().includes(search.toLowerCase()) ||
+    (d.city || "").toLowerCase().includes(search.toLowerCase())
   );
 
   if (loading) return (

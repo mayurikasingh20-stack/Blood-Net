@@ -80,7 +80,8 @@ class Donor(db.Model):
     )
 
     def __repr__(self):
-        return f"<Donor {self.user.email}>"
+        email = self.user.email if self.user else "no-user"
+        return f"<Donor {email}>"
 
     def check_donation_interval(self):
         if not self.last_donation_date:

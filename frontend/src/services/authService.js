@@ -76,12 +76,12 @@ export async function refreshAccessToken(refreshToken) {
 
 // Makes backend and network errors safe to show in the interface.
 export function getAuthErrorMessage(error) {
-  if (error.response?.data?.message) {
-    return error.response.data.message;
-  }
-
   if (error.response?.data?.error) {
     return error.response.data.error;
+  }
+
+  if (error.response?.data?.message) {
+    return error.response.data.message;
   }
 
   if (error.handledMessage) {

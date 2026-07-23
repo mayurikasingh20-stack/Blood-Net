@@ -1,4 +1,5 @@
 import os
+import traceback
 from datetime import date
 from flask import Flask
 from app.config import Config
@@ -19,6 +20,7 @@ from app.routes.camps import camps_bp
 from app.models.user import User
 from app.models.inventory_history import InventoryHistory
 from app.utils.password import hash_password
+from werkzeug.exceptions import HTTPException
 
 
 def seed_admin_users():
@@ -72,5 +74,17 @@ def create_app():
     with app.app_context():
         db.create_all()
         seed_admin_users()
+
+    @app.errorhandler(500)
+    def internal_error(error):
+        traceback.print_exc()
+        return {"message": "Internal server error. Please try again later."}, 500
+
+    @app.errorhandler(Exception)
+    def unhandled_exception(error):
+        if isinstance(error, HTTPException):
+            return {"message": error.description}, error.code
+        traceback.print_exc()
+        return {"message": "Internal server error. Please try again later."}, 500
 
     return app

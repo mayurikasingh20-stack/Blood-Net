@@ -78,8 +78,9 @@ export default function PatientDashboard() {
       setRaiseOpen(false);
       fetchData();
     } catch (err) {
+      console.error("Create request error:", err.response?.status, err.response?.data);
       const errors = err.response?.data?.errors;
-      let msg = err.response?.data?.message || "Could not create request.";
+      let msg = err.response?.data?.message || err.response?.data?.msg || "Could not create request.";
       if (errors) {
         const fieldLabels = { blood_group: "Blood group", hospital_address: "Hospital address", contact_phone: "Contact phone", required_before: "Required by date", urgency_level: "Urgency level" };
         const list = Object.entries(errors).map(([k, v]) => `${fieldLabels[k] || k}: ${v}`).join("\n");

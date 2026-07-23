@@ -83,7 +83,8 @@ export default function EmergencyRequest() {
         setSuccess("");
       }, 3000);
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to create request");
+      console.error("Create request error:", err.response?.status, err.response?.data);
+      setError(err.response?.data?.message || err.response?.data?.msg || "Failed to create request");
     } finally {
       setLoading(false);
     }
@@ -93,54 +94,56 @@ export default function EmergencyRequest() {
 
   if (isDonor) {
     return (
-      <div className="space-y-6 max-w-4xl mx-auto">
-        <div>
-          <h2 className="text-2xl font-bold text-slate-900">Emergency Blood Requests</h2>
-          <p className="text-sm text-slate-500 mt-1">View and accept urgent blood requests in your area.</p>
-        </div>
-        {requests.length === 0 ? (
-          <div className="bg-white rounded-2xl p-8 text-center border border-slate-100">
-            <p className="text-slate-500">No emergency requests at the moment.</p>
+      <>
+        <div className="space-y-6 max-w-4xl mx-auto">
+          <div>
+            <h2 className="text-2xl font-bold text-slate-900">Emergency Blood Requests</h2>
+            <p className="text-sm text-slate-500 mt-1">View and accept urgent blood requests in your area.</p>
           </div>
-        ) : (
-          <div className="grid gap-4">
-            {requests.filter((r) => r.status === "pending").map((req) => (
-              <div key={req.id} className="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-lg font-bold text-red">{req.blood_group}</span>
-                  <span className="text-xs font-bold px-2 py-1 rounded-full bg-amber-50 text-amber-700">
-                    {req.urgency_level || "Urgent"}
-                  </span>
+          {requests.length === 0 ? (
+            <div className="bg-white rounded-2xl p-8 text-center border border-slate-100">
+              <p className="text-slate-500">No emergency requests at the moment.</p>
+            </div>
+          ) : (
+            <div className="grid gap-4">
+              {requests.filter((r) => r.status === "pending").map((req) => (
+                <div key={req.id} className="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-lg font-bold text-red">{req.blood_group}</span>
+                    <span className="text-xs font-bold px-2 py-1 rounded-full bg-amber-50 text-amber-700">
+                      {req.urgency_level || "Urgent"}
+                    </span>
+                  </div>
+                  <p className="text-sm text-slate-600">{req.hospital} - {req.city}</p>
+                  <p className="text-xs text-slate-400 mt-1">{req.units} unit(s) needed</p>
+                  <button
+                    onClick={() => setScreeningRequest(req)}
+                    className="mt-3 px-4 py-2 bg-red text-white rounded-full text-sm font-bold hover:bg-red-700 transition"
+                  >
+                    Accept & Donate
+                  </button>
                 </div>
-                <p className="text-sm text-slate-600">{req.hospital} - {req.city}</p>
-                <p className="text-xs text-slate-400 mt-1">{req.units} unit(s) needed</p>
-                <button
-                  onClick={() => setScreeningRequest(req)}
-                  className="mt-3 px-4 py-2 bg-red text-white rounded-full text-sm font-bold hover:bg-red-700 transition"
-                >
-                  Accept & Donate
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+              ))}
+            </div>
+          )}
+        </div>
 
-      {screeningRequest && (
-        <DonorScreeningModal
-          requestId={screeningRequest.id}
-          requestBloodGroup={screeningRequest.blood_group}
-          onComplete={(result) => {
-            if (result?.donation_id) {
-              setRequests((prev) => prev.filter((r) => r.id !== screeningRequest.id));
-            }
-            setScreeningRequest(null);
-          }}
-          onClose={() => setScreeningRequest(null)}
-        />
-      )}
-    </div>
-  );
+        {screeningRequest && (
+          <DonorScreeningModal
+            requestId={screeningRequest.id}
+            requestBloodGroup={screeningRequest.blood_group}
+            onComplete={(result) => {
+              if (result?.donation_id) {
+                setRequests((prev) => prev.filter((r) => r.id !== screeningRequest.id));
+              }
+              setScreeningRequest(null);
+            }}
+            onClose={() => setScreeningRequest(null)}
+          />
+        )}
+      </>
+    );
+  }
 
   return (
     <div className="max-w-2xl mx-auto">

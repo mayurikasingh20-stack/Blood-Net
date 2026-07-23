@@ -139,15 +139,15 @@ export default function BloodMap({
           const allData = await publicRes.json();
           const regData = regRes.ok ? await regRes.json() : [];
           if (!cancelled) {
-            setBanks(allData.filter((b) => b.source === "public"));
-            setRegisteredBanks(regData);
+            setBanks(Array.isArray(allData) ? allData.filter((b) => b.source === "public") : []);
+            setRegisteredBanks(Array.isArray(regData) ? regData : []);
           }
         }
         if (showCamps) {
           const res = await fetch(`${baseUrl}/map/camps`);
           if (!res.ok) throw new Error("Failed to load camps");
           const data = await res.json();
-          if (!cancelled) setCamps(data);
+          if (!cancelled) setCamps(Array.isArray(data) ? data : []);
         }
       } catch (err) {
         if (!cancelled) setError(err.message || "Failed to load map data");

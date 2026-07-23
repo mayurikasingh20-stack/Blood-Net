@@ -198,7 +198,9 @@ export default function PatientBloodRequests() {
               setShowModal(false);
               loadRequests();
             } catch (err) {
-              alert(err.response?.data?.message || err.response?.data?.errors || "Could not create request.");
+              console.error("Create request error:", err.response?.status, err.response?.data);
+              const errMsg = err.response?.data?.message || err.response?.data?.msg || err.response?.data?.errors || "Could not create request.";
+              alert(typeof errMsg === "string" ? errMsg : JSON.stringify(errMsg));
             }
           }}
         />

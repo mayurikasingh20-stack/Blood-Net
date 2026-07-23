@@ -57,7 +57,7 @@ export default function BloodBankRequests() {
       (r.blood_group || "").toLowerCase().includes(term) ||
       (r.hospital || "").toLowerCase().includes(term) ||
       (r.city || "").toLowerCase().includes(term) ||
-      r.id.toString().includes(term)
+      (r.id || "").toString().includes(term)
     );
   });
 

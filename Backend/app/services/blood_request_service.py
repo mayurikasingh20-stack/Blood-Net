@@ -117,7 +117,7 @@ def create_blood_request(data):
     )
 
     for donor in matching_donors:
-        if donor.user.city != request.city:
+        if not donor.user or donor.user.city != request.city:
             continue
         create_notification(
             user_id=donor.user_id,
@@ -132,6 +132,8 @@ def create_blood_request(data):
 
     blood_banks = BloodBank.query.filter_by(status="approved").all()
     for bank in blood_banks:
+        if not db.session.get(User, bank.user_id):
+            continue
         create_notification(
             user_id=bank.user_id,
             title="New Blood Request",
@@ -212,10 +214,10 @@ def get_my_requests():
                 {
                     "donation_id": d.id,
                     "donor_id": d.donor.id,
-                    "name": f"{d.donor.user.first_name} {d.donor.user.last_name}",
+                    "name": f"{d.donor.user.first_name} {d.donor.user.last_name}" if d.donor.user else "Unknown",
                     "blood_group": d.donor.blood_group,
-                    "phone": d.donor.user.phone,
-                    "city": d.donor.user.city,
+                    "phone": d.donor.user.phone if d.donor.user else "",
+                    "city": d.donor.user.city if d.donor.user else "",
                     "status": d.status.value,
                     "donated_units": d.donated_units,
                     "accepted_at": d.accepted_at.isoformat() if d.accepted_at else None,
@@ -292,7 +294,7 @@ def get_accepted_donors(request_id):
     donors = []
     for donation in donations:
         donor = donation.donor
-        if donor:
+        if donor and donor.user:
             donors.append({
                 "donor_id": donor.id,
                 "name": f"{donor.user.first_name} {donor.user.last_name}",
@@ -535,14 +537,15 @@ def patient_update_request_status(request_id, data):
             donation.donated_units = 1
             donation.verified_at = datetime.utcnow()
 
-            donor_name = f"{donation.donor.user.first_name} {donation.donor.user.last_name}"
-            create_notification(
-                user_id=donation.donor.user_id,
-                title="Donation Verified",
-                message=f"Your donation for {blood_request.blood_group} request at {blood_request.hospital} has been marked as fulfilled.",
-                notification_type="donation_verified",
-                reference_id=donation.id
-            )
+            if donation.donor and donation.donor.user:
+                donor_name = f"{donation.donor.user.first_name} {donation.donor.user.last_name}"
+                create_notification(
+                    user_id=donation.donor.user_id,
+                    title="Donation Verified",
+                    message=f"Your donation for {blood_request.blood_group} request at {blood_request.hospital} has been marked as fulfilled.",
+                    notification_type="donation_verified",
+                    reference_id=donation.id
+                )
 
         create_notification(
             user_id=blood_request.created_by,
@@ -556,14 +559,15 @@ def patient_update_request_status(request_id, data):
         for donation in accepted_donations:
             donation.status = DonationStatus.CANCELLED
 
-            donor_name = f"{donation.donor.user.first_name} {donation.donor.user.last_name}"
-            create_notification(
-                user_id=donation.donor.user_id,
-                title="Donation Not Fulfilled",
-                message=f"The patient marked your acceptance for {blood_request.blood_group} request at {blood_request.hospital} as not fulfilled.",
-                notification_type="donation_cancelled",
-                reference_id=donation.id
-            )
+            if donation.donor and donation.donor.user:
+                donor_name = f"{donation.donor.user.first_name} {donation.donor.user.last_name}"
+                create_notification(
+                    user_id=donation.donor.user_id,
+                    title="Donation Not Fulfilled",
+                    message=f"The patient marked your acceptance for {blood_request.blood_group} request at {blood_request.hospital} as not fulfilled.",
+                    notification_type="donation_cancelled",
+                    reference_id=donation.id
+                )
 
     db.session.commit()
 
@@ -616,6 +620,8 @@ def get_matching_donors(request_id):
     result = []
 
     for donor in donors:
+        if not donor.user:
+            continue
 
         if donor.user.city != blood_request.city:
             continue

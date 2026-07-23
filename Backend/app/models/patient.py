@@ -38,6 +38,7 @@ class Patient(db.Model):
             "Critical",
             "High",
             "Moderate",
+            "Low",
             name="urgency_level"
         ),
         nullable=False,
@@ -125,4 +126,5 @@ class Patient(db.Model):
     )
 
     def __repr__(self):
-        return f"<Patient {self.user.email}>"
+        email = self.user.email if self.user else "no-user"
+        return f"<Patient {email}>"
