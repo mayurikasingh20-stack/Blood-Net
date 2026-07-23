@@ -290,16 +290,19 @@ def get_all_donations():
 
         donor = donation.donor
         request = donation.blood_request
+        donor_user = donor.user
 
         result.append({
             "donation_id": donation.id,
             "request_id": request.id,
             "donor_id": donor.id,
+            "donor_name": f"{donor_user.first_name} {donor_user.last_name}",
             "blood_group": request.blood_group,
             "hospital": request.hospital,
             "city": request.city,
             "status": donation.status.value,
             "donated_units": donation.donated_units,
+            "rejection_reason": donation.rejection_reason,
             "accepted_at": donation.accepted_at.isoformat() if donation.accepted_at else None,
             "verified_at": donation.verified_at.isoformat() if donation.verified_at else None,
             "created_at": donation.created_at.isoformat()
@@ -471,6 +474,19 @@ def reject_donation(donation_id, data):
         }, 400
     donation.status = DonationStatus.REJECTED
     donation.rejection_reason = reason
+
+    blood_request = donation.blood_request
+    create_notification(
+        user_id=donation.donor.user_id,
+        title="Donation Rejected",
+        message=(
+            f"Your donation for request {blood_request.id} "
+            f"has been rejected. Reason: {reason}"
+        ),
+        notification_type="donation_rejected",
+        reference_id=donation.id
+    )
+
     db.session.commit()
     return {
         "message": "Donation rejected successfully."

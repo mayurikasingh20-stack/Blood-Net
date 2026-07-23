@@ -329,6 +329,7 @@ export default function AdminDashboard() {
           <motion.div className="bg-white rounded-2xl border border-slate-100 shadow-sm" {...fadeUp}>
             <div className="px-4 md:px-6 py-4 border-b border-slate-100">
               <h3 className="text-base font-bold text-slate-900">All Blood Requests</h3>
+              <p className="text-xs text-slate-500 mt-0.5">Track current status of all blood requests.</p>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
@@ -337,10 +338,10 @@ export default function AdminDashboard() {
                     <th className="text-left px-4 md:px-6 py-3 text-xs font-bold text-slate-500 uppercase">Blood Group</th>
                     <th className="text-left px-4 md:px-6 py-3 text-xs font-bold text-slate-500 uppercase">Hospital</th>
                     <th className="text-left px-4 md:px-6 py-3 text-xs font-bold text-slate-500 uppercase hidden md:table-cell">Units</th>
+                    <th className="text-left px-4 md:px-6 py-3 text-xs font-bold text-slate-500 uppercase hidden md:table-cell">Fulfilled</th>
                     <th className="text-left px-4 md:px-6 py-3 text-xs font-bold text-slate-500 uppercase">Severity</th>
                     <th className="text-left px-4 md:px-6 py-3 text-xs font-bold text-slate-500 uppercase">Status</th>
                     <th className="text-left px-4 md:px-6 py-3 text-xs font-bold text-slate-500 uppercase hidden md:table-cell">Date</th>
-                    <th className="text-right px-4 md:px-6 py-3 text-xs font-bold text-slate-500 uppercase">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50">
@@ -356,6 +357,7 @@ export default function AdminDashboard() {
                       </td>
                       <td className="px-4 md:px-6 py-3 text-slate-600">{r.hospital_name || r.hospital}</td>
                       <td className="px-4 md:px-6 py-3 text-slate-500 hidden md:table-cell">{r.units || 1}</td>
+                      <td className="px-4 md:px-6 py-3 text-slate-600 hidden md:table-cell">{r.fulfilled_units || 0}</td>
                       <td className="px-4 md:px-6 py-3">
                         <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
                           r.urgency_level === "Critical" ? "bg-red/10 text-red" :
@@ -368,41 +370,12 @@ export default function AdminDashboard() {
                         <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
                           r.status === "completed" ? "bg-emerald-50 text-emerald-600" :
                           r.status === "cancelled" ? "bg-slate-100 text-slate-500" :
-                          "bg-amber-50 text-amber-700"
+                          r.status === "pending" ? "bg-amber-50 text-amber-700" :
+                          "bg-blue-50 text-blue-600"
                         }`}>{r.status ? r.status.charAt(0).toUpperCase() + r.status.slice(1) : "Pending"}</span>
                       </td>
                       <td className="px-4 md:px-6 py-3 text-slate-500 hidden md:table-cell">
                         {r.created_at ? new Date(r.created_at).toLocaleDateString() : "—"}
-                      </td>
-                      <td className="px-4 md:px-6 py-3 text-right">
-                        {r.status === "pending" && (
-                          <div className="flex items-center justify-end gap-1">
-                            <button
-                              onClick={async () => {
-                                try {
-                                  await api.patch(`/admin/blood-requests/${r.id}/complete`);
-                                  fetchAll();
-                                } catch { alert("Failed to complete request."); }
-                              }}
-                              className="p-1.5 rounded-lg hover:bg-emerald-50 text-slate-400 hover:text-emerald-600 transition"
-                              title="Complete"
-                            >
-                              <CheckCircle size={16} />
-                            </button>
-                            <button
-                              onClick={async () => {
-                                try {
-                                  await api.patch(`/blood-request/${r.id}/cancel`);
-                                  fetchAll();
-                                } catch { alert("Failed to cancel request."); }
-                              }}
-                              className="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red transition"
-                              title="Cancel"
-                            >
-                              <XCircle size={16} />
-                            </button>
-                          </div>
-                        )}
                       </td>
                     </tr>
                   ))}
@@ -416,7 +389,8 @@ export default function AdminDashboard() {
         {activeTab === "donations" && (
           <motion.div className="bg-white rounded-2xl border border-slate-100 shadow-sm" {...fadeUp}>
             <div className="px-4 md:px-6 py-4 border-b border-slate-100">
-              <h3 className="text-base font-bold text-slate-900">All Donations</h3>
+              <h3 className="text-base font-bold text-slate-900">Donation History</h3>
+              <p className="text-xs text-slate-500 mt-0.5">Completed and fulfilled donations across the platform.</p>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
@@ -425,32 +399,26 @@ export default function AdminDashboard() {
                     <th className="text-left px-4 md:px-6 py-3 text-xs font-bold text-slate-500 uppercase">Donor</th>
                     <th className="text-left px-4 md:px-6 py-3 text-xs font-bold text-slate-500 uppercase">Blood Group</th>
                     <th className="text-left px-4 md:px-6 py-3 text-xs font-bold text-slate-500 uppercase hidden md:table-cell">Bank</th>
-                    <th className="text-left px-4 md:px-6 py-3 text-xs font-bold text-slate-500 uppercase">Status</th>
-                    <th className="text-left px-4 md:px-6 py-3 text-xs font-bold text-slate-500 uppercase hidden md:table-cell">Date</th>
+                    <th className="text-left px-4 md:px-6 py-3 text-xs font-bold text-slate-500 uppercase hidden md:table-cell">Units</th>
+                    <th className="text-left px-4 md:px-6 py-3 text-xs font-bold text-slate-500 uppercase hidden md:table-cell">Verified On</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50">
-                  {allDonations.length === 0 && (
+                  {allDonations.filter((d) => d.status === "verified").length === 0 && (
                     <tr>
-                      <td colSpan={5} className="px-6 py-12 text-center text-sm text-slate-500">No donations yet.</td>
+                      <td colSpan={5} className="px-6 py-12 text-center text-sm text-slate-500">No fulfilled donations yet.</td>
                     </tr>
                   )}
-                  {allDonations.map((d) => (
-                    <tr key={d.id} className="hover:bg-slate-50/50 transition">
+                  {allDonations.filter((d) => d.status === "verified").map((d) => (
+                    <tr key={d.donation_id || d.id} className="hover:bg-slate-50/50 transition">
                       <td className="px-4 md:px-6 py-3 font-semibold text-slate-800">{d.donor_name || "—"}</td>
                       <td className="px-4 md:px-6 py-3">
                         <span className="font-bold text-red">{d.blood_group || "—"}</span>
                       </td>
-                      <td className="px-4 md:px-6 py-3 text-slate-500 hidden md:table-cell">{d.blood_bank_name || "—"}</td>
-                      <td className="px-4 md:px-6 py-3">
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                          d.status === "verified" ? "bg-emerald-50 text-emerald-600" :
-                          d.status === "rejected" ? "bg-red-50 text-red" :
-                          "bg-amber-50 text-amber-700"
-                        }`}>{d.status ? d.status.charAt(0).toUpperCase() + d.status.slice(1) : "Pending"}</span>
-                      </td>
+                      <td className="px-4 md:px-6 py-3 text-slate-500 hidden md:table-cell">{d.blood_bank_name || d.hospital || "—"}</td>
+                      <td className="px-4 md:px-6 py-3 text-slate-600 hidden md:table-cell">{d.donated_units || "—"}</td>
                       <td className="px-4 md:px-6 py-3 text-slate-500 hidden md:table-cell">
-                        {d.donation_date ? new Date(d.donation_date).toLocaleDateString() : "—"}
+                        {d.verified_at ? new Date(d.verified_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "—"}
                       </td>
                     </tr>
                   ))}

@@ -30,13 +30,6 @@ export default function AdminRequests() {
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
-  async function handleComplete(id) {
-    try {
-      await api.patch(`/admin/blood-requests/${id}/complete`);
-      fetchAll();
-    } catch { alert("Failed to complete request"); }
-  }
-
   const filtered = requests.filter((r) =>
     (r.hospital || "").toLowerCase().includes(search.toLowerCase()) ||
     (r.blood_group || "").includes(search.toUpperCase()) ||
@@ -48,7 +41,7 @@ export default function AdminRequests() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-slate-900">All Blood Requests</h2>
-          <p className="text-sm text-slate-500 mt-1">Monitor and manage all blood requests across the platform.</p>
+          <p className="text-sm text-slate-500 mt-1">Track current status of all blood requests across the platform.</p>
         </div>
         <button onClick={fetchAll} className="flex items-center gap-1.5 px-4 py-2 border border-slate-200 rounded-full text-sm font-semibold text-slate-600 hover:border-red hover:text-red transition">
           <RefreshCw size={15} /> Refresh
@@ -78,8 +71,10 @@ export default function AdminRequests() {
                 <th className="text-left px-6 py-3 text-xs font-bold text-slate-500 uppercase">Hospital</th>
                 <th className="text-left px-6 py-3 text-xs font-bold text-slate-500 uppercase hidden md:table-cell">City</th>
                 <th className="text-left px-6 py-3 text-xs font-bold text-slate-500 uppercase hidden md:table-cell">Units</th>
+                <th className="text-left px-6 py-3 text-xs font-bold text-slate-500 uppercase hidden md:table-cell">Fulfilled</th>
+                <th className="text-left px-6 py-3 text-xs font-bold text-slate-500 uppercase">Severity</th>
                 <th className="text-left px-6 py-3 text-xs font-bold text-slate-500 uppercase">Status</th>
-                <th className="text-right px-6 py-3 text-xs font-bold text-slate-500 uppercase">Action</th>
+                <th className="text-left px-6 py-3 text-xs font-bold text-slate-500 uppercase hidden md:table-cell">Date</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
@@ -89,19 +84,22 @@ export default function AdminRequests() {
                   <td className="px-6 py-3 text-slate-600">{r.hospital}</td>
                   <td className="px-6 py-3 text-slate-500 hidden md:table-cell">{r.city}</td>
                   <td className="px-6 py-3 text-slate-500 hidden md:table-cell">{r.units}</td>
+                  <td className="px-6 py-3 text-slate-600 hidden md:table-cell">{r.fulfilled_units || 0}</td>
+                  <td className="px-6 py-3">
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                      r.urgency_level === "Critical" ? "bg-red/10 text-red" :
+                      r.urgency_level === "High" ? "bg-amber-50 text-amber-700" :
+                      r.urgency_level === "Moderate" ? "bg-blue-50 text-blue-600" :
+                      "bg-slate-100 text-slate-500"
+                    }`}>{r.urgency_level || "Moderate"}</span>
+                  </td>
                   <td className="px-6 py-3">
                     <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${statusStyles[r.status] || "bg-slate-100 text-slate-500"}`}>
                       {r.status ? r.status.charAt(0).toUpperCase() + r.status.slice(1) : "Pending"}
                     </span>
                   </td>
-                  <td className="px-6 py-3 text-right">
-                    {r.status === "pending" || r.status === "accepted" ? (
-                      <button onClick={() => handleComplete(r.id)} className="text-xs font-bold px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded-full hover:bg-emerald-100 transition">
-                        Complete
-                      </button>
-                    ) : (
-                      <span className="text-xs text-slate-400">-</span>
-                    )}
+                  <td className="px-6 py-3 text-slate-500 hidden md:table-cell">
+                    {r.created_at ? new Date(r.created_at).toLocaleDateString() : "—"}
                   </td>
                 </tr>
               ))}

@@ -2,6 +2,7 @@
 node_modules/
 frontend/node_modules/
 Backend/venv/
+Backend/.venv/
 
 
 __pycache__/

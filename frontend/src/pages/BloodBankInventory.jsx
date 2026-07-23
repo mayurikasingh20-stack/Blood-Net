@@ -107,6 +107,7 @@ export default function BloodBankInventory() {
 
   const totalAvailable = sumUnits(inventory.filter((i) => i.status === "AVAILABLE"));
   const totalUnits = sumUnits(inventory);
+  const availableTypes = new Set(inventory.filter((i) => i.units > 0 && i.status !== "EXPIRED").map((i) => i.blood_group)).size;
 
   function resetForm() {
     setFormData({ action: "Add Units", blood_group: "", units: 1 });
@@ -204,7 +205,7 @@ export default function BloodBankInventory() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
         {[
           { icon: Droplets, label: "Total Units", value: totalUnits, color: "text-red", bg: "bg-red/10" },
-          { icon: CheckCircle, label: "Available", value: totalAvailable, color: "text-emerald-600", bg: "bg-emerald-50" },
+          { icon: CheckCircle, label: "Available Types", value: availableTypes, color: "text-emerald-600", bg: "bg-emerald-50" },
           { icon: AlertTriangle, label: "Low Stock Types", value: lowStock.length, color: "text-amber-600", bg: "bg-amber-50" },
           { icon: Clock, label: "Unique Types", value: inventory.length, color: "text-blue-600", bg: "bg-blue-50" },
         ].map((stat) => (
@@ -223,29 +224,15 @@ export default function BloodBankInventory() {
         <div className="lg:col-span-3 space-y-6">
           <motion.div className="grid grid-cols-2 md:grid-cols-4 gap-3" {...fadeUp}>
             {BLOOD_GROUPS.map((bg) => {
-              const item = inventory.find((i) => i.blood_group === bg);
-              const units = item ? item.units : 0;
-              const isLow = item && item.status === "LOW_STOCK";
-              const isOut = item && item.status === "OUT_OF_STOCK";
-              const isExpired = item && item.status === "EXPIRED";
-              const isEmpty = !item || units === 0;
-              const cardClass = isExpired ? "bg-red-50 border-red-200" :
-                isOut ? "bg-slate-100 border-slate-200" :
-                isLow ? "bg-amber-50 border-amber-200" :
-                "bg-white border-slate-100";
-              const textClass = isExpired ? "text-red" :
-                isOut ? "text-slate-400" :
-                isLow ? "text-amber-600" :
-                "text-slate-900";
+              const items = inventory.filter((i) => i.blood_group === bg);
+              const units = items.filter((i) => i.status !== "EXPIRED").reduce((s, i) => s + (i.units || 0), 0);
+              const isEmpty = units === 0;
               return (
-                <div key={bg} className={`rounded-xl p-3 md:p-4 border text-center ${cardClass}`}>
-                  <p className={`text-lg font-bold ${textClass}`}>{bg}</p>
-                  <p className={`text-xs mt-0.5 ${textClass}`}>
-                    {isEmpty ? "No stock" : `${units} unit${units !== 1 ? "s" : ""}`}
+                <div key={bg} className={`rounded-xl p-3 md:p-4 border text-center ${isEmpty ? "bg-slate-50 border-slate-200" : "bg-emerald-50 border-emerald-200"}`}>
+                  <p className={`text-lg font-bold ${isEmpty ? "text-slate-400" : "text-emerald-700"}`}>{bg}</p>
+                  <p className={`text-xs mt-0.5 ${isEmpty ? "text-slate-400" : "text-emerald-600"}`}>
+                    {isEmpty ? "Unavailable" : `${units} unit${units !== 1 ? "s" : ""}`}
                   </p>
-                  {isLow && <span className="text-[10px] font-bold text-amber-600 flex items-center justify-center gap-1 mt-1"><AlertTriangle size={10} /> Low</span>}
-                  {isOut && <span className="text-[10px] font-bold text-slate-400 flex items-center justify-center gap-1 mt-1"><XCircle size={10} /> Out</span>}
-                  {isExpired && <span className="text-[10px] font-bold text-red flex items-center justify-center gap-1 mt-1"><CalendarX size={10} /> Expired</span>}
                 </div>
               );
             })}
