@@ -1,33 +1,61 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
-import { MapPin, Phone, Mail, Search, Loader, Building, ExternalLink } from "lucide-react";
-import { getPublicBloodBanks } from "../services/dashboardService";
+import { MapPin, Phone, Mail, Search, Loader, Building, ExternalLink, X } from "lucide-react";
+import { getRandomPublicBloodBanks, searchPublicBloodBanks } from "../services/dashboardService";
 
 export default function PublicBloodBanks() {
   const [banks, setBanks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [search, setSearch] = useState("");
+  const [query, setQuery] = useState("");
+  const [searched, setSearched] = useState(false);
+  const [searching, setSearching] = useState(false);
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const data = await getPublicBloodBanks();
-        setBanks(data?.blood_banks || []);
-      } catch {
-        setError("Could not load blood banks.");
-      } finally {
-        setLoading(false);
-      }
-    })();
+  const fetchRandom = useCallback(async () => {
+    setLoading(true);
+    setError("");
+    setSearched(false);
+    try {
+      const data = await getRandomPublicBloodBanks(10);
+      setBanks(data?.blood_banks || []);
+    } catch {
+      setError("Could not load blood banks.");
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  const filtered = banks.filter((b) =>
-    !search ||
-    b.name?.toLowerCase().includes(search.toLowerCase()) ||
-    b.city?.toLowerCase().includes(search.toLowerCase()) ||
-    b.address?.toLowerCase().includes(search.toLowerCase())
-  );
+  useEffect(() => {
+    fetchRandom();
+  }, [fetchRandom]);
+
+  const handleSearch = async () => {
+    const q = query.trim();
+    if (!q) {
+      fetchRandom();
+      return;
+    }
+    setSearching(true);
+    setError("");
+    try {
+      const data = await searchPublicBloodBanks(q);
+      setBanks(data?.blood_banks || []);
+      setSearched(true);
+    } catch {
+      setError("Search failed. Please try again.");
+    } finally {
+      setSearching(false);
+    }
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter") handleSearch();
+  };
+
+  const handleClear = () => {
+    setQuery("");
+    fetchRandom();
+  };
 
   if (loading) return (
     <div className="flex items-center justify-center py-20">
@@ -37,17 +65,44 @@ export default function PublicBloodBanks() {
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Blood Banks</h1>
-          <p className="text-sm text-slate-500 mt-1">{banks.length} blood bank(s) registered</p>
-        </div>
-        <div className="relative w-full sm:w-64">
+      <div>
+        <h1 className="text-2xl font-bold text-slate-900">Blood Banks</h1>
+        <p className="text-sm text-slate-500 mt-1">
+          {searched
+            ? `${banks.length} blood bank(s) found`
+            : `Showing ${banks.length} random blood bank(s)`}
+        </p>
+      </div>
+
+      <div className="flex flex-col sm:flex-row items-end gap-3">
+        <div className="relative flex-1 w-full">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input value={search} onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by name, city..."
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Search by Blood Bank Name or City"
             className="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-red/20"
           />
+        </div>
+        <div className="flex gap-2 w-full sm:w-auto">
+          <button
+            onClick={handleSearch}
+            disabled={searching}
+            className="flex items-center gap-2 px-5 py-2 bg-red text-white text-sm font-semibold rounded-xl hover:bg-red-700 transition disabled:opacity-50"
+          >
+            {searching ? <Loader size={14} className="animate-spin" /> : <Search size={14} />}
+            Search
+          </button>
+          {searched && (
+            <button
+              onClick={handleClear}
+              className="flex items-center gap-2 px-4 py-2 border border-slate-200 text-slate-600 text-sm font-semibold rounded-xl hover:bg-slate-50 transition"
+            >
+              <X size={14} />
+              Clear
+            </button>
+          )}
         </div>
       </div>
 
@@ -59,14 +114,23 @@ export default function PublicBloodBanks() {
         initial="initial" whileInView="whileInView" viewport={{ once: true }}
         variants={{ whileInView: { transition: { staggerChildren: 0.05 } } }}
       >
-        {filtered.length === 0 ? (
+        {banks.length === 0 ? (
           <div className="col-span-full text-center py-16 bg-white rounded-2xl border border-slate-100">
             <Building size={36} className="mx-auto mb-3 text-slate-300" />
-            <p className="text-sm text-slate-500 font-medium">No blood banks found</p>
-            <p className="text-xs text-slate-400 mt-1">{banks.length === 0 ? "No banks registered yet" : "Try a different search"}</p>
+            <p className="text-sm text-slate-500 font-medium">
+              {searched ? "No blood banks found matching your search." : "No blood banks found"}
+            </p>
+            {searched && (
+              <button
+                onClick={handleClear}
+                className="mt-3 text-xs font-semibold text-red hover:text-red-700 transition"
+              >
+                Clear Search
+              </button>
+            )}
           </div>
         ) : (
-          filtered.map((bank, i) => (
+          banks.map((bank, i) => (
             <motion.div key={bank.id || i}
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -99,8 +163,8 @@ export default function PublicBloodBanks() {
                   </a>
                 )}
               </div>
-              {bank.lat && bank.lng && (
-                <a href={`https://www.google.com/maps?q=${bank.lat},${bank.lng}`} target="_blank" rel="noopener noreferrer"
+              {bank.latitude && bank.longitude && (
+                <a href={`https://www.google.com/maps?q=${bank.latitude},${bank.longitude}`} target="_blank" rel="noopener noreferrer"
                   className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-red hover:text-red-700 transition"
                 >
                   <ExternalLink size={12} /> View on Map

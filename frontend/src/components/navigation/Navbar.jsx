@@ -39,22 +39,10 @@ export default function Navbar({
           {rightContent || (
             <>
               <Link
-                to="/login?role=bloodbank"
-                className="text-sm text-slate-500 hover:text-red transition-colors font-semibold"
-              >
-                Blood Bank
-              </Link>
-              <Link
                 to="/login"
-                className="text-sm text-slate-500 hover:text-red transition-colors font-semibold"
-              >
-                Login
-              </Link>
-               <Link
-                to="/donate"
                 className="bg-red text-white px-5 py-2 rounded-full text-sm font-bold hover:bg-red-700 transition shadow-lg shadow-red/20"
               >
-                Donate Now
+                Sign In
               </Link>
             </>
           )}

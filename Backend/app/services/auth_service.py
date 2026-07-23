@@ -7,6 +7,7 @@ from app.extensions import db
 from app.models.user import User
 from app.models.donor import Donor
 from app.models.patient import Patient
+from app.models.blood_bank import BloodBank
 from app.utils.password import hash_password, verify_password
 from app.utils.validators import is_valid_email, normalize_phone
 
@@ -55,14 +56,14 @@ def register_user(data):
         if not is_valid_email(email):
             return {"message": "Invalid email address"}, 400
         if User.query.filter_by(email=email).first():
-            return {"message": "Credentials not matched"}, 409
+            return {"message": "Email already registered"}, 409
 
     normalized_phone = normalize_phone(data["phone"])
     if not normalized_phone:
         return {"message": "Invalid phone number"}, 400
 
     if User.query.filter_by(phone=normalized_phone).first():
-        return {"message": "Credentials not matched"}, 409
+        return {"message": "Phone number already registered"}, 409
 
     hashed_password = hash_password(data["password"])
 
@@ -189,6 +190,11 @@ def login_user(data):
     if not user or not verify_password(user.password_hash, password):
         return {"message": "Credentials not matched"}, 401
 
+    if user.role == "blood_bank":
+        blood_bank = BloodBank.query.filter_by(user_id=user.id).first()
+        if blood_bank and blood_bank.status == "rejected":
+            return {"message": "Your blood bank registration has been rejected by admin."}, 403
+
     access_token = create_access_token(identity=str(user.id))
     refresh_token = create_refresh_token(identity=str(user.id))
 
@@ -206,4 +212,3 @@ def login_user(data):
             "role": user.role,
         },
     }, 200
-

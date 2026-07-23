@@ -37,7 +37,7 @@ export default function Login() {
     try {
       const authData = await loginUser({ identifier, password });
       login(authData, true);
-      setSuccess("Login successful. Redirecting you now...");
+      setSuccess("Sign in successful. Redirecting you now...");
       window.setTimeout(() => navigate(dashboardPathForRole(authData.user.role), { replace: true }), 500);
     } catch (requestError) {
       setError(getAuthErrorMessage(requestError));

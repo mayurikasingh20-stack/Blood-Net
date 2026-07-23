@@ -95,19 +95,14 @@ export default function BloodBankInventory() {
 
   const sumUnits = (items) => items.reduce((s, i) => s + (i.units || 0), 0);
 
-  const lowStock = BLOOD_GROUPS.filter((bg) => {
-    const units = sumUnits(inventory.filter(
-      (i) => i.blood_group === bg && i.status === "AVAILABLE"
-    ));
-    return units < 3;
-  });
+  const lowStock = inventory.filter((i) => i.status === "LOW_STOCK");
 
   const nearExpiry = inventory.filter((item) => {
     if (!item.expiry_date) return false;
     const daysLeft = Math.ceil(
       (new Date(item.expiry_date) - new Date()) / (1000 * 60 * 60 * 24)
     );
-    return daysLeft >= 0 && daysLeft <= 7 && item.status === "AVAILABLE";
+    return daysLeft >= 0 && daysLeft <= 7 && (item.status === "AVAILABLE" || item.status === "LOW_STOCK");
   });
 
   const totalAvailable = sumUnits(inventory.filter((i) => i.status === "AVAILABLE"));
@@ -228,13 +223,29 @@ export default function BloodBankInventory() {
         <div className="lg:col-span-3 space-y-6">
           <motion.div className="grid grid-cols-2 md:grid-cols-4 gap-3" {...fadeUp}>
             {BLOOD_GROUPS.map((bg) => {
-              const units = sumUnits(inventory.filter((i) => i.blood_group === bg && i.status === "AVAILABLE"));
-              const isLow = units < 3;
+              const item = inventory.find((i) => i.blood_group === bg);
+              const units = item ? item.units : 0;
+              const isLow = item && item.status === "LOW_STOCK";
+              const isOut = item && item.status === "OUT_OF_STOCK";
+              const isExpired = item && item.status === "EXPIRED";
+              const isEmpty = !item || units === 0;
+              const cardClass = isExpired ? "bg-red-50 border-red-200" :
+                isOut ? "bg-slate-100 border-slate-200" :
+                isLow ? "bg-amber-50 border-amber-200" :
+                "bg-white border-slate-100";
+              const textClass = isExpired ? "text-red" :
+                isOut ? "text-slate-400" :
+                isLow ? "text-amber-600" :
+                "text-slate-900";
               return (
-                <div key={bg} className={`rounded-xl p-3 md:p-4 border text-center ${isLow ? "bg-red-50 border-red-200" : "bg-white border-slate-100"}`}>
-                  <p className={`text-lg font-bold ${isLow ? "text-red" : "text-slate-900"}`}>{bg}</p>
-                  <p className={`text-xs mt-0.5 ${isLow ? "text-red" : "text-slate-500"}`}>{units} unit{units !== 1 ? "s" : ""}</p>
-                  {isLow && <span className="text-[10px] font-bold text-red flex items-center justify-center gap-1 mt-1"><AlertTriangle size={10} /> Low</span>}
+                <div key={bg} className={`rounded-xl p-3 md:p-4 border text-center ${cardClass}`}>
+                  <p className={`text-lg font-bold ${textClass}`}>{bg}</p>
+                  <p className={`text-xs mt-0.5 ${textClass}`}>
+                    {isEmpty ? "No stock" : `${units} unit${units !== 1 ? "s" : ""}`}
+                  </p>
+                  {isLow && <span className="text-[10px] font-bold text-amber-600 flex items-center justify-center gap-1 mt-1"><AlertTriangle size={10} /> Low</span>}
+                  {isOut && <span className="text-[10px] font-bold text-slate-400 flex items-center justify-center gap-1 mt-1"><XCircle size={10} /> Out</span>}
+                  {isExpired && <span className="text-[10px] font-bold text-red flex items-center justify-center gap-1 mt-1"><CalendarX size={10} /> Expired</span>}
                 </div>
               );
             })}
@@ -312,10 +323,10 @@ export default function BloodBankInventory() {
                 <AlertTriangle size={15} className="text-amber-500" /> Low Stock Alert
               </h4>
               <div className="space-y-2">
-                {lowStock.map((bg) => (
-                  <div key={bg} className="flex items-center justify-between text-sm">
-                    <span className="font-semibold text-red">{bg}</span>
-                    <span className="text-xs text-slate-500">{sumUnits(inventory.filter((i) => i.blood_group === bg && i.status === "AVAILABLE"))} units</span>
+                {lowStock.map((item) => (
+                  <div key={item.id} className="flex items-center justify-between text-sm">
+                    <span className="font-semibold text-amber-600">{item.blood_group}</span>
+                    <span className="text-xs text-slate-500">{item.units} units</span>
                   </div>
                 ))}
               </div>

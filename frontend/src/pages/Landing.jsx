@@ -466,12 +466,6 @@ export default function Landing() {
                 Register as Donor
               </Link>
               <Link
-                to="/bloodbank-register"
-                className="px-8 py-3.5 bg-white/10 border border-white/30 text-white rounded-full text-sm font-bold hover:bg-white/20 transition"
-              >
-                Register Blood Bank
-              </Link>
-              <Link
                 to="/contact"
                 className="px-8 py-3.5 bg-white/10 border border-white/30 text-white rounded-full text-sm font-bold hover:bg-white/20 transition"
               >

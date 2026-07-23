@@ -80,9 +80,8 @@ export default function BloodBankRegister() {
       if (regRes.status !== 201) throw new Error(regRes.data?.message || "Registration failed");
 
       const loginRes = await api.post("/auth/login", {
-        email: form.email.trim().toLowerCase(),
+        identifier: form.email.trim().toLowerCase(),
         password: form.password,
-        role: "blood_bank",
       });
       const token = loginRes.data.access_token;
 

@@ -135,13 +135,7 @@ export default function DashboardLayout({
           >
             <Menu size={20} />
           </button>
-          <Link
-            to="/register?role=donor"
-            className="bg-red text-white px-5 py-2 rounded-full text-sm font-bold hover:bg-red-700 transition shadow-lg shadow-red/20 hidden sm:inline-flex items-center gap-2"
-          >
-            <Droplet size={15} />
-            Donate Now
-          </Link>
+
         </div>
       </header>
 

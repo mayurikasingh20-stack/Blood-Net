@@ -18,6 +18,8 @@ class PublicBloodBank(db.Model):
 
     hospital_type = db.Column(db.String(50), nullable=True)
 
+    city = db.Column(db.String(255), nullable=True)
+
     hospital_code = db.Column(db.Integer, nullable=True, unique=True)
 
     latitude = db.Column(db.Float, nullable=True)
@@ -56,6 +58,7 @@ class PublicBloodBank(db.Model):
             "email": self.email,
             "facility": self.facility,
             "hospital_type": self.hospital_type,
+            "city": self.city,
             "hospital_code": self.hospital_code,
             "latitude": self.latitude,
             "longitude": self.longitude,

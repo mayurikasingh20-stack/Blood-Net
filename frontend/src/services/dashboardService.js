@@ -282,6 +282,17 @@ export async function getPublicBloodBanks(params = {}) {
   return res.data; // { blood_banks: [...] }
 }
 
+export async function getRandomPublicBloodBanks(limit = 10) {
+  const res = await api.get(`/public-blood-banks/random?limit=${limit}`);
+  return res.data; // { blood_banks: [...] }
+}
+
+export async function searchPublicBloodBanks(query = "") {
+  const qs = query ? `?q=${encodeURIComponent(query)}` : "";
+  const res = await api.get(`/public-blood-banks/search${qs}`);
+  return res.data; // { blood_banks: [...], count }
+}
+
 // ============== BLOOD BANK PROFILE REGISTRATION ==============
 
 export async function registerBloodBankProfile(data) {
