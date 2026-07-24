@@ -232,11 +232,28 @@ def get_my_requests():
     }, 200
     
 def get_open_requests():
-    requests = (
-        BloodRequest.query
-        .filter_by(status=RequestStatus.PENDING)
-        .all()
-    )
+    user_id = get_jwt_identity()
+    user = db.session.get(User, user_id)
+    if user is None:
+        return {"message": "User not found."}, 404
+
+    query = BloodRequest.query.filter_by(status=RequestStatus.PENDING)
+
+    # If the current user is a donor, exclude requests they have already accepted
+    if user.role == "donor":
+        donor = Donor.query.filter_by(user_id=user.id).first()
+        if donor is not None:
+            accepted_request_ids = [
+                d.blood_request_id
+                for d in Donation.query
+                .filter_by(donor_id=donor.id)
+                .filter(Donation.status.in_([DonationStatus.ACCEPTED, DonationStatus.VERIFIED]))
+                .all()
+            ]
+            if accepted_request_ids:
+                query = query.filter(~BloodRequest.id.in_(accepted_request_ids))
+
+    requests = query.all()
 
     data = []
     for req in requests:

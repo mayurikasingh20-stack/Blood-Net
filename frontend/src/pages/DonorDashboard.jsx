@@ -2,9 +2,9 @@ import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
-  Heart, Droplets, Clock, CalendarCheck, User,
-  CheckCircle, XCircle, AlertCircle, MapPin,
-  Settings, Bell, Activity, ThumbsUp,
+  ThumbsUp, CheckCircle, Clock, CalendarCheck, User,
+  Droplets, XCircle, AlertCircle, MapPin,
+  Settings, Bell, Activity,
 } from "lucide-react";
 import useAuth from "../context/useAuth";
 import BloodMap from "../components/shared/BloodMap";
@@ -113,7 +113,7 @@ export default function DonorDashboard() {
 
   const bloodGroup = dashboard?.blood_group || donorProfile?.donor?.blood_group || "—";
   const totalDonations = dashboard?.total_donations || 0;
-  const livesSaved = totalDonations * 3;
+  const fulfilledDonations = dashboard?.verified_donations || 0;
   const lastDonation = donorProfile?.donor?.last_donation_date;
   const weight = donorProfile?.donor?.weight;
   const nextEligible = computeNextEligible(lastDonation);
@@ -145,9 +145,9 @@ export default function DonorDashboard() {
         initial="initial" whileInView="whileInView" viewport={{ once: true }}
       >
         {[
-          { icon: Droplets, label: "Total Donations", value: totalDonations, color: "text-red", bg: "bg-red/10" },
-          { icon: Heart, label: "Lives Saved", value: livesSaved, color: "text-emerald-600", bg: "bg-emerald-50" },
-          { icon: Clock, label: "Next Eligible", value: nextEligible, color: "text-blue-600", bg: "bg-blue-50" },
+          { icon: ThumbsUp, label: "Requests Accepted", value: totalDonations, color: "text-blue-600", bg: "bg-blue-50" },
+          { icon: CheckCircle, label: "Donations Fulfilled", value: fulfilledDonations, color: "text-emerald-600", bg: "bg-emerald-50" },
+          { icon: Clock, label: "Next Eligible", value: nextEligible, color: "text-amber-600", bg: "bg-amber-50" },
           { icon: CalendarCheck, label: "Last Donation", value: lastDonation || "N/A", color: "text-purple-600", bg: "bg-purple-50" },
         ].map((stat) => (
           <motion.div key={stat.label} variants={fadeUp}
