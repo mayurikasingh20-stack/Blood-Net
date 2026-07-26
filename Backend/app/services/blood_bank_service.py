@@ -10,14 +10,15 @@ from app.utils.helpers import create_notification
 from app.services.geocoding_service import geocode_address
 
 def register_blood_bank(data):
-    user_id = get_jwt_identity()
-    user = db.session.get(User, user_id)
-    if not user:
-        return jsonify({
-            "message": "User not found."
-    }), 404
-    existing_bank = BloodBank.query.filter_by(user_id=user.id).first()
+    email = data.get("email")
+    if not email:
+        return jsonify({"message": "Email is required."}), 400
 
+    user = User.query.filter_by(email=email).first()
+    if not user:
+        return jsonify({"message": "User not found with this email."}), 404
+
+    existing_bank = BloodBank.query.filter_by(user_id=user.id).first()
     if existing_bank:
         return jsonify({
             "message": "Blood bank profile already exists."
@@ -26,6 +27,7 @@ def register_blood_bank(data):
     blood_bank = BloodBank(
     user_id=user.id,
     facility_name=data.get("facility_name"),
+    license_id=data.get("license_id"),
     contact_person=data.get("contact_person"),
     address=data.get("address"),
     operating_hours=data.get("operating_hours"),

@@ -18,6 +18,11 @@ class BloodBank(db.Model):
         nullable=False
     )
 
+    license_id = db.Column(
+        db.String(100),
+        nullable=True
+    )
+
     status = db.Column(
         db.Enum(
             "pending",

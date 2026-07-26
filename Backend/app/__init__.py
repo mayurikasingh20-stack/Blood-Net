@@ -17,6 +17,7 @@ from app.routes.inventory import inventory_bp
 from app.routes.public_blood_bank import public_bb_bp
 from app.routes.map import map_bp
 from app.routes.camps import camps_bp
+from app.routes.public import public_bp
 from app.models.user import User
 from app.models.inventory_history import InventoryHistory
 from app.utils.password import hash_password
@@ -71,8 +72,14 @@ def create_app():
     app.register_blueprint(public_bb_bp)
     app.register_blueprint(map_bp)
     app.register_blueprint(camps_bp)
+    app.register_blueprint(public_bp)
     with app.app_context():
         db.create_all()
+        import sqlalchemy as sa
+        inspector = sa.inspect(db.engine)
+        if "license_id" not in [c["name"] for c in inspector.get_columns("blood_banks")]:
+            db.session.execute(sa.text("ALTER TABLE blood_banks ADD COLUMN license_id VARCHAR(100)"))
+            db.session.commit()
         seed_admin_users()
 
     @app.errorhandler(500)

@@ -70,14 +70,16 @@ export default function AdminBloodBanks() {
           <p className="text-slate-500">{search ? "No matching blood banks." : "No blood banks registered yet."}</p>
         </div>
       ) : (
-        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-slate-100 bg-slate-50/50">
-                <th className="text-left px-6 py-3 text-xs font-bold text-slate-500 uppercase">Name</th>
-                <th className="text-left px-6 py-3 text-xs font-bold text-slate-500 uppercase hidden md:table-cell">City</th>
-                <th className="text-left px-6 py-3 text-xs font-bold text-slate-500 uppercase">Status</th>
-                <th className="text-right px-6 py-3 text-xs font-bold text-slate-500 uppercase">Actions</th>
+                <th className="text-left px-4 py-3 text-xs font-bold text-slate-500 uppercase">Name</th>
+                <th className="text-left px-4 py-3 text-xs font-bold text-slate-500 uppercase">License ID</th>
+                <th className="text-left px-4 py-3 text-xs font-bold text-slate-500 uppercase hidden md:table-cell">Contact</th>
+                <th className="text-left px-4 py-3 text-xs font-bold text-slate-500 uppercase hidden lg:table-cell">City</th>
+                <th className="text-left px-4 py-3 text-xs font-bold text-slate-500 uppercase">Status</th>
+                <th className="text-right px-4 py-3 text-xs font-bold text-slate-500 uppercase">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
@@ -86,17 +88,19 @@ export default function AdminBloodBanks() {
                 const isPending = vs !== "approved";
                 return (
                   <tr key={b.id} className="hover:bg-slate-50/50 transition">
-                    <td className="px-6 py-3">
+                    <td className="px-4 py-3">
                       <span className="font-semibold text-slate-800">{b.facility_name || b.name}</span>
                       {b.email && <p className="text-xs text-slate-400">{b.email}</p>}
                     </td>
-                    <td className="px-6 py-3 text-slate-500 hidden md:table-cell">{b.city || "-"}</td>
-                    <td className="px-6 py-3">
+                    <td className="px-4 py-3 text-slate-600 font-mono text-xs">{b.license_id || "—"}</td>
+                    <td className="px-4 py-3 text-slate-500 hidden md:table-cell">{b.contact_person || "—"}</td>
+                    <td className="px-4 py-3 text-slate-500 hidden lg:table-cell">{b.city || "—"}</td>
+                    <td className="px-4 py-3">
                       <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${isPending ? "bg-amber-50 text-amber-700" : "bg-emerald-50 text-emerald-600"}`}>
                         {isPending ? "Pending" : "Approved"}
                       </span>
                     </td>
-                    <td className="px-6 py-3 text-right">
+                    <td className="px-4 py-3 text-right">
                       {isPending ? (
                         <div className="flex justify-end gap-1">
                           <button onClick={() => handleApprove(b.id)} className="p-1.5 rounded-lg hover:bg-emerald-50 text-slate-400 hover:text-emerald-600 transition" title="Approve">

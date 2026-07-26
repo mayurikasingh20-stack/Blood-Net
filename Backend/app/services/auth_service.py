@@ -192,8 +192,10 @@ def login_user(data):
 
     if user.role == "blood_bank":
         blood_bank = BloodBank.query.filter_by(user_id=user.id).first()
+        if blood_bank and blood_bank.status == "pending":
+            return {"message": "Your account is currently under verification. The administrator has not yet approved your registration. Please wait a few minutes and try again later."}, 403
         if blood_bank and blood_bank.status == "rejected":
-            return {"message": "Your blood bank registration has been rejected by admin."}, 403
+            return {"message": "Your registration request has been rejected by the administrator. Please contact the administrator or register again with valid information."}, 403
 
     access_token = create_access_token(identity=str(user.id))
     refresh_token = create_refresh_token(identity=str(user.id))

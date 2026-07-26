@@ -17,7 +17,7 @@ from datetime import date
 
 
 def get_all_blood_banks():
-    blood_banks = BloodBank.query.all()
+    blood_banks = BloodBank.query.order_by(BloodBank.created_at.desc()).all()
 
     result = []
 
@@ -30,7 +30,9 @@ def get_all_blood_banks():
         result.append({
             "id": blood_bank.id,
             "facility_name": blood_bank.facility_name,
+            "license_id": blood_bank.license_id,
             "contact_person": blood_bank.contact_person,
+            "address": blood_bank.address,
             "verification_status": blood_bank.status,
             "city": user.city,
             "email": user.email,

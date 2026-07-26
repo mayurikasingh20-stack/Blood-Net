@@ -175,7 +175,7 @@ def update_availability(data):
         "available": donor.available
     }, 200
 def get_all_donors():
-    donors = Donor.query.filter_by(available=True).all()
+    donors = Donor.query.filter_by(available=True).order_by(Donor.id.desc()).all()
     donor_list = []
 
     for donor in donors:
@@ -199,7 +199,7 @@ def search_donors(blood_group):
     donors = Donor.query.filter_by(
         blood_group=blood_group,
         available=True
-    ).all()
+    ).order_by(Donor.id.desc()).all()
 
     donor_list = []
 

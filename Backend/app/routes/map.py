@@ -55,7 +55,7 @@ def map_blood_banks():
             )
         )
 
-    registered_banks = registered_query.all()
+    registered_banks = registered_query.order_by(BloodBank.created_at.desc()).all()
 
     results = [
         {
@@ -116,7 +116,7 @@ def registered_blood_banks():
             )
         )
 
-    banks = query.all()
+    banks = query.order_by(BloodBank.created_at.desc()).all()
 
     return jsonify([
         {

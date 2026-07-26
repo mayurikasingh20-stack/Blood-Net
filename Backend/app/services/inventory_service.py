@@ -15,7 +15,7 @@ def get_inventory_by_blood_bank(blood_bank_id):
 
     inventory = Inventory.query.filter_by(
         blood_bank_id=blood_bank.id
-    ).all()
+    ).order_by(Inventory.created_at.desc()).all()
 
     result = []
     for item in inventory:
@@ -206,7 +206,7 @@ def get_inventory():
 
     inventory = Inventory.query.filter_by(
         blood_bank_id=blood_bank.id
-    ).all()
+    ).order_by(Inventory.created_at.desc()).all()
 
     inventory_list = []
 
@@ -357,7 +357,7 @@ def search_inventory(blood_group):
     inventory = Inventory.query.filter(
         Inventory.blood_bank_id == blood_bank.id,
         Inventory.blood_group.ilike(f"%{blood_group}%")
-    ).all()
+    ).order_by(Inventory.created_at.desc()).all()
 
     result = []
 
@@ -387,7 +387,7 @@ def filter_inventory(status):
     inventory = Inventory.query.filter_by(
         blood_bank_id=blood_bank.id,
         status=InventoryStatus(status)
-    ).all()
+    ).order_by(Inventory.created_at.desc()).all()
 
     result = []
 

@@ -85,7 +85,7 @@ def search_public_blood_banks():
             User.city.ilike(f"%{q}%")
         )
 
-    registered_banks = registered_query.all()
+    registered_banks = registered_query.order_by(BloodBank.created_at.desc()).all()
 
     combined = [b.to_dict() for b in public_banks]
     combined.extend(_registered_to_dict(b) for b in registered_banks)

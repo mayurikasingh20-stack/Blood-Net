@@ -3,7 +3,6 @@ import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Building2, CheckCircle, ArrowLeft, ArrowRight, Loader, Shield, Eye, EyeOff } from "lucide-react";
 import api from "../services/api";
-import { saveAuth } from "../utils/authStorage";
 
 const genders = [
   { value: "Male", label: "Male" },
@@ -18,7 +17,7 @@ export default function BloodBankRegister() {
     password: "", confirmPassword: "", gender: "", dob: "",
     city: "", address: "",
     facilityName: "", contactPerson: "",
-    facilityAddress: "", operatingHours: "", website: "",
+    facilityAddress: "", licenseId: "", operatingHours: "", website: "",
     available24x7: false,
   });
   const [showPassword, setShowPassword] = useState(false);
@@ -41,7 +40,7 @@ export default function BloodBankRegister() {
   };
 
   const validateStep2 = () => {
-    if (!form.facilityName || !form.contactPerson || !form.facilityAddress)
+    if (!form.facilityName || !form.licenseId || !form.contactPerson || !form.facilityAddress)
       return "Please complete all facility details.";
     return "";
   };
@@ -79,16 +78,10 @@ export default function BloodBankRegister() {
       const regRes = await api.post("/auth/register", regPayload);
       if (regRes.status !== 201) throw new Error(regRes.data?.message || "Registration failed");
 
-      const loginRes = await api.post("/auth/login", {
-        identifier: form.email.trim().toLowerCase(),
-        password: form.password,
-      });
-      const token = loginRes.data.access_token;
-
-      saveAuth({ token, user: loginRes.data.user });
-
       const profilePayload = {
+        email: form.email.trim().toLowerCase(),
         facility_name: form.facilityName,
+        license_id: form.licenseId.trim(),
         contact_person: form.contactPerson,
         address: form.facilityAddress,
         available_24x7: form.available24x7,
@@ -96,12 +89,16 @@ export default function BloodBankRegister() {
       if (form.operatingHours) profilePayload.operating_hours = form.operatingHours;
       if (form.website) profilePayload.website = form.website;
 
-      await api.post("/blood-bank/register", profilePayload, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await api.post("/blood-bank/register", profilePayload);
 
-      setSuccess("Registration submitted! Your blood bank is pending admin approval. You'll be notified once approved.");
-      setTimeout(() => navigate("/login"), 3000);
+      setSuccess(
+        "Registration Submitted Successfully! Your registration request has been sent to the administrator for verification. " +
+        "The administrator will review your blood bank details and license information. " +
+        "Please wait approximately 5 minutes while your request is being reviewed. " +
+        "After your account has been approved, you can log in using your registered email and password. " +
+        "If your request is rejected, you will be notified when you try to log in."
+      );
+      setTimeout(() => navigate("/login"), 5000);
     } catch (err) {
       const msg = err.response?.data?.message || err.message || "Registration failed.";
       setError(msg);
@@ -245,6 +242,12 @@ export default function BloodBankRegister() {
                   <label className="text-sm font-semibold text-slate-700 block mb-1">Facility Name *</label>
                   <input value={form.facilityName} onChange={(e) => update("facilityName", e.target.value)}
                     placeholder="e.g. City Central Blood Bank"
+                    className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-red/20" />
+                </div>
+                <div>
+                  <label className="text-sm font-semibold text-slate-700 block mb-1">License ID / Number *</label>
+                  <input value={form.licenseId} onChange={(e) => update("licenseId", e.target.value)}
+                    placeholder="e.g. BB-LIC-2024-00123"
                     className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-red/20" />
                 </div>
                 <div>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
@@ -17,6 +17,7 @@ import {
   ArrowRight,
   CheckCircle,
 } from "lucide-react";
+import api from "../services/api";
 
 const fadeUp = {
   initial: { opacity: 0, y: 30 },
@@ -142,6 +143,23 @@ const faqs = [
 
 export default function Landing() {
   const [openFaq, setOpenFaq] = useState(null);
+  const [topRequests, setTopRequests] = useState([]);
+  const [requestsLoading, setRequestsLoading] = useState(true);
+
+  useEffect(() => {
+    api
+      .get("/public/requests/top")
+      .then((res) => setTopRequests(res.data.blood_requests))
+      .catch(() => setTopRequests([]))
+      .finally(() => setRequestsLoading(false));
+  }, []);
+
+  const urgencyConfig = {
+    Critical: { bg: "bg-red-50", badge: "bg-red text-white", icon: "text-red" },
+    High: { bg: "bg-orange-50", badge: "bg-orange-500 text-white", icon: "text-orange-500" },
+    Moderate: { bg: "bg-amber-50", badge: "bg-amber-500 text-white", icon: "text-amber-500" },
+    Low: { bg: "bg-green-50", badge: "bg-green-500 text-white", icon: "text-green-500" },
+  };
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
@@ -270,6 +288,84 @@ export default function Landing() {
           </div>
         </div>
       </motion.section>
+
+      {/* URGENT BLOOD REQUESTS BOARD */}
+      <section className="max-w-6xl mx-auto px-4 md:px-8 py-16 md:py-24">
+        <div className="text-center mb-12 md:mb-16">
+          <span className="text-red font-bold text-sm uppercase tracking-wider bg-red/10 px-4 py-1.5 rounded-full">
+            Live Requests
+          </span>
+          <h2 className="text-2xl md:text-4xl font-bold text-slate-900 mt-4 mb-4">
+            Urgent Blood Requests
+          </h2>
+          <p className="text-slate-500 max-w-2xl mx-auto text-sm md:text-base">
+            These patients need blood immediately. Every matching donor can make a difference.
+          </p>
+        </div>
+
+        {requestsLoading ? (
+          <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden animate-pulse">
+            <div className="p-6 space-y-4">
+              {[...Array(5)].map((_, i) => (
+                <div key={i} className="h-12 bg-slate-200 rounded-lg" />
+              ))}
+            </div>
+          </div>
+        ) : topRequests.length === 0 ? (
+          <div className="text-center py-12">
+            <CheckCircle size={48} className="mx-auto text-emerald-400 mb-4" />
+            <p className="text-slate-500 text-lg font-medium">No urgent requests right now</p>
+            <p className="text-slate-400 text-sm mt-1">Check back soon — new requests appear in real time.</p>
+          </div>
+        ) : (
+          <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+            {topRequests.map((req, idx) => {
+              const urgent = urgencyConfig[req.urgency_level] || urgencyConfig.Moderate;
+              return (
+                <motion.div
+                  key={req.id}
+                  className={`flex items-center gap-3 md:gap-6 px-5 md:px-8 py-4 ${idx < topRequests.length - 1 ? "border-b border-slate-100" : ""} hover:bg-slate-50 transition`}
+                  initial={{ opacity: 0, x: -10 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: idx * 0.05 }}
+                >
+                  <span className={`min-w-[68px] text-center text-lg font-black tracking-wider px-2.5 py-1 rounded-lg ${urgent.bg}`}>
+                    {req.blood_group}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-slate-900 truncate">{req.hospital}</p>
+                    <p className="text-xs text-slate-500 truncate">{req.city}</p>
+                  </div>
+                  <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full flex-shrink-0 hidden sm:inline-block ${urgent.badge}`}>
+                    {req.urgency_level}
+                  </span>
+                  <span className="text-xs text-slate-500 flex-shrink-0 hidden md:block">
+                    <span className="font-bold text-slate-700">{req.units}</span> unit{req.units > 1 ? "s" : ""}
+                  </span>
+                  <Link
+                    to="/register?role=donor"
+                    className="flex-shrink-0 text-xs font-bold text-red hover:text-red-700 transition flex items-center gap-1"
+                  >
+                    Help <ArrowRight size={12} />
+                  </Link>
+                </motion.div>
+              );
+            })}
+          </div>
+        )}
+
+        {topRequests.length > 0 && (
+          <div className="text-center mt-10">
+            <Link
+              to="/register?role=donor"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-red text-white rounded-full text-sm font-bold hover:bg-red-700 transition shadow-lg shadow-red/30"
+            >
+              <Droplet size={16} /> Become a Donor & Help Them
+            </Link>
+          </div>
+        )}
+      </section>
 
       {/* FEATURES */}
       <motion.section className="max-w-6xl mx-auto px-4 md:px-8 py-16 md:py-24" {...fadeUp}>

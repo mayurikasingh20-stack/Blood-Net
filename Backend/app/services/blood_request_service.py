@@ -208,6 +208,7 @@ def get_my_requests():
             donations = (
                 Donation.query
                 .filter_by(blood_request_id=request.id, status=DonationStatus.ACCEPTED)
+                .order_by(Donation.created_at.desc())
                 .all()
             )
             item["accepted_donors"] = [
@@ -289,6 +290,41 @@ def get_open_requests():
     return {"blood_requests": data}, 200
 
 
+def get_top_requests():
+    from sqlalchemy import case as sa_case
+
+    urgency_order = sa_case(
+        (BloodRequest.urgency_level == UrgencyLevel.CRITICAL, 0),
+        (BloodRequest.urgency_level == UrgencyLevel.HIGH, 1),
+        (BloodRequest.urgency_level == UrgencyLevel.MODERATE, 2),
+        (BloodRequest.urgency_level == UrgencyLevel.LOW, 3),
+        else_=4
+    )
+
+    requests = (
+        BloodRequest.query
+        .filter_by(status=RequestStatus.PENDING)
+        .order_by(urgency_order, BloodRequest.created_at.desc())
+        .limit(7)
+        .all()
+    )
+
+    data = []
+    for req in requests:
+        data.append({
+            "id": req.id,
+            "blood_group": req.blood_group,
+            "units": req.units,
+            "hospital": req.hospital,
+            "city": req.city,
+            "urgency_level": req.urgency_level.value,
+            "required_before": req.required_before.isoformat(),
+            "created_at": req.created_at.isoformat(),
+        })
+
+    return {"blood_requests": data}, 200
+
+
 def get_accepted_donors(request_id):
     user_id = get_jwt_identity()
     user = db.session.get(User, user_id)
@@ -305,6 +341,7 @@ def get_accepted_donors(request_id):
     donations = (
         Donation.query
         .filter_by(blood_request_id=request_id, status=DonationStatus.ACCEPTED)
+        .order_by(Donation.created_at.desc())
         .all()
     )
 
