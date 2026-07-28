@@ -136,11 +136,11 @@ export default function AppRoutes() {
       <Route path="/about" element={<PublicPage><About /></PublicPage>} />
       <Route path="/contact" element={<PublicPage><Contact /></PublicPage>} />
       <Route path="/camps" element={<PublicPage><Camps /></PublicPage>} />
+      <Route path="/education" element={<PublicPage><Education /></PublicPage>} />
       <Route path="/login" element={<PublicPage><Login /></PublicPage>} />
       <Route path="/register" element={<PublicPage><Register /></PublicPage>} />
       <Route path="/bloodbank-register" element={<BloodBankRegister />} />
       <Route path="/unauthorized" element={<PublicPage><Unauthorized /></PublicPage>} />
-      <Route path="/education" element={<PublicPage><Education /></PublicPage>} />
 
       {/* Unified Donor/Patient Routes (new single-portal routes) */}
       <Route
@@ -166,7 +166,7 @@ export default function AppRoutes() {
       <Route
         path="/history"
         element={
-          <RoleBasedRoute allowedRoles={["donor"]}>
+          <RoleBasedRoute allowedRoles={["donor", "patient"]}>
             <DashboardPage sidebarItems={unifiedSidebar} title="History" subtitle="Donation History">
               <DonorDonationHistory />
             </DashboardPage>
@@ -176,7 +176,7 @@ export default function AppRoutes() {
       <Route
         path="/donors"
         element={
-          <RoleBasedRoute allowedRoles={["patient"]}>
+          <RoleBasedRoute allowedRoles={["donor", "patient"]}>
             <DashboardPage sidebarItems={unifiedSidebar} title="Donors" subtitle="Nearby Donors">
               <PatientNearbyDonors />
             </DashboardPage>

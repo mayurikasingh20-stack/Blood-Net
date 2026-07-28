@@ -657,6 +657,7 @@ export default function UnifiedDashboard() {
         <DonorScreeningModal
           requestId={screeningRequest.id}
           requestBloodGroup={screeningRequest.blood_group}
+          donorBloodGroup={bloodGroup}
           onComplete={(result) => handleScreeningComplete(screeningRequest.id, result)}
           onClose={() => setScreeningRequest(null)}
         />

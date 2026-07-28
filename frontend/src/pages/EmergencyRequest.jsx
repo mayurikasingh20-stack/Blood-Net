@@ -3,6 +3,7 @@ import { Phone } from "lucide-react";
 import useAuth from "../context/useAuth";
 import api from "../services/api";
 import DonorScreeningModal from "../components/donor/DonorScreeningModal";
+import { getDonorProfile } from "../services/dashboardService";
 import { BLOOD_GROUPS } from "../utils/constants";
 
 const urgencyLevels = [
@@ -25,6 +26,7 @@ export default function EmergencyRequest() {
   const [screeningRequest, setScreeningRequest] = useState(null);
   const [loading, setLoading] = useState(false);
   const [requests, setRequests] = useState([]);
+  const [donorBloodGroup, setDonorBloodGroup] = useState("");
   const [form, setForm] = useState({
     blood_group: "",
     units: 1,
@@ -42,6 +44,11 @@ export default function EmergencyRequest() {
     api.get("/blood-request/open")
       .then((res) => setRequests(res.data?.blood_requests || []))
       .catch(() => {});
+    if (isDonor) {
+      getDonorProfile()
+        .then((data) => setDonorBloodGroup(data?.donor?.blood_group || ""))
+        .catch(() => {});
+    }
   }, []);
 
   function update(field, value) {
@@ -284,6 +291,7 @@ export default function EmergencyRequest() {
         <DonorScreeningModal
           requestId={screeningRequest.id}
           requestBloodGroup={screeningRequest.blood_group}
+          donorBloodGroup={donorBloodGroup}
           contactName={screeningRequest.contact_name}
           contactPhone={screeningRequest.contact_phone}
           onComplete={(result) => {

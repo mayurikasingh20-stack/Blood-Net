@@ -5,7 +5,7 @@ import api from "../../services/api";
 
 const DONATION_MIN_GAP_DAYS = 56;
 
-export default function DonorScreeningModal({ requestId, requestBloodGroup, contactName, contactPhone, onComplete, onClose }) {
+export default function DonorScreeningModal({ requestId, requestBloodGroup, donorBloodGroup, contactName, contactPhone, onComplete, onClose }) {
   const [step, setStep] = useState("checking");
   const [intervalData, setIntervalData] = useState(null);
   const [questions, setQuestions] = useState([]);
@@ -16,7 +16,11 @@ export default function DonorScreeningModal({ requestId, requestBloodGroup, cont
   const [error, setError] = useState("");
 
   useEffect(() => {
-    checkEligibility();
+    if (donorBloodGroup && requestBloodGroup && donorBloodGroup !== requestBloodGroup) {
+      setStep("blood_group_mismatch");
+    } else {
+      checkEligibility();
+    }
   }, []);
 
   async function checkEligibility() {
@@ -109,6 +113,28 @@ export default function DonorScreeningModal({ requestId, requestBloodGroup, cont
     const q = questions[currentQ];
     if (!q) return false;
     return answers[q.id] !== undefined;
+  }
+
+  function renderBloodGroupMismatch() {
+    return (
+      <div className="text-center py-4">
+        <div className="w-14 h-14 rounded-full bg-red/10 flex items-center justify-center mx-auto mb-4">
+          <AlertCircle size={28} className="text-red" />
+        </div>
+        <h3 className="text-lg font-bold text-slate-900 mb-2">Your blood group is not the same</h3>
+        <div className="bg-red-50 rounded-xl p-4 mb-4">
+          <p className="text-sm text-red-700">
+            Request needs <strong>{requestBloodGroup}</strong> but your blood group is <strong>{donorBloodGroup}</strong>.
+          </p>
+        </div>
+        <button
+          onClick={onClose}
+          className="px-6 py-2.5 bg-slate-200 text-slate-700 rounded-full text-sm font-bold hover:bg-slate-300 transition"
+        >
+          Close
+        </button>
+      </div>
+    );
   }
 
   function renderIntervalBlocked() {
@@ -311,6 +337,7 @@ export default function DonorScreeningModal({ requestId, requestBloodGroup, cont
           <div>
             <h3 className="text-lg font-bold text-slate-900">
               {step === "checking" && "Checking Eligibility"}
+              {step === "blood_group_mismatch" && "Blood Group Mismatch"}
               {step === "interval_blocked" && "Eligibility Check"}
               {step === "questions" && "Donor Eligibility Screening"}
               {step === "passed" && "Screening Passed"}
@@ -351,6 +378,7 @@ export default function DonorScreeningModal({ requestId, requestBloodGroup, cont
             <Loader size={28} className="animate-spin text-red" />
           </div>
         )}
+        {step === "blood_group_mismatch" && renderBloodGroupMismatch()}
         {step === "interval_blocked" && renderIntervalBlocked()}
         {step === "questions" && renderQuestions()}
         {step === "passed" && renderPassed()}

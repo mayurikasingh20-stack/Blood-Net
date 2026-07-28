@@ -164,32 +164,24 @@ export default function Landing() {
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
       {/* HERO SECTION */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(220,38,38,0.15),transparent_50%),radial-gradient(circle_at_80%_20%,rgba(37,99,235,0.1),transparent_40%)]" />
-        <div className="relative max-w-6xl mx-auto px-4 md:px-8 py-16 md:py-28">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 md:gap-16 items-center">
-            <motion.div className="space-y-6" {...stagger}>
-              <motion.div
-                className="inline-flex items-center gap-2 bg-white/10 border border-white/20 px-4 py-1.5 rounded-full"
-                variants={{ initial: { opacity: 0, y: 20 }, whileInView: { opacity: 1, y: 0 } }}
-              >
-                <span className="w-2 h-2 rounded-full bg-red animate-pulse" />
-                <span className="text-xs font-bold uppercase tracking-wider">Serving Jodhpur & Beyond</span>
-              </motion.div>
-
+      <section className="relative min-h-screen flex items-center overflow-hidden bg-[#0B0F19] text-white">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(230,57,70,0.12),transparent_50%),radial-gradient(circle_at_80%_20%,rgba(37,99,235,0.06),transparent_40%)]" />
+        <div className="relative w-full max-w-6xl mx-auto px-4 md:px-8 py-10 md:py-16">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-16 items-center">
+            <motion.div className="space-y-4" {...stagger}>
               <motion.h1
                 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight"
                 variants={{ initial: { opacity: 0, y: 20 }, whileInView: { opacity: 1, y: 0 } }}
               >
                 Every Drop{" "}
-                <span className="text-red">Counts.</span>
+                <span className="text-[#E63946]">Counts.</span>
                 <br />
                 Every Second{" "}
-                <span className="text-red">Matters.</span>
+                <span className="text-[#E63946]">Matters.</span>
               </motion.h1>
 
               <motion.p
-                className="text-slate-300 text-base md:text-lg max-w-lg"
+                className="text-slate-400 text-base md:text-lg max-w-lg leading-relaxed"
                 variants={{ initial: { opacity: 0, y: 20 }, whileInView: { opacity: 1, y: 0 } }}
               >
                 Blood Net connects patients, donors, and licensed blood banks on one real-time network. 
@@ -197,12 +189,12 @@ export default function Landing() {
               </motion.p>
 
               <motion.div
-                className="flex flex-col sm:flex-row gap-3 pt-2"
+                className="flex flex-col sm:flex-row gap-3 pt-1"
                 variants={{ initial: { opacity: 0, y: 20 }, whileInView: { opacity: 1, y: 0 } }}
               >
                 <Link
                   to="/register?role=donor"
-                  className="px-8 py-3.5 bg-red text-white rounded-full text-sm font-bold text-center hover:bg-red-700 transition shadow-lg shadow-red/30 flex items-center justify-center gap-2"
+                  className="px-8 py-3.5 bg-[#E63946] text-white rounded-full text-sm font-bold text-center hover:bg-red-700 transition shadow-lg shadow-[#E63946]/30 flex items-center justify-center gap-2"
                 >
                   <Droplet size={18} /> Become a Donor
                 </Link>
@@ -213,81 +205,57 @@ export default function Landing() {
                   Request Blood
                 </Link>
               </motion.div>
-
-              <motion.div
-                className="flex items-center gap-3 text-xs text-slate-400 pt-2 flex-wrap"
-                variants={{ initial: { opacity: 0, y: 20 }, whileInView: { opacity: 1, y: 0 } }}
-              >
-                <span className="flex items-center gap-1"><CheckCircle size={12} /> Verified Network</span>
-                <span className="flex items-center gap-1"><CheckCircle size={12} /> Real-time Tracking</span>
-                <span className="flex items-center gap-1"><CheckCircle size={12} /> Free to Join</span>
-                <span className="text-slate-500 mx-1">|</span>
-                <Link to="/login?role=bloodbank" className="hover:text-white transition font-medium">Blood Bank Login</Link>
-                <span className="text-slate-500">·</span>
-                <Link to="/bloodbank-register" className="hover:text-white transition font-medium">Register Facility</Link>
-              </motion.div>
             </motion.div>
 
             <motion.div
-              className="hidden lg:flex justify-center"
+              className="hidden lg:flex justify-center items-center relative"
               initial={{ opacity: 0, x: 50 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.6 }}
             >
-              <div className="relative w-full max-w-md">
-                <div className="absolute -inset-4 bg-gradient-to-r from-red/20 to-blue-600/20 blur-3xl rounded-3xl" />
-                <div className="relative bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl p-8">
-                  <div className="flex items-center justify-between mb-6">
-                    <div>
-                      <p className="text-[10px] uppercase tracking-widest text-slate-400">Live Network</p>
-                      <p className="text-2xl font-bold mt-1">214</p>
-                    </div>
-                    <div className="w-12 h-12 rounded-full bg-red/20 flex items-center justify-center">
-                      <Droplet size={22} className="text-red" />
-                    </div>
-                  </div>
-                  <div className="space-y-3 mb-6">
-                    <div className="flex items-center justify-between bg-white/5 rounded-xl px-4 py-3">
-                      <div>
-                        <p className="text-sm font-semibold">Critical Requests</p>
-                        <p className="text-xs text-slate-400">24 hospitals waiting</p>
-                      </div>
-                      <span className="bg-red/20 text-red text-xs font-bold px-2.5 py-1 rounded-full">24</span>
-                    </div>
-                    <div className="flex items-center justify-between bg-white/5 rounded-xl px-4 py-3">
-                      <div>
-                        <p className="text-sm font-semibold">Available Donors</p>
-                        <p className="text-xs text-slate-400">18 within 5 km</p>
-                      </div>
-                      <span className="bg-emerald-500/20 text-emerald-400 text-xs font-bold px-2.5 py-1 rounded-full">18</span>
-                    </div>
-                  </div>
-                  <div className="bg-white/5 rounded-2xl p-4 border border-white/10">
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-red">Urgent Need</p>
-                    <p className="text-sm font-semibold mt-1">O- blood type critically low</p>
-                  </div>
+              <div className="relative w-full max-w-sm flex flex-col items-center">
+                <div className="absolute -inset-10 bg-[#E63946]/20 blur-[80px] rounded-full" />
+                <div className="relative w-48 h-56 md:w-56 md:h-64">
+                  <svg viewBox="0 0 120 160" className="w-full h-full drop-shadow-2xl" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                      <linearGradient id="bloodGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stopColor="#E63946" stopOpacity="0.95" />
+                        <stop offset="40%" stopColor="#c1121f" stopOpacity="0.85" />
+                        <stop offset="100%" stopColor="#780000" stopOpacity="0.7" />
+                      </linearGradient>
+                      <linearGradient id="shine" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stopColor="#ffffff" stopOpacity="0.35" />
+                        <stop offset="50%" stopColor="#ffffff" stopOpacity="0.05" />
+                        <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
+                      </linearGradient>
+                      <filter id="glow">
+                        <feGaussianBlur stdDeviation="6" result="blur" />
+                        <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                      </filter>
+                    </defs>
+                    <path d="M60 10 C40 40 15 70 15 100 C15 130 30 150 60 150 C90 150 105 130 105 100 C105 70 80 40 60 10Z"
+                      fill="url(#bloodGrad)" filter="url(#glow)" />
+                    <path d="M35 85 Q45 75 55 80 Q65 85 60 95 Q55 105 45 100 Q35 95 35 85Z"
+                      fill="url(#shine)" opacity="0.6" />
+                    <ellipse cx="42" cy="75" rx="8" ry="12" fill="url(#shine)" opacity="0.4" transform="rotate(-20 42 75)" />
+                    <ellipse cx="75" cy="115" rx="10" ry="5" fill="url(#shine)" opacity="0.2" transform="rotate(10 75 115)" />
+                  </svg>
                 </div>
+                <motion.div
+                  className="relative -mt-3 inline-flex items-center gap-2 bg-white/10 backdrop-blur-xl border border-white/20 px-4 py-2.5 rounded-full shadow-xl"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.4, duration: 0.5 }}
+                >
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#E63946] animate-pulse" />
+                  <span className="text-xs font-semibold text-slate-200">{topRequests.length} Active Blood Request{topRequests.length !== 1 ? "s" : ""}</span>
+                </motion.div>
               </div>
             </motion.div>
           </div>
         </div>
       </section>
-
-      {/* STATS BAR */}
-      <motion.section className="max-w-6xl mx-auto px-4 md:px-8 -mt-8 md:-mt-12 relative z-10" {...fadeUp}>
-        <div className="bg-white rounded-2xl md:rounded-3xl shadow-lg border border-slate-100 p-4 md:p-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8">
-            {stats.map((stat) => (
-              <div key={stat.label} className="text-center p-3 md:p-4">
-                <stat.icon size={24} className={`${stat.color} mx-auto mb-2`} />
-                <p className="text-2xl md:text-3xl font-bold text-slate-900">{stat.value}</p>
-                <p className="text-xs md:text-sm text-slate-500 mt-1">{stat.label}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </motion.section>
 
       {/* URGENT BLOOD REQUESTS BOARD */}
       <section className="max-w-6xl mx-auto px-4 md:px-8 py-16 md:py-24">
