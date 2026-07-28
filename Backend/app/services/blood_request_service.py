@@ -56,7 +56,7 @@ def create_blood_request(data):
 
     patient = None
     blood_bank = None
-    if user.role == "patient":
+    if user.has_role("patient"):
         patient = Patient.query.filter_by(user_id=user.id).first()
         if patient is None:
             patient = Patient(
@@ -69,7 +69,7 @@ def create_blood_request(data):
             )
             db.session.add(patient)
             db.session.flush()
-    elif user.role == "blood_bank":
+    elif user.has_role("blood_bank"):
         blood_bank = BloodBank.query.filter_by(user_id=user.id).first()
         if blood_bank is None:
             return {"message": "Blood bank profile not found."}, 404
@@ -204,7 +204,7 @@ def get_my_requests():
             "accepted_count": accepted_count,
         }
 
-        if user.role == "patient":
+        if user.has_role("patient"):
             donations = (
                 Donation.query
                 .filter_by(blood_request_id=request.id, status=DonationStatus.ACCEPTED)
@@ -241,7 +241,7 @@ def get_open_requests():
     query = BloodRequest.query.filter_by(status=RequestStatus.PENDING)
 
     # If the current user is a donor, exclude requests they have already accepted
-    if user.role == "donor":
+    if user.has_role("donor"):
         donor = Donor.query.filter_by(user_id=user.id).first()
         if donor is not None:
             accepted_request_ids = [
@@ -274,18 +274,11 @@ def get_open_requests():
             "status": req.status.value,
             "created_at": req.created_at.isoformat(),
             "accepted_count": accepted_count,
+            "contact_name": req.contact_name,
+            "contact_phone": req.contact_phone,
         })
 
-    def sort_key(r):
-        urgency = URGENCY_ORDER.get(r["urgency_level"], 99)
-        created = r.get("created_at") or ""
-        try:
-            ts = datetime.fromisoformat(created).timestamp()
-        except Exception:
-            ts = 0
-        return (urgency, -ts)
-
-    data.sort(key=sort_key)
+    data.sort(key=lambda r: r.get("created_at") or "", reverse=True)
 
     return {"blood_requests": data}, 200
 
@@ -304,7 +297,7 @@ def get_top_requests():
     requests = (
         BloodRequest.query
         .filter_by(status=RequestStatus.PENDING)
-        .order_by(urgency_order, BloodRequest.created_at.desc())
+        .order_by(BloodRequest.created_at.desc())
         .limit(7)
         .all()
     )
@@ -320,6 +313,8 @@ def get_top_requests():
             "urgency_level": req.urgency_level.value,
             "required_before": req.required_before.isoformat(),
             "created_at": req.created_at.isoformat(),
+            "contact_name": req.contact_name,
+            "contact_phone": req.contact_phone,
         })
 
     return {"blood_requests": data}, 200
@@ -335,7 +330,7 @@ def get_accepted_donors(request_id):
     if blood_request is None:
         return {"message": "Blood request not found."}, 404
 
-    if blood_request.created_by != user.id and user.role != "admin":
+    if blood_request.created_by != user.id and not user.has_role("admin"):
         return {"message": "Unauthorized access."}, 403
 
     donations = (
@@ -557,7 +552,7 @@ def patient_update_request_status(request_id, data):
     if user is None:
         return {"message": "User not found."}, 404
 
-    if user.role != "patient":
+    if not user.has_role("patient"):
         return {"message": "Only patients can perform this action."}, 403
 
     blood_request = db.session.get(BloodRequest, request_id)
@@ -654,7 +649,7 @@ def get_matching_donors(request_id):
 
     # Only request owner or admin
     if (
-        user.role != "admin"
+        not user.has_role("admin")
         and blood_request.created_by != user.id
     ):
         return {

@@ -2,9 +2,7 @@ import api from "./api";
 
 // ============== AUTH ==============
 export async function loginUser({ identifier, password, role }) {
-  const payload = { password, role: role === "bloodbank" ? "blood_bank" : role };
-  if (role === "donor") payload.phone = identifier;
-  else payload.email = identifier;
+  const payload = { password, role: role === "bloodbank" ? "blood_bank" : role, identifier };
   const res = await api.post("/auth/login", payload);
   return {
     token: res.data.access_token,
@@ -43,6 +41,13 @@ export async function registerUser(formData) {
 export async function getCurrentUser() {
   const res = await api.get("/auth/profile");
   return { ...res.data, name: `${res.data.first_name || ""} ${res.data.last_name || ""}`.trim() };
+}
+
+// ============== UNIFIED USER ==============
+
+export async function getUserDashboard() {
+  const res = await api.get("/user/dashboard");
+  return res.data;
 }
 
 // ============== DONOR ==============

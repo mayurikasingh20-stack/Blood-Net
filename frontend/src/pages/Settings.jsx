@@ -27,8 +27,9 @@ const tabs = [
   { id: "notifications", label: "Notifications", icon: Bell },
 ];
 
-export default function Settings({ role = "donor" }) {
-  const { user } = useAuth();
+export default function Settings({ role: propRole }) {
+  const { user, hasRole } = useAuth();
+  const role = propRole || (hasRole("admin") ? "admin" : hasRole("bloodbank") || hasRole("blood_bank") ? "blood bank" : hasRole("donor") && hasRole("patient") ? "user" : hasRole("donor") ? "donor" : hasRole("patient") ? "patient" : "donor");
   const [activeTab, setActiveTab] = useState("profile");
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState("");

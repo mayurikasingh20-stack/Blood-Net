@@ -12,7 +12,7 @@ export default function RaiseRequestModal({ onClose, onSubmit, requesterName = "
     city: "",
     condition: "",
     urgency: "Moderate",
-    requiredBefore: "",
+    requiredBefore: new Date().toISOString().split("T")[0],
     contactName: requesterName,
     contactPhone: "",
   });
@@ -20,7 +20,8 @@ export default function RaiseRequestModal({ onClose, onSubmit, requesterName = "
 
   const update = (field, value) => setForm((p) => ({ ...p, [field]: value }));
 
-  const handleSubmit = () => {
+  const handleSubmit = (e) => {
+    e.preventDefault();
     if (!form.bloodGroup || !form.unitsNeeded || !form.hospital || !form.city || !form.contactName || !form.contactPhone) {
       setError("Please fill in blood group, units, hospital, city, contact name, and contact phone.");
       return;
@@ -49,12 +50,12 @@ export default function RaiseRequestModal({ onClose, onSubmit, requesterName = "
       >
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-lg font-bold text-slate-900">Raise a Blood Request</h3>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-slate-100 transition">
+          <button type="button" onClick={onClose} className="p-1.5 rounded-lg hover:bg-slate-100 transition">
             <X size={20} className="text-slate-400" />
           </button>
         </div>
 
-        <div className="space-y-4">
+        <form id="raise-request-form" onSubmit={handleSubmit} className="space-y-4">
           {/* Blood Group */}
           <div>
             <label className="text-sm font-semibold text-slate-700 block mb-1.5">
@@ -161,13 +162,13 @@ export default function RaiseRequestModal({ onClose, onSubmit, requesterName = "
               <AlertCircle size={16} /> {error}
             </div>
           )}
-        </div>
+        </form>
 
         <div className="flex gap-3 mt-6">
-          <button onClick={onClose} className="w-1/3 py-2.5 border border-slate-200 rounded-full text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">
+          <button type="button" onClick={onClose} className="w-1/3 py-2.5 border border-slate-200 rounded-full text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">
             Cancel
           </button>
-          <button onClick={handleSubmit} className="w-2/3 py-2.5 bg-red text-white rounded-full text-sm font-bold hover:bg-red-700 transition">
+          <button type="submit" form="raise-request-form" className="w-2/3 py-2.5 bg-red text-white rounded-full text-sm font-bold hover:bg-red-700 transition">
             Submit Request
           </button>
         </div>

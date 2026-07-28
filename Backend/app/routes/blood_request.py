@@ -23,7 +23,7 @@ blood_request_bp = Blueprint(
 
 @blood_request_bp.post("/create")
 @jwt_required()
-@role_required("patient", "blood_bank")
+@role_required("patient", "blood_bank", "donor")
 def create():
     data = request.get_json()
     return create_blood_request(data)

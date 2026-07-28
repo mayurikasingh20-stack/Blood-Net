@@ -10,6 +10,7 @@ export async function loginUser({ identifier, password }) {
     refreshToken: response.data.refresh_token,
     user: {
       ...backendUser,
+      roles: backendUser.roles || [backendRoleToUiRole(backendUser.role)],
       role: backendRoleToUiRole(backendUser.role),
       name: response.data.name || `${backendUser.first_name || ""} ${backendUser.last_name || ""}`.trim(),
     },
@@ -24,7 +25,6 @@ export async function registerUser(formData) {
     last_name: formData.lastName.trim(),
     phone: formData.phone.trim(),
     password: formData.password,
-    role: uiRoleToBackendRole(formData.role),
     gender: formData.gender,
     dob: formData.dob,
     city: formData.city.trim(),
@@ -38,18 +38,17 @@ export async function registerUser(formData) {
     payload.address = formData.address.trim();
   }
 
-  if (formData.role === "donor") {
+  if (formData.bloodGroup) {
     payload.blood_group = formData.bloodGroup;
-    payload.weight = Number(formData.weight);
-
-    if (formData.lastDonationDate) {
-      payload.last_donation_date = formData.lastDonationDate;
-    }
-
-    payload.has_chronic_condition = Boolean(formData.hasChronicCondition);
-    payload.on_medication = Boolean(formData.onMedication);
-    payload.available = formData.available !== false;
   }
+  if (formData.weight) {
+    payload.weight = Number(formData.weight);
+  }
+  if (formData.lastDonationDate) {
+    payload.last_donation_date = formData.lastDonationDate;
+  }
+  payload.has_chronic_condition = Boolean(formData.hasChronicCondition);
+  payload.on_medication = Boolean(formData.onMedication);
 
   const response = await api.post("/auth/register", payload);
   return response.data;
@@ -62,6 +61,7 @@ export async function getCurrentUser() {
 
   return {
     ...user,
+    roles: user.roles || [backendRoleToUiRole(user.role)],
     role: backendRoleToUiRole(user.role),
     name: `${user.first_name || ""} ${user.last_name || ""}`.trim(),
   };

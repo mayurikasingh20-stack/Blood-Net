@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
-import { Search, MapPin, Phone, Droplets, Loader, UserCheck } from "lucide-react";
+import { Search, MapPin, Phone, Droplets, Loader, UserCheck, X } from "lucide-react";
 import api from "../services/api";
 import { BLOOD_GROUPS } from "../utils/constants";
 
@@ -9,45 +9,40 @@ export default function PatientNearbyDonors() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [searchBg, setSearchBg] = useState("");
+  const [searchName, setSearchName] = useState("");
+  const [searchCity, setSearchCity] = useState("");
 
-  useEffect(() => {
-    if (searchBg) {
-      searchDonors(searchBg);
-    } else {
-      loadAll();
-    }
-  }, []);
-
-  async function loadAll() {
-    setLoading(true);
-    try {
-      const res = await api.get("/donor/all");
-      setDonors(res.data?.donors || []);
-    } catch {
-      setError("Failed to load donors");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function searchDonors(bg) {
+  const fetchDonors = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
-      const res = await api.get(`/donor/search?blood_group=${bg}`);
+      const params = {};
+      if (searchBg) params.blood_group = searchBg;
+      if (searchName.trim()) params.name = searchName.trim();
+      if (searchCity.trim()) params.city = searchCity.trim();
+      const hasFilters = Object.keys(params).length > 0;
+      const res = hasFilters
+        ? await api.get("/donor/search", { params })
+        : await api.get("/donor/all");
       setDonors(res.data?.donors || []);
-    } catch {
-      setError("Failed to search donors");
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to load donors");
     } finally {
       setLoading(false);
     }
+  }, [searchBg, searchName, searchCity]);
+
+  useEffect(() => {
+    fetchDonors();
+  }, [fetchDonors]);
+
+  function clearFilters() {
+    setSearchBg("");
+    setSearchName("");
+    setSearchCity("");
   }
 
-  function handleBgSearch(bg) {
-    setSearchBg(bg);
-    if (bg) searchDonors(bg);
-    else loadAll();
-  }
+  const hasFilters = searchBg || searchName.trim() || searchCity.trim();
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
@@ -56,10 +51,38 @@ export default function PatientNearbyDonors() {
         <p className="text-sm text-slate-500 mt-1">Find and connect with blood donors in your area.</p>
       </div>
 
+      {/* Search Fields */}
+      <div className="flex flex-wrap gap-3">
+        <div className="relative flex-1 min-w-[200px]">
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <input
+            value={searchName}
+            onChange={(e) => setSearchName(e.target.value)}
+            placeholder="Search by name..."
+            className="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-red/20"
+          />
+        </div>
+        <div className="relative flex-1 min-w-[160px]">
+          <MapPin size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <input
+            value={searchCity}
+            onChange={(e) => setSearchCity(e.target.value)}
+            placeholder="Search by city..."
+            className="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-red/20"
+          />
+        </div>
+        {hasFilters && (
+          <button onClick={clearFilters} className="flex items-center gap-1 px-3 py-2 text-xs font-semibold text-slate-500 hover:text-red transition">
+            <X size={14} /> Clear
+          </button>
+        )}
+      </div>
+
+      {/* Blood Group Filter */}
       <div className="flex flex-wrap gap-2">
-        <button onClick={() => handleBgSearch("")} className={`px-3 py-1.5 rounded-full text-xs font-bold transition ${!searchBg ? "bg-red text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}>All</button>
+        <button onClick={() => setSearchBg("")} className={`px-3 py-1.5 rounded-full text-xs font-bold transition ${!searchBg ? "bg-red text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}>All</button>
         {BLOOD_GROUPS.map((bg) => (
-          <button key={bg} onClick={() => handleBgSearch(bg)} className={`px-3 py-1.5 rounded-full text-xs font-bold transition ${searchBg === bg ? "bg-red text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}>{bg}</button>
+          <button key={bg} onClick={() => setSearchBg(searchBg === bg ? "" : bg)} className={`px-3 py-1.5 rounded-full text-xs font-bold transition ${searchBg === bg ? "bg-red text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}>{bg}</button>
         ))}
       </div>
 
@@ -69,7 +92,7 @@ export default function PatientNearbyDonors() {
       {!loading && donors.length === 0 && (
         <div className="bg-white rounded-2xl p-8 text-center border border-slate-100">
           <UserCheck size={40} className="mx-auto text-slate-300 mb-3" />
-          <p className="text-slate-500">No donors found{searchBg ? ` for ${searchBg}` : ""}.</p>
+          <p className="text-slate-500">No donors found.</p>
         </div>
       )}
 

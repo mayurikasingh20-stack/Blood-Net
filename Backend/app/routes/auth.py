@@ -2,7 +2,10 @@ from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity, create_access_token
 from app.extensions import db
 from app.models.user import User
+from app.models.donor import Donor
+from app.models.patient import Patient
 from app.services.auth_service import login_user, register_user
+from app.utils.helpers import get_missing_fields
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/api/auth")
 
@@ -46,6 +49,7 @@ def profile():
         "email": user.email,
         "phone": user.phone,
         "role": user.role,
+        "roles": user.get_roles(),
         "gender": user.gender,
         "city": user.city
     }), 200
@@ -99,3 +103,61 @@ def change_password():
     user.password_hash = hash_password(new_password)
     db.session.commit()
     return jsonify({"message": "Password changed successfully."}), 200
+
+@auth_bp.post("/add-role")
+@jwt_required()
+def add_role():
+    user_id = get_jwt_identity()
+    user = db.session.get(User, user_id)
+    if not user:
+        return jsonify({"message": "User not found"}), 404
+
+    data = request.get_json(silent=True) or {}
+    new_role = data.get("role", "").strip().lower()
+
+    if new_role not in ("donor", "patient"):
+        return jsonify({"message": "Can only add 'donor' or 'patient' role."}), 400
+
+    if user.has_role(new_role):
+        return jsonify({"message": f"You already have the '{new_role}' role."}), 409
+
+    if new_role == "donor" and Donor.query.filter_by(user_id=user.id).first():
+        return jsonify({"message": "Donor profile already exists."}), 409
+
+    if new_role == "patient" and Patient.query.filter_by(user_id=user.id).first():
+        return jsonify({"message": "Patient profile already exists."}), 409
+
+    if new_role == "donor":
+        required = ["blood_group", "weight"]
+        missing = get_missing_fields(data, required)
+        if missing:
+            return jsonify({"message": "Missing required fields", "missing_fields": missing}), 400
+        donor = Donor(
+            user_id=user.id,
+            blood_group=data["blood_group"],
+            weight=float(data["weight"]),
+        )
+        db.session.add(donor)
+
+    if new_role == "patient":
+        patient = Patient(
+            user_id=user.id,
+            blood_group_needed=data.get("blood_group_needed", "Unknown"),
+            hospital_name=data.get("hospital_name", "Pending"),
+            condition_description=data.get("condition_description", "Pending"),
+            urgency_level=data.get("urgency_level", "Moderate"),
+            relation_to_patient=data.get("relation_to_patient", "Self"),
+        )
+        db.session.add(patient)
+
+    user.add_role(new_role)
+    try:
+        db.session.commit()
+        return jsonify({
+            "message": f"'{new_role}' role added successfully.",
+            "role": user.role,
+            "roles": user.get_roles()
+        }), 200
+    except Exception as exc:
+        db.session.rollback()
+        return jsonify({"message": "Failed to add role", "error": str(exc)}), 500

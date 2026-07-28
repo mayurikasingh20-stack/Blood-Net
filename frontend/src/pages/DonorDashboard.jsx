@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
@@ -45,38 +45,28 @@ export default function DonorDashboard() {
   const [error, setError] = useState("");
   const [available, setAvailable] = useState(true);
 
-  const fetchData = useCallback(async () => {
+  function loadData() {
     setLoading(true);
     setError("");
-    try {
-      const [dash, profile, donData, reqData, notifData] = await Promise.all([
-        getDonorDashboard().catch(() => null),
-        getDonorProfile().catch(() => null),
-        getMyDonations().catch(() => ({ donations: [] })),
-        getOpenRequests().catch(() => ({ blood_requests: [] })),
-        getNotifications().catch(() => ({ notifications: [] })),
-      ]);
-
-      setDashboard(dash);
+    getDonorDashboard().then(setDashboard).catch(() => {});
+    getDonorProfile().then(profile => {
       setDonorProfile(profile);
-      setDonations(donData?.donations || []);
-      setOpenRequests(reqData?.blood_requests || []);
-      setNotifications(notifData?.notifications || []);
+      if (profile?.donor?.available !== undefined) setAvailable(profile.donor.available);
+    }).catch(() => {});
+    getMyDonations().then(d => setDonations(d?.donations || [])).catch(() => {});
+    getOpenRequests().then(r => setOpenRequests(r?.blood_requests || [])).catch(() => {});
+    getNotifications().then(n => setNotifications(n?.notifications || [])).catch(() => {});
+    getDonorDashboard().then(dash => {
+      setDashboard(dash);
       if (dash?.availability !== undefined) setAvailable(dash.availability);
-      else if (profile?.donor?.available !== undefined) setAvailable(profile.donor.available);
-    } catch {
-      setError("Could not load dashboard data.");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => { fetchData(); }, [fetchData]);
+    }).catch(() => {}).finally(() => setLoading(false));
+  }
 
   useEffect(() => {
-    const interval = setInterval(fetchData, 30000);
+    loadData();
+    const interval = setInterval(loadData, 30000);
     return () => clearInterval(interval);
-  }, [fetchData]);
+  }, []);
 
   async function toggleAvailability() {
     const original = available;

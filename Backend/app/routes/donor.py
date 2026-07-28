@@ -64,12 +64,10 @@ def all_donors():
 @jwt_required()
 def search():
     blood_group = request.args.get("blood_group")
-    if not blood_group:
-        return jsonify({
-            "message": "blood_group is required"
-        }), 400
+    name = request.args.get("name")
+    city = request.args.get("city")
 
-    response, status = search_donors(blood_group)
+    response, status = search_donors(blood_group, name, city)
     return jsonify(response), status
 
 @donor_bp.get("/<int:donor_id>")

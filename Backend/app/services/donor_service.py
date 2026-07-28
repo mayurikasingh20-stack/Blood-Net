@@ -18,7 +18,7 @@ def register_donor(user_id, data):
         return jsonify({
             "message": "user not found"
         }),404
-    if user.role != "donor":
+    if not user.has_role("donor"):
         return {
             "message": "Only users with donor role can create a donor profile."
         },403
@@ -179,6 +179,8 @@ def get_all_donors():
     donor_list = []
 
     for donor in donors:
+        if not donor.user:
+            continue
         donor_data = {
             "id": donor.id,
             "first_name": donor.user.first_name,
@@ -195,27 +197,34 @@ def get_all_donors():
         "donors": donor_list
     }, 200
     
-def search_donors(blood_group):
-    donors = Donor.query.filter_by(
-        blood_group=blood_group,
-        available=True
-    ).order_by(Donor.id.desc()).all()
+def search_donors(blood_group=None, name=None, city=None):
+    donors = Donor.query.filter_by(available=True).order_by(Donor.id.desc()).all()
 
-    donor_list = []
-
+    filtered = []
     for donor in donors:
-        donor_list.append({
+        if not donor.user:
+            continue
+        if blood_group and donor.blood_group != blood_group:
+            continue
+        if name:
+            full = f"{donor.user.first_name} {donor.user.last_name}".lower()
+            if name.lower() not in donor.user.first_name.lower() and name.lower() not in donor.user.last_name.lower() and name.lower() not in full:
+                continue
+        if city and city.lower() not in (donor.user.city or "").lower():
+            continue
+        filtered.append({
             "id": donor.id,
             "first_name": donor.user.first_name,
             "last_name": donor.user.last_name,
             "blood_group": donor.blood_group,
             "city": donor.user.city,
-            "available": donor.available
+            "weight": donor.weight,
+            "available": donor.available,
         })
 
     return {
-        "count": len(donor_list),
-        "donors": donor_list
+        "count": len(filtered),
+        "donors": filtered
     }, 200
 def get_donor_by_id(donor_id):
     donor = db.session.get(Donor, donor_id)

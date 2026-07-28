@@ -14,7 +14,8 @@ def role_required(*roles):
                 return jsonify({
                     "message": "User not found."
                 }), 404
-            if user.role not in roles:
+            user_roles = user.role.split(",") if user.role else []
+            if not any(r in user_roles for r in roles):
                 return jsonify({
                     "message": "Access denied."
                 }), 403

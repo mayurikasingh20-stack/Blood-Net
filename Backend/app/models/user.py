@@ -16,16 +16,7 @@ class User(db.Model):
 
     password_hash = db.Column(db.String(255), nullable=False)
 
-    role = db.Column(
-        db.Enum(
-            "donor",
-            "patient",
-            "blood_bank",
-            "admin",
-            name="user_roles"
-        ),
-        nullable=False
-    )
+    role = db.Column(db.String(50), nullable=False)
 
     gender = db.Column(
         db.Enum(
@@ -88,6 +79,19 @@ class User(db.Model):
         back_populates="user",
         cascade="all, delete"
     )
+
+    def has_role(self, role):
+        roles = self.role.split(",") if self.role else []
+        return role in roles
+
+    def add_role(self, role):
+        roles = self.role.split(",") if self.role else []
+        if role not in roles:
+            roles.append(role)
+            self.role = ",".join(roles)
+
+    def get_roles(self):
+        return self.role.split(",") if self.role else []
 
     def __repr__(self):
         return f"<User {self.email}>"

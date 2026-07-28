@@ -3,7 +3,7 @@ import useAuth from "../context/useAuth";
 import LoadingPage from "../pages/LoadingPage";
 
 function RoleBasedRoute({ allowedRoles, children }) {
-  const { user, token, loading } = useAuth();
+  const { user, token, loading, hasRole } = useAuth();
 
   if (loading) return <LoadingPage />;
 
@@ -11,7 +11,7 @@ function RoleBasedRoute({ allowedRoles, children }) {
     return <Navigate to="/login" replace />;
   }
 
-  if (!user || !allowedRoles.includes(user.role)) {
+  if (!user || !allowedRoles.some(r => hasRole(r))) {
     return <Navigate to="/unauthorized" replace />;
   }
 

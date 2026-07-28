@@ -337,27 +337,28 @@ export default function PatientDashboard() {
             <p className="text-sm text-slate-500 mb-4">
               Confirm donation from <strong>{verifyModal.donorName}</strong>
             </p>
-            <label className="text-sm font-semibold text-slate-700 block mb-1.5">Units Donated</label>
-            <input
-              type="number" min={1} value={verifyUnits}
-              onChange={(e) => setVerifyUnits(Math.max(1, parseInt(e.target.value) || 1))}
-              className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-red/20 mb-4"
-            />
-            <div className="flex gap-3">
-              <button
-                onClick={() => setVerifyModal(null)}
-                className="w-1/3 py-2.5 border border-slate-200 rounded-full text-sm font-semibold text-slate-600 hover:bg-slate-50 transition"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => handleVerify(verifyModal.donationId, verifyUnits)}
-                disabled={verifying}
-                className="w-2/3 py-2.5 bg-emerald-500 text-white rounded-full text-sm font-bold hover:bg-emerald-600 transition disabled:opacity-60"
-              >
-                {verifying ? "Verifying..." : "Confirm Fulfillment"}
-              </button>
-            </div>
+            <form onSubmit={(e) => { e.preventDefault(); handleVerify(verifyModal.donationId, verifyUnits); }}>
+              <label className="text-sm font-semibold text-slate-700 block mb-1.5">Units Donated</label>
+              <input
+                type="number" min={1} value={verifyUnits}
+                onChange={(e) => setVerifyUnits(Math.max(1, parseInt(e.target.value) || 1))}
+                className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-red/20 mb-4"
+              />
+              <div className="flex gap-3">
+                <button type="button"
+                  onClick={() => setVerifyModal(null)}
+                  className="w-1/3 py-2.5 border border-slate-200 rounded-full text-sm font-semibold text-slate-600 hover:bg-slate-50 transition"
+                >
+                  Cancel
+                </button>
+                <button type="submit"
+                  disabled={verifying}
+                  className="w-2/3 py-2.5 bg-emerald-500 text-white rounded-full text-sm font-bold hover:bg-emerald-600 transition disabled:opacity-60"
+                >
+                  {verifying ? "Verifying..." : "Confirm Fulfillment"}
+                </button>
+              </div>
+            </form>
           </motion.div>
         </div>
       )}

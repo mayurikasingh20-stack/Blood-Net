@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, AlertCircle, CheckCircle, ChevronLeft, ChevronRight, Loader } from "lucide-react";
+import { X, AlertCircle, CheckCircle, ChevronLeft, ChevronRight, Loader, Phone, User } from "lucide-react";
 import api from "../../services/api";
 
 const DONATION_MIN_GAP_DAYS = 56;
 
-export default function DonorScreeningModal({ requestId, requestBloodGroup, onComplete, onClose }) {
+export default function DonorScreeningModal({ requestId, requestBloodGroup, contactName, contactPhone, onComplete, onClose }) {
   const [step, setStep] = useState("checking");
   const [intervalData, setIntervalData] = useState(null);
   const [questions, setQuestions] = useState([]);
@@ -324,6 +324,13 @@ export default function DonorScreeningModal({ requestId, requestBloodGroup, onCo
             )}
             {step === "checking" && (
               <p className="text-xs text-slate-500 mt-1">Checking your donation interval...</p>
+            )}
+            {(contactName || contactPhone) && (
+              <div className="flex items-center gap-3 mt-2 p-2 bg-slate-50 rounded-xl text-xs">
+                {contactName && <span className="flex items-center gap-1 text-slate-600"><User size={12} /> {contactName}</span>}
+                {contactPhone && <span className="flex items-center gap-1 text-slate-600"><Phone size={12} /> {contactPhone}</span>}
+                <span className="font-bold text-red">{requestBloodGroup}</span>
+              </div>
             )}
           </div>
           {step !== "submitting" && (

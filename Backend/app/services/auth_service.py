@@ -17,31 +17,24 @@ def calculate_age(dob):
     return today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
 
 
-def get_missing_fields(data, required_fields):
-    missing = []
-    for field in required_fields:
-        if field not in data or not data[field]:
-            missing.append(field)
-    return missing
-
-
 def register_user(data):
-    """Perform the registration business logic and return a response tuple."""
     if not data:
         return {"message": "No data recieved"}, 400
+
+    role = data.get("role", "").strip().lower()
 
     required_fields = [
         "first_name",
         "last_name",
         "phone",
         "password",
-        "role",
         "gender",
         "dob",
         "city",
     ]
-    if data.get("role") in ("blood_bank", "admin"):
+    if role in ("blood_bank", "admin"):
         required_fields.append("email")
+        required_fields.append("role")
 
     missing_fields = get_missing_fields(data, required_fields)
     if missing_fields:
@@ -75,16 +68,11 @@ def register_user(data):
     if dob > date.today():
         return {"message": "Date of birth cannot be in the future."}, 400
 
-    if data["role"] == "donor":
+    if role == "donor" or role == "patient" or not role:
         age = calculate_age(dob)
         if age < 18:
-            return {
-                "message": "You must be at least 18 years old to register as a blood donor."
-            }, 400
-        if age > 65:
-            return {
-                "message": "People above 65 years of age are not eligible for blood donation. Please consult a medical professional if you have any questions."
-            }, 400
+            return {"message": "You must be at least 18 years old to register."}, 400
+        role = "donor,patient"
 
     new_user = User(
         first_name=data["first_name"],
@@ -92,7 +80,7 @@ def register_user(data):
         email=email,
         phone=normalized_phone,
         password_hash=hashed_password,
-        role=data["role"],
+        role=role,
         gender=data["gender"],
         dob=dob,
         city=data["city"],
@@ -100,39 +88,27 @@ def register_user(data):
     )
 
     donor_profile = None
-    if data["role"] == "donor":
-        donor_required_fields = ["blood_group", "weight"]
-        donor_missing_fields = get_missing_fields(data, donor_required_fields)
-        if donor_missing_fields:
-            return {
-                "message": "Missing required donor profile fields",
-                "missing_fields": donor_missing_fields,
-            }, 400
+    patient_profile = None
 
+    if new_user.has_role("donor"):
         last_donation_date = None
         if data.get("last_donation_date"):
             try:
-                last_donation_date = datetime.strptime(
-                    data["last_donation_date"],
-                    "%Y-%m-%d"
-                ).date()
+                last_donation_date = datetime.strptime(data["last_donation_date"], "%Y-%m-%d").date()
             except ValueError:
-                return {
-                    "message": "Invalid last_donation_date format. Use YYYY-MM-DD"
-                }, 400
+                return {"message": "Invalid last_donation_date format. Use YYYY-MM-DD"}, 400
 
         donor_profile = Donor(
             user=new_user,
-            blood_group=data["blood_group"],
-            weight=data["weight"],
+            blood_group=data.get("blood_group", "Unknown"),
+            weight=float(data["weight"]) if data.get("weight") else 0.0,
             last_donation_date=last_donation_date,
             has_chronic_condition=data.get("has_chronic_condition", False),
             on_medication=data.get("on_medication", False),
-            available=data.get("available", True),
+            available=True,
         )
 
-    patient_profile = None
-    if data["role"] == "patient":
+    if new_user.has_role("patient"):
         patient_profile = Patient(
             user=new_user,
             blood_group_needed=data.get("blood_group_needed", "Unknown"),
@@ -190,7 +166,7 @@ def login_user(data):
     if not user or not verify_password(user.password_hash, password):
         return {"message": "Credentials not matched"}, 401
 
-    if user.role == "blood_bank":
+    if user.has_role("blood_bank"):
         blood_bank = BloodBank.query.filter_by(user_id=user.id).first()
         if blood_bank and blood_bank.status == "pending":
             return {"message": "Your account is currently under verification. The administrator has not yet approved your registration. Please wait a few minutes and try again later."}, 403
@@ -212,5 +188,6 @@ def login_user(data):
             "email": user.email,
             "phone": user.phone,
             "role": user.role,
+            "roles": user.get_roles(),
         },
     }, 200

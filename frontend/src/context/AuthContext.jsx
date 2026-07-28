@@ -88,16 +88,25 @@ export function AuthProvider({ children }) {
     clearAuth();
   };
 
+  const roles = useMemo(() => {
+    if (!user?.roles) return user?.role ? [user.role] : [];
+    return user.roles;
+  }, [user]);
+
+  const hasRole = useMemo(() => (role) => roles.includes(role), [roles]);
+
   const value = useMemo(() => ({
     user,
     token,
     refreshToken,
     role: user?.role || null,
+    roles,
+    hasRole,
     loading,
     isAuthenticated: Boolean(user && token),
     login,
     logout,
-  }), [user, token, refreshToken, loading]);
+  }), [user, token, refreshToken, roles, hasRole, loading]);
 
   return (
     <AuthContext.Provider value={value}>

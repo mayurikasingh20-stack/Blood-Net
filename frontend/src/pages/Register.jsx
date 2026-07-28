@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Droplets, User, Lock, ShieldCheck, ArrowLeft, ArrowRight } from "lucide-react";
 import Button from "../components/ui/Button";
@@ -28,12 +28,6 @@ function calculateAge(dobString) {
   return age;
 }
 
-const roles = [
-  { value: "donor", label: "Donor" },
-  { value: "patient", label: "Patient" },
-  { value: "bloodbank", label: "Blood Bank" },
-];
-
 const genders = [
   { value: "Male", label: "Male" },
   { value: "Female", label: "Female" },
@@ -47,30 +41,21 @@ const steps = [
 ];
 
 export default function Register() {
-  const [searchParams] = useSearchParams();
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
     firstName: "", lastName: "", email: "", phone: "",
     password: "", confirmPassword: "",
-    role: searchParams.get("role") || "donor",
     gender: "", dob: "", city: "", address: "",
     bloodGroup: "", weight: "", lastDonationDate: "",
-    hasChronicCondition: false, onMedication: false, available: true,
+    hasChronicCondition: false, onMedication: false,
     acceptedTerms: false,
   });
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const donor = formData.role === "donor";
 
   const update = (name, value) => setFormData((current) => ({ ...current, [name]: value }));
-
-  useEffect(() => {
-    if (formData.role === "bloodbank") {
-      navigate("/bloodbank-register", { replace: true });
-    }
-  }, [formData.role, navigate]);
 
   function validateStep(stepNum) {
     if (stepNum === 1) {
@@ -87,16 +72,11 @@ export default function Register() {
       if (formData.dob) {
         const dobDate = new Date(formData.dob + "T00:00:00");
         if (dobDate > new Date()) return "Date of birth cannot be in the future.";
-        if (donor) {
-          const age = calculateAge(formData.dob);
-          if (age < 18) return "You must be at least 18 years old to register as a blood donor.";
-          if (age > 65) return "People above 65 years of age are not eligible for blood donation. Please consult a medical professional if you have any questions.";
-        }
+        const age = calculateAge(formData.dob);
+        if (age < 18) return "You must be at least 18 years old to register.";
       }
     }
     if (stepNum === 3) {
-      if (donor && (!formData.bloodGroup || !formData.weight || Number(formData.weight) <= 0))
-        return "Donors must provide a blood group and valid weight.";
       if (!formData.acceptedTerms) return "Please accept the terms before registering.";
     }
     return "";
@@ -120,16 +100,13 @@ export default function Register() {
     setSuccess("");
     const validationError = validateStep(3);
     if (validationError) { setError(validationError); return; }
-    if (donor && formData.dob) {
-      const age = calculateAge(formData.dob);
-      if (age < 18) { setError("You must be at least 18 years old to register as a blood donor."); return; }
-      if (age > 65) { setError("People above 65 years of age are not eligible for blood donation. Please consult a medical professional if you have any questions."); return; }
-    }
+    const age = calculateAge(formData.dob);
+    if (age < 18) { setError("You must be at least 18 years old to register."); return; }
     setLoading(true);
     try {
       await registerUser(formData);
       setSuccess("Registration successful! Redirecting to login...");
-      setTimeout(() => navigate(`/login?role=${formData.role}`, { replace: true }), 1500);
+      setTimeout(() => navigate("/login", { replace: true }), 1500);
     } catch (requestError) {
       setError(getAuthErrorMessage(requestError));
     } finally {
@@ -146,14 +123,7 @@ export default function Register() {
               <Droplets size={28} className="text-red" />
             </div>
             <h1 className="text-2xl md:text-3xl font-bold text-slate-900">Create an account</h1>
-            <p className="text-sm text-slate-500 mt-1">Join Blood Net and help save lives</p>
-          </div>
-
-          {/* Role Selector at top */}
-          <div className="mb-6">
-            <Select label="Account type" value={formData.role}
-              onChange={(e) => { update("role", e.target.value); setError(""); }}
-              options={roles} required />
+            <p className="text-sm text-slate-500 mt-1">Join Blood Net as both donor and receiver</p>
           </div>
 
           {/* Progress Steps */}
@@ -192,7 +162,7 @@ export default function Register() {
                   <Input label="Last name" name="lastName" value={formData.lastName}
                     onChange={(e) => update("lastName", e.target.value)} required />
                   <Input label="Email address" name="email" type="email" value={formData.email}
-                    onChange={(e) => update("email", e.target.value)} placeholder="name@example.com" autoComplete="off" hint="Optional for donors & patients" />
+                    onChange={(e) => update("email", e.target.value)} placeholder="name@example.com" hint="Optional" />
                   <Input label="Phone number" name="phone" type="tel" value={formData.phone}
                     onChange={(e) => update("phone", e.target.value)} placeholder="+91 98765 43210" required />
                   <Select label="Gender" value={formData.gender}
@@ -240,35 +210,31 @@ export default function Register() {
               </motion.div>
             )}
 
-            {/* Step 3: Donor Details & Confirm */}
+            {/* Step 3: Donor Info & Confirm */}
             {step === 3 && (
               <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-4">
                 <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                  <ShieldCheck size={18} className="text-red" /> Final Details
+                  <ShieldCheck size={18} className="text-red" /> Donor Details
                 </h2>
 
-                {donor && (
-                  <div className="rounded-xl border border-red/10 bg-red/5 p-4 space-y-4">
-                    <p className="text-sm font-bold text-red">Donor Information</p>
-                    <div className="grid gap-4 md:grid-cols-2">
-                      <Select label="Blood group" value={formData.bloodGroup}
-                        onChange={(e) => update("bloodGroup", e.target.value)}
-                        options={BLOOD_GROUPS.map((v) => ({ value: v, label: v }))} required />
-                      <Input label="Weight (kg)" name="weight" type="number" min="1" value={formData.weight}
-                        onChange={(e) => update("weight", e.target.value)} required />
-                      <Input label="Last donation date" name="lastDonationDate" type="date" value={formData.lastDonationDate}
-                        onChange={(e) => update("lastDonationDate", e.target.value)} hint="Optional" />
-                    </div>
-                    <div className="space-y-2">
-                      <Checkbox label="I have a chronic medical condition" checked={formData.hasChronicCondition}
-                        onChange={(e) => update("hasChronicCondition", e.target.checked)} />
-                      <Checkbox label="I am currently on medication" checked={formData.onMedication}
-                        onChange={(e) => update("onMedication", e.target.checked)} />
-                      <Checkbox label="I am available to donate" checked={formData.available}
-                        onChange={(e) => update("available", e.target.checked)} />
-                    </div>
+                <div className="rounded-xl border border-red/10 bg-red/5 p-4 space-y-4">
+                  <p className="text-sm font-bold text-red">Blood Donation Profile (optional now, fill anytime)</p>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <Select label="Blood group" value={formData.bloodGroup}
+                      onChange={(e) => update("bloodGroup", e.target.value)}
+                      options={BLOOD_GROUPS.map((v) => ({ value: v, label: v }))} />
+                    <Input label="Weight (kg)" name="weight" type="number" min="1" value={formData.weight}
+                      onChange={(e) => update("weight", e.target.value)} />
+                    <Input label="Last donation date" name="lastDonationDate" type="date" value={formData.lastDonationDate}
+                      onChange={(e) => update("lastDonationDate", e.target.value)} hint="Optional" />
                   </div>
-                )}
+                  <div className="space-y-2">
+                    <Checkbox label="I have a chronic medical condition" checked={formData.hasChronicCondition}
+                      onChange={(e) => update("hasChronicCondition", e.target.checked)} />
+                    <Checkbox label="I am currently on medication" checked={formData.onMedication}
+                      onChange={(e) => update("onMedication", e.target.checked)} />
+                  </div>
+                </div>
 
                 <Checkbox label="I confirm that all information provided is accurate and I agree to the terms of service."
                   checked={formData.acceptedTerms}
@@ -283,7 +249,7 @@ export default function Register() {
                     <ArrowLeft size={16} /> Back
                   </button>
                   <Button type="submit" className="flex-1 max-w-xs" loading={loading}>
-                    {donor ? "Register as Donor" : "Create Account"}
+                    Create Account
                   </Button>
                 </div>
               </motion.div>
@@ -291,6 +257,10 @@ export default function Register() {
           </form>
 
           <p className="mt-6 text-center text-sm text-slate-500">
+            Registering as a blood bank?{" "}
+            <Link to="/bloodbank-register" className="font-semibold text-red hover:underline">Click here</Link>
+          </p>
+          <p className="text-center text-sm text-slate-500">
             Already have an account?{" "}
             <Link to="/login" className="font-semibold text-red hover:underline">Login</Link>
           </p>

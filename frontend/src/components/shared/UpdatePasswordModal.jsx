@@ -18,7 +18,8 @@ function UpdatePasswordModal({ onClose, onSave }) {
     return "";
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = (e) => {
+    e.preventDefault();
     if (!currentPassword || !newPassword || !confirmPassword) {
       setError("Please fill in all fields.");
       return;
@@ -39,10 +40,10 @@ function UpdatePasswordModal({ onClose, onSave }) {
       <div className="bg-paper rounded-[22px] p-8 w-full max-w-md">
         <div className="flex justify-between items-center mb-5">
           <h3 className="font-serif text-xl font-semibold">Update Password</h3>
-          <button onClick={onClose}><X size={20} /></button>
+          <button type="button" onClick={onClose}><X size={20} /></button>
         </div>
 
-        <div className="space-y-4">
+        <form id="password-update-form" onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="text-sm font-medium block mb-1">Current Password</label>
             <div className="relative">
@@ -74,11 +75,11 @@ function UpdatePasswordModal({ onClose, onSave }) {
             </div>
           </div>
           {error && <p className="text-sm text-red-600">{error}</p>}
-        </div>
+        </form>
 
         <div className="flex gap-3 mt-6">
-          <button onClick={onClose} className="w-1/3 border border-ink/15 font-semibold py-3 rounded-full hover:bg-ink/5 transition">Cancel</button>
-          <button onClick={handleSubmit} className="w-2/3 bg-red-deep text-white font-semibold py-3 rounded-full hover:bg-red transition">Update Password</button>
+          <button type="button" onClick={onClose} className="w-1/3 border border-ink/15 font-semibold py-3 rounded-full hover:bg-ink/5 transition">Cancel</button>
+          <button type="submit" form="password-update-form" className="w-2/3 bg-red-deep text-white font-semibold py-3 rounded-full hover:bg-red transition">Update Password</button>
         </div>
       </div>
     </div>
