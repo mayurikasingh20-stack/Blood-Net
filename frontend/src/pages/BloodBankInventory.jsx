@@ -220,90 +220,88 @@ export default function BloodBankInventory() {
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        <div className="lg:col-span-3 space-y-6">
-          <motion.div className="grid grid-cols-2 md:grid-cols-4 gap-3" {...fadeUp}>
-            {BLOOD_GROUPS.map((bg) => {
-              const items = inventory.filter((i) => i.blood_group === bg);
-              const units = items.filter((i) => i.status !== "EXPIRED").reduce((s, i) => s + (i.units || 0), 0);
-              const isEmpty = units === 0;
-              return (
-                <div key={bg} className={`rounded-xl p-3 md:p-4 border text-center ${isEmpty ? "bg-slate-50 border-slate-200" : "bg-emerald-50 border-emerald-200"}`}>
-                  <p className={`text-lg font-bold ${isEmpty ? "text-slate-400" : "text-emerald-700"}`}>{bg}</p>
-                  <p className={`text-xs mt-0.5 ${isEmpty ? "text-slate-400" : "text-emerald-600"}`}>
-                    {isEmpty ? "Unavailable" : `${units} unit${units !== 1 ? "s" : ""}`}
-                  </p>
-                </div>
-              );
-            })}
-          </motion.div>
+      <motion.div className="grid grid-cols-2 md:grid-cols-4 gap-3" {...fadeUp}>
+        {BLOOD_GROUPS.map((bg) => {
+          const items = inventory.filter((i) => i.blood_group === bg);
+          const units = items.filter((i) => i.status !== "EXPIRED").reduce((s, i) => s + (i.units || 0), 0);
+          const isEmpty = units === 0;
+          return (
+            <div key={bg} className={`rounded-xl p-3 md:p-4 border text-center ${isEmpty ? "bg-slate-50 border-slate-200" : "bg-emerald-50 border-emerald-200"}`}>
+              <p className={`text-lg font-bold ${isEmpty ? "text-slate-400" : "text-emerald-700"}`}>{bg}</p>
+              <p className={`text-xs mt-0.5 ${isEmpty ? "text-slate-400" : "text-emerald-600"}`}>
+                {isEmpty ? "Unavailable" : `${units} unit${units !== 1 ? "s" : ""}`}
+              </p>
+            </div>
+          );
+        })}
+      </motion.div>
 
-          <motion.div className="bg-white rounded-2xl border border-slate-100 shadow-sm" {...fadeUp}>
-            <div className="px-4 md:px-6 py-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                <Activity size={16} className="text-red" /> Inventory Units
-              </h3>
-              <div className="relative">
-                <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="Search by blood group or ID..."
-                  className="pl-9 pr-3 py-1.5 rounded-lg border border-slate-200 text-sm w-full sm:w-64 focus:outline-none focus:ring-2 focus:ring-red/20" />
-              </div>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-slate-100 bg-slate-50/50">
-                    <th className="text-left px-4 md:px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Blood Group</th>
-                    <th className="text-left px-4 md:px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Units</th>
-                    <th className="text-left px-4 md:px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider hidden md:table-cell">Collection</th>
-                    <th className="text-left px-4 md:px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider hidden md:table-cell">Expiry</th>
-                    <th className="text-left px-4 md:px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Status</th>
-                    <th className="text-right px-4 md:px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-50">
-                  {filteredInventory.length === 0 && (
-                    <tr><td colSpan={6} className="px-6 py-12 text-center text-sm text-slate-500">{searchTerm ? "No matching units found." : "No inventory units yet. Add your first unit."}</td></tr>
-                  )}
-                  {filteredInventory.map((item) => {
-                    const isExpiring = item.expiry_date && Math.ceil((new Date(item.expiry_date) - new Date()) / (1000 * 60 * 60 * 24)) <= 7 && item.status === "AVAILABLE";
-                    return (
-                      <tr key={item.id} className="hover:bg-slate-50/50 transition">
-                        <td className="px-4 md:px-6 py-3"><span className="font-bold text-red">{item.blood_group}</span></td>
-                        <td className="px-4 md:px-6 py-3 text-slate-600">{item.units} units</td>
-                        <td className="px-4 md:px-6 py-3 text-slate-500 hidden md:table-cell">{item.collection_date || "—"}</td>
-                        <td className="px-4 md:px-6 py-3 hidden md:table-cell">
-                          <span className={`${isExpiring ? "text-red font-semibold" : "text-slate-500"}`}>
-                            {item.expiry_date || "—"}
-                            {isExpiring && <span className="ml-1 text-[10px]">(Expiring)</span>}
-                          </span>
-                        </td>
-                        <td className="px-4 md:px-6 py-3">
-                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${statusColors[item.status] || statusColors.AVAILABLE}`}>
-                            {statusLabels[item.status] || item.status || "Available"}
-                          </span>
-                        </td>
-                        <td className="px-4 md:px-6 py-3 text-right">
-                          <div className="flex items-center justify-end gap-1">
-                            <button onClick={() => handleDelete(item.id)} className="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red transition"><Trash2 size={14} /></button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-            {inventory.length > 0 && (
-              <div className="px-4 md:px-6 py-3 border-t border-slate-100 text-xs text-slate-400">
-                Showing {filteredInventory.length} of {inventory.length} units
-              </div>
-            )}
-          </motion.div>
+      <motion.div className="bg-white rounded-2xl border border-slate-100 shadow-sm" {...fadeUp}>
+        <div className="px-4 md:px-6 py-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+            <Activity size={16} className="text-red" /> Inventory Units
+          </h3>
+          <div className="relative">
+            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Search by blood group or ID..."
+              className="pl-9 pr-3 py-1.5 rounded-lg border border-slate-200 text-sm w-full sm:w-64 focus:outline-none focus:ring-2 focus:ring-red/20" />
+          </div>
         </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-slate-100 bg-slate-50/50">
+                <th className="text-left px-4 md:px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Blood Group</th>
+                <th className="text-left px-4 md:px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Units</th>
+                <th className="text-left px-4 md:px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider hidden md:table-cell">Collection</th>
+                <th className="text-left px-4 md:px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider hidden md:table-cell">Expiry</th>
+                <th className="text-left px-4 md:px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Status</th>
+                <th className="text-right px-4 md:px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-50">
+              {filteredInventory.length === 0 && (
+                <tr><td colSpan={6} className="px-6 py-12 text-center text-sm text-slate-500">{searchTerm ? "No matching units found." : "No inventory units yet. Add your first unit."}</td></tr>
+              )}
+              {filteredInventory.map((item) => {
+                const isExpiring = item.expiry_date && Math.ceil((new Date(item.expiry_date) - new Date()) / (1000 * 60 * 60 * 24)) <= 7 && item.status === "AVAILABLE";
+                return (
+                  <tr key={item.id} className="hover:bg-slate-50/50 transition">
+                    <td className="px-4 md:px-6 py-3"><span className="font-bold text-red">{item.blood_group}</span></td>
+                    <td className="px-4 md:px-6 py-3 text-slate-600">{item.units} units</td>
+                    <td className="px-4 md:px-6 py-3 text-slate-500 hidden md:table-cell">{item.collection_date || "—"}</td>
+                    <td className="px-4 md:px-6 py-3 hidden md:table-cell">
+                      <span className={`${isExpiring ? "text-red font-semibold" : "text-slate-500"}`}>
+                        {item.expiry_date || "—"}
+                        {isExpiring && <span className="ml-1 text-[10px]">(Expiring)</span>}
+                      </span>
+                    </td>
+                    <td className="px-4 md:px-6 py-3">
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${statusColors[item.status] || statusColors.AVAILABLE}`}>
+                        {statusLabels[item.status] || item.status || "Available"}
+                      </span>
+                    </td>
+                    <td className="px-4 md:px-6 py-3 text-right">
+                      <div className="flex items-center justify-end gap-1">
+                        <button onClick={() => handleDelete(item.id)} className="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red transition"><Trash2 size={14} /></button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+        {inventory.length > 0 && (
+          <div className="px-4 md:px-6 py-3 border-t border-slate-100 text-xs text-slate-400">
+            Showing {filteredInventory.length} of {inventory.length} units
+          </div>
+        )}
+      </motion.div>
 
-        <div className="space-y-6">
+      {(lowStock.length > 0 || nearExpiry.length > 0) && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {lowStock.length > 0 && (
             <motion.div className="bg-white rounded-2xl p-4 md:p-6 border border-slate-100 shadow-sm" {...fadeUp}>
               <h4 className="text-sm font-bold text-slate-900 flex items-center gap-2 mb-3">
@@ -335,7 +333,7 @@ export default function BloodBankInventory() {
             </motion.div>
           )}
         </div>
-      </div>
+      )}
 
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">

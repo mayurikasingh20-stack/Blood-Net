@@ -11,7 +11,6 @@ import {
   Activity,
   Search,
   ChevronRight,
-  RefreshCw,
   Shield,
   UserCheck,
   Ban,
@@ -20,6 +19,16 @@ import {
 import { getAdminDashboard, getAdminCamps, getNotifications } from "../services/dashboardService";
 import api from "../services/api";
 import NotificationPanel from "../components/shared/NotificationPanel";
+
+function shallowArrayEqual(a, b) {
+  if (a === b) return true;
+  if (!a || !b) return false;
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) {
+    if (a[i] !== b[i]) return false;
+  }
+  return true;
+}
 
 const fadeUp = {
   initial: { opacity: 0, y: 20 },
@@ -52,23 +61,7 @@ export default function AdminDashboard() {
     setLoading(true);
     setError("");
     try {
-      const dash = await getAdminDashboard().catch(() => null);
-      setDashboard(dash);
-
-      const [banksRes, reqsRes, donsRes] = await Promise.all([
-        api.get("/admin/blood-banks").catch(() => ({ data: { blood_banks: [] } })),
-        api.get("/admin/blood-requests").catch(() => ({ data: { blood_requests: [] } })),
-        api.get("/admin/donations").catch(() => ({ data: { donations: [] } })),
-      ]);
-      setBloodBanks(Array.isArray(banksRes.data?.blood_banks) ? banksRes.data.blood_banks : []);
-      setAllRequests(Array.isArray(reqsRes.data?.blood_requests) ? reqsRes.data.blood_requests : []);
-      setAllDonations(Array.isArray(donsRes.data?.donations) ? donsRes.data.donations : []);
-
-      const campsData = await getAdminCamps().catch(() => ({ camps: [] }));
-      setCamps(Array.isArray(campsData?.camps) ? campsData.camps : []);
-
-      const notifs = await getNotifications().catch(() => ({ notifications: [] }));
-      setNotifications(Array.isArray(notifs?.notifications) ? notifs.notifications : []);
+      await loadAllData(true);
     } catch {
       setError("Could not load admin data.");
     } finally {
@@ -76,12 +69,43 @@ export default function AdminDashboard() {
     }
   }, []);
 
+  const pollData = useCallback(async () => {
+    await loadAllData(false);
+  }, []);
+
+  async function loadAllData(isFullRefresh) {
+    const dash = await getAdminDashboard().catch(() => null);
+    setDashboard((prev) => isFullRefresh || JSON.stringify(dash) !== JSON.stringify(prev) ? dash : prev);
+
+    const [banksRes, reqsRes, donsRes] = await Promise.all([
+      api.get("/admin/blood-banks").catch(() => ({ data: { blood_banks: [] } })),
+      api.get("/admin/blood-requests").catch(() => ({ data: { blood_requests: [] } })),
+      api.get("/admin/donations").catch(() => ({ data: { donations: [] } })),
+    ]);
+
+    const newBanks = Array.isArray(banksRes.data?.blood_banks) ? banksRes.data.blood_banks : [];
+    const newReqs = Array.isArray(reqsRes.data?.blood_requests) ? reqsRes.data.blood_requests : [];
+    const newDons = Array.isArray(donsRes.data?.donations) ? donsRes.data.donations : [];
+
+    setBloodBanks((prev) => isFullRefresh || !shallowArrayEqual(newBanks, prev) ? newBanks : prev);
+    setAllRequests((prev) => isFullRefresh || !shallowArrayEqual(newReqs, prev) ? newReqs : prev);
+    setAllDonations((prev) => isFullRefresh || !shallowArrayEqual(newDons, prev) ? newDons : prev);
+
+    const campsData = await getAdminCamps().catch(() => ({ camps: [] }));
+    const newCamps = Array.isArray(campsData?.camps) ? campsData.camps : [];
+    setCamps((prev) => isFullRefresh || !shallowArrayEqual(newCamps, prev) ? newCamps : prev);
+
+    const notifs = await getNotifications().catch(() => ({ notifications: [] }));
+    const newNotifs = Array.isArray(notifs?.notifications) ? notifs.notifications : [];
+    setNotifications((prev) => isFullRefresh || !shallowArrayEqual(newNotifs, prev) ? newNotifs : prev);
+  }
+
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
   useEffect(() => {
-    const interval = setInterval(fetchAll, 30000);
+    const interval = setInterval(pollData, 30000);
     return () => clearInterval(interval);
-  }, [fetchAll]);
+  }, [pollData]);
 
   async function handleApprove(id) {
     try {
@@ -102,6 +126,7 @@ export default function AdminDashboard() {
   const pendingBanks = bloodBanks.filter((b) => (b.verification_status || b.status) === "pending");
   const approvedBanks = bloodBanks.filter((b) => (b.verification_status || b.status) === "approved");
   const pendingRequests = allRequests.filter((r) => r.status === "pending");
+  const today = new Date().toISOString().split("T")[0];
 
   const filteredBanks = bloodBanks.filter((b) =>
     (b.facility_name || b.name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -118,13 +143,6 @@ export default function AdminDashboard() {
           <h1 className="text-2xl md:text-3xl font-bold text-slate-900">Admin Dashboard</h1>
           <p className="text-sm text-slate-500 mt-1">Manage users, blood banks, and platform activity.</p>
         </div>
-        <button
-          onClick={fetchAll}
-          className="px-4 py-2 border border-slate-200 rounded-full text-sm font-semibold text-slate-600 hover:border-red hover:text-red transition flex items-center gap-1.5"
-        >
-          <RefreshCw size={15} />
-          Refresh
-        </button>
       </div>
 
       {error && (
@@ -184,7 +202,7 @@ export default function AdminDashboard() {
         {/* Overview Tab */}
         {activeTab === "overview" && (
           <motion.div className="space-y-6" {...fadeUp}>
-            <NotificationPanel notifications={notifications} onClear={() => {
+            <NotificationPanel notifications={notifications} onClear={() => setNotifications([])} onReadAll={() => {
               setNotifications((prev) => prev.map((n) => ({ ...n, status: "read" })));
             }} />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -466,11 +484,12 @@ export default function AdminDashboard() {
                           <td className="px-4 py-3 text-slate-500 hidden md:table-cell">{camp.blood_bank_name || "—"}</td>
                           <td className="px-4 py-3">
                             <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                              camp.status === "completed" ? "bg-green-50 text-green-600" :
-                              camp.status === "ongoing" || camp.date === new Date().toISOString().split("T")[0] ? "bg-blue-50 text-blue-600" :
+                              camp.date < today ? "bg-green-50 text-green-600" :
+                              camp.date === today ? "bg-blue-50 text-blue-600" :
                               "bg-amber-50 text-amber-700"
                             }`}>
-                              {camp.date === new Date().toISOString().split("T")[0] ? "Today" : camp.status || "upcoming"}
+                              {camp.date < today ? "Completed" :
+                               camp.date === today ? "Today" : "Upcoming"}
                             </span>
                           </td>
                         </tr>

@@ -7,7 +7,6 @@ import { Droplets, AlertTriangle, Bell, CheckCircle, Activity, ThumbsUp, XCircle
 import { useNavigate } from "react-router-dom";
 import useAuth from "../context/useAuth";
 import { getBloodBankDashboard, getInventory, getNotifications, getOpenRequests, getMyCamps, createCamp, updateCamp, deleteCamp, fulfillBloodRequest } from "../services/dashboardService";
-import BloodMap from "../components/shared/BloodMap";
 import api from "../services/api";
 import { BLOOD_GROUPS } from "../utils/constants";
 import NotificationPanel from "../components/shared/NotificationPanel";
@@ -78,6 +77,16 @@ function CampClickMarker({ position, onPositionChange }) {
   ) : null;
 }
 
+function shallowArrayEqual(a, b) {
+  if (a === b) return true;
+  if (!a || !b) return false;
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) {
+    if (a[i] !== b[i]) return false;
+  }
+  return true;
+}
+
 const fadeUp = {
   initial: { opacity: 0, y: 20 },
   whileInView: { opacity: 1, y: 0 },
@@ -107,20 +116,7 @@ export default function BloodBankDashboard() {
     setLoading(true);
     setError("");
     try {
-      const [dashData, invData, reqRes, openReqData, notifData, campsData] = await Promise.all([
-        getBloodBankDashboard().catch(() => null),
-        getInventory().catch(() => ({ inventory: [] })),
-        api.get("/blood-request/my-requests").catch(() => ({ data: { blood_requests: [] } })),
-        getOpenRequests().catch(() => ({ blood_requests: [] })),
-        getNotifications().catch(() => ({ notifications: [] })),
-        getMyCamps().catch(() => ({ camps: [] })),
-      ]);
-      setDashboard(dashData);
-      setInventory(Array.isArray(invData?.inventory) ? invData.inventory : []);
-      setRequests(Array.isArray(reqRes.data?.blood_requests) ? reqRes.data.blood_requests : []);
-      setOpenBloodRequests(openReqData?.blood_requests || []);
-      setNotifications(notifData?.notifications || []);
-      setCamps(Array.isArray(campsData?.camps) ? campsData.camps : []);
+      await loadAllData(true);
     } catch {
       setError("Could not load data.");
     } finally {
@@ -128,17 +124,47 @@ export default function BloodBankDashboard() {
     }
   }, []);
 
+  const pollData = useCallback(async () => {
+    await loadAllData(false);
+  }, []);
+
+  async function loadAllData(isFullRefresh) {
+    const [dashData, invData, reqRes, openReqData, notifData, campsData] = await Promise.all([
+      getBloodBankDashboard().catch(() => null),
+      getInventory().catch(() => ({ inventory: [] })),
+      api.get("/blood-request/my-requests").catch(() => ({ data: { blood_requests: [] } })),
+      getOpenRequests().catch(() => ({ blood_requests: [] })),
+      getNotifications().catch(() => ({ notifications: [] })),
+      getMyCamps().catch(() => ({ camps: [] })),
+    ]);
+
+    setDashboard((prev) => isFullRefresh || JSON.stringify(dashData) !== JSON.stringify(prev) ? dashData : prev);
+
+    const newInv = Array.isArray(invData?.inventory) ? invData.inventory : [];
+    const newReqs = Array.isArray(reqRes.data?.blood_requests) ? reqRes.data.blood_requests : [];
+    const newOpen = openReqData?.blood_requests || [];
+    const newNotifs = notifData?.notifications || [];
+    const newCamps = Array.isArray(campsData?.camps) ? campsData.camps : [];
+
+    setInventory((prev) => isFullRefresh || !shallowArrayEqual(newInv, prev) ? newInv : prev);
+    setRequests((prev) => isFullRefresh || !shallowArrayEqual(newReqs, prev) ? newReqs : prev);
+    setOpenBloodRequests((prev) => isFullRefresh || !shallowArrayEqual(newOpen, prev) ? newOpen : prev);
+    setNotifications((prev) => isFullRefresh || !shallowArrayEqual(newNotifs, prev) ? newNotifs : prev);
+    setCamps((prev) => isFullRefresh || !shallowArrayEqual(newCamps, prev) ? newCamps : prev);
+  }
+
   useEffect(() => { fetchData(); }, [fetchData]);
 
   useEffect(() => {
-    const interval = setInterval(fetchData, 30000);
+    const interval = setInterval(pollData, 30000);
     return () => clearInterval(interval);
-  }, [fetchData]);
+  }, [pollData]);
 
   const sumUnits = (items) => items.reduce((s, i) => s + (i.units || 0), 0);
   const totalAvailable = sumUnits(inventory.filter((i) => i.status === "AVAILABLE"));
   const totalUnits = sumUnits(inventory);
   const availableTypes = new Set(inventory.filter((i) => i.units > 0 && i.status !== "EXPIRED").map((i) => i.blood_group)).size;
+  const today = new Date().toISOString().split("T")[0];
 
   const lowStock = inventory.filter((i) => i.status === "LOW_STOCK");
 
@@ -375,26 +401,14 @@ export default function BloodBankDashboard() {
               )}
             </div>
           </motion.div>
-
-          {/* Nearby Blood Banks Map */}
-          <motion.div className="bg-white rounded-2xl border border-slate-100 shadow-sm" {...fadeUp}>
-            <div className="px-4 md:px-6 py-4 border-b border-slate-100">
-              <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                <MapPin size={16} className="text-red" />
-                Nearby Blood Banks & Camps
-              </h3>
-            </div>
-            <div className="p-4 md:p-6"><BloodMap showCamps={true} height="320px" /></div>
-          </motion.div>
         </div>
 
         <NotificationPanel
           notifications={notifications}
-          onClear={() => {
+          onClear={() => setNotifications([])}
+          onReadAll={() => {
             setNotifications((prev) =>
-              prev.map((n) =>
-                n.notification_type === "blood_request" ? { ...n, status: "read" } : n
-              )
+              prev.map((n) => ({ ...n, status: "read" }))
             );
           }}
         />
@@ -435,11 +449,12 @@ export default function BloodBankDashboard() {
                       <p className="text-xs text-slate-500 mt-0.5">{camp.venue || camp.address}</p>
                     </div>
                     <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap ${
-                      camp.status === "completed" ? "bg-green-50 text-green-600" :
-                      camp.date === new Date().toISOString().split("T")[0] ? "bg-blue-50 text-blue-600" :
+                      camp.date < today ? "bg-green-50 text-green-600" :
+                      camp.date === today ? "bg-blue-50 text-blue-600" :
                       "bg-amber-50 text-amber-700"
                     }`}>
-                      {camp.date === new Date().toISOString().split("T")[0] ? "Today" : camp.status || "upcoming"}
+                      {camp.date < today ? "Completed" :
+                       camp.date === today ? "Today" : "Upcoming"}
                     </span>
                   </div>
                   <div className="mt-2 text-xs text-slate-500 space-y-0.5">

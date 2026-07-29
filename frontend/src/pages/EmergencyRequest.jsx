@@ -61,6 +61,8 @@ export default function EmergencyRequest() {
     if (!isBloodBank && !form.hospital_address.trim()) return "Hospital address is required";
     if (!form.city.trim()) return "City is required";
     if (!form.required_before) return "Required by date is required";
+    const today = new Date().toISOString().split("T")[0];
+    if (form.required_before < today) return "Required-by date cannot be in the past. Please choose today or a future date.";
     if (!form.contact_name.trim()) return "Contact name is required";
     if (!form.contact_phone.trim()) return "Contact phone is required";
     if (form.units < 1) return "Units must be at least 1";
@@ -162,7 +164,7 @@ export default function EmergencyRequest() {
                 </div>
                 <div>
                   <label className="text-sm font-semibold text-slate-700 block mb-1">Required By *</label>
-                  <input type="date" value={form.required_before} onChange={(e) => update("required_before", e.target.value)} className={inputClass} />
+                  <input type="date" value={form.required_before} onChange={(e) => update("required_before", e.target.value)} min={new Date().toISOString().split("T")[0]} className={inputClass} />
                 </div>
                 {isBloodBank && (
                   <div>

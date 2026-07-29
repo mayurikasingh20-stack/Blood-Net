@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
-import { Search, CheckCircle, XCircle, Shield, AlertTriangle, RefreshCw } from "lucide-react";
+import { Search, CheckCircle, XCircle, Shield, AlertTriangle } from "lucide-react";
 import api from "../services/api";
 
 export default function AdminBloodBanks() {
@@ -51,9 +51,6 @@ export default function AdminBloodBanks() {
           <h2 className="text-2xl font-bold text-slate-900">Manage Blood Banks</h2>
           <p className="text-sm text-slate-500 mt-1">Approve or reject blood bank registrations.</p>
         </div>
-        <button onClick={fetchBanks} className="flex items-center gap-1.5 px-4 py-2 border border-slate-200 rounded-full text-sm font-semibold text-slate-600 hover:border-red hover:text-red transition">
-          <RefreshCw size={15} /> Refresh
-        </button>
       </div>
 
       <div className="relative max-w-md">

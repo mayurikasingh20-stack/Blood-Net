@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { RefreshCw, AlertTriangle, Droplets, Search } from "lucide-react";
+import { AlertTriangle, Droplets, Search } from "lucide-react";
 import api from "../services/api";
 
 const statusStyles = {
@@ -43,9 +43,6 @@ export default function AdminRequests() {
           <h2 className="text-2xl font-bold text-slate-900">All Blood Requests</h2>
           <p className="text-sm text-slate-500 mt-1">Track current status of all blood requests across the platform.</p>
         </div>
-        <button onClick={fetchAll} className="flex items-center gap-1.5 px-4 py-2 border border-slate-200 rounded-full text-sm font-semibold text-slate-600 hover:border-red hover:text-red transition">
-          <RefreshCw size={15} /> Refresh
-        </button>
       </div>
 
       <div className="relative max-w-md">

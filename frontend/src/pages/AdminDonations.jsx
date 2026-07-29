@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { TrendingUp, RefreshCw, AlertTriangle, Search, X } from "lucide-react";
+import { TrendingUp, AlertTriangle, Search, X } from "lucide-react";
 import api from "../services/api";
 
 function formatDate(dateStr) {
@@ -44,9 +44,6 @@ export default function AdminDonations() {
           <h2 className="text-2xl font-bold text-slate-900">Donation History</h2>
           <p className="text-sm text-slate-500 mt-1">Completed and fulfilled donations across the platform.</p>
         </div>
-        <button onClick={fetchAll} className="flex items-center gap-1.5 px-4 py-2 border border-slate-200 rounded-full text-sm font-semibold text-slate-600 hover:border-red hover:text-red transition">
-          <RefreshCw size={15} /> Refresh
-        </button>
       </div>
 
       <div className="relative max-w-md">

@@ -3,19 +3,18 @@ import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ThumbsUp, CheckCircle, Clock, Droplets, Heart, Plus,
-  XCircle, AlertCircle, MapPin, Bell, User, Settings,
+  XCircle, AlertCircle, Bell, User,
   Activity, ChevronDown, ChevronUp, Phone,
 } from "lucide-react";
 import useAuth from "../context/useAuth";
-import BloodMap from "../components/shared/BloodMap";
 import NotificationPanel from "../components/shared/NotificationPanel";
 import DonorScreeningModal from "../components/donor/DonorScreeningModal";
-import RaiseRequestModal from "../components/shared/RaiseRequestModal";
+
 import { DONATION_STATUS_STYLES, STATUS_STYLES } from "../utils/constants";
 import {
   getUserDashboard, getDonorProfile, getMyDonations, getOpenRequests,
   updateAvailability, acceptBloodRequest, getNotifications,
-  getMyBloodRequests, createBloodRequest, cancelBloodRequest,
+  getMyBloodRequests, cancelBloodRequest,
   verifyDonationFulfillment, patientUpdateRequestStatus,
 } from "../services/dashboardService";
 
@@ -53,7 +52,6 @@ export default function UnifiedDashboard() {
 
   const [acceptingId, setAcceptingId] = useState(null);
   const [screeningRequest, setScreeningRequest] = useState(null);
-  const [raiseOpen, setRaiseOpen] = useState(false);
   const [expandedRequest, setExpandedRequest] = useState(null);
   const [verifyModal, setVerifyModal] = useState(null);
   const [verifyUnits, setVerifyUnits] = useState(1);
@@ -148,35 +146,6 @@ export default function UnifiedDashboard() {
     }
   }
 
-  async function handleCreateRequest(formData) {
-    const payload = {
-      blood_group: formData.bloodGroup,
-      units: parseInt(formData.unitsNeeded),
-      hospital: formData.hospital,
-      hospital_address: formData.hospitalAddress || formData.hospital,
-      city: formData.city || user?.city || "",
-      urgency_level: formData.urgency,
-      required_before: formData.requiredBefore || new Date(Date.now() + 7 * 86400000).toISOString().split("T")[0],
-      purpose: formData.condition || "",
-      contact_name: formData.contactName || user?.name || "",
-      contact_phone: formData.contactPhone || user?.phone || "",
-    };
-    try {
-      await createBloodRequest(payload);
-      setRaiseOpen(false);
-      fetchData();
-    } catch (err) {
-      const errors = err.response?.data?.errors;
-      let msg = err.response?.data?.message || "Could not create request.";
-      if (errors) {
-        const fieldLabels = { blood_group: "Blood group", hospital_address: "Hospital address", contact_phone: "Contact phone", required_before: "Required by date", urgency_level: "Urgency level" };
-        const list = Object.entries(errors).map(([k, v]) => `${fieldLabels[k] || k}: ${v}`).join("\n");
-        msg = list || msg;
-      }
-      alert(msg);
-    }
-  }
-
   async function handleVerify(donationId, units) {
     setVerifying(true);
     try {
@@ -256,15 +225,12 @@ export default function UnifiedDashboard() {
         </div>
         <div className="flex items-center gap-2">
           {isPatient && (
-            <button onClick={() => setRaiseOpen(true)}
+            <Link to="/requests"
               className="px-5 py-2.5 bg-red text-white rounded-full text-sm font-bold hover:bg-red-700 transition flex items-center gap-2 shadow-lg shadow-red/20"
             >
               <Plus size={16} /> Raise Request
-            </button>
+            </Link>
           )}
-          <Link to="/settings" className="px-4 py-2 border border-slate-200 rounded-full text-sm font-semibold text-slate-600 hover:border-red hover:text-red transition flex items-center gap-1.5">
-            <Settings size={15} />
-          </Link>
         </div>
       </div>
 
@@ -445,48 +411,6 @@ export default function UnifiedDashboard() {
                 </div>
               </motion.div>
 
-              {/* Donation History */}
-              <motion.div className="bg-white rounded-2xl border border-slate-100 shadow-sm" {...fadeUp}>
-                <div className="flex items-center justify-between px-4 md:px-6 py-4 border-b border-slate-100">
-                  <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                    <Activity size={16} className="text-red" />
-                    History
-                  </h3>
-                  {donations.length > 0 && (
-                    <Link to="/history" className="text-xs text-red font-semibold hover:underline">View All</Link>
-                  )}
-                </div>
-                <div className="p-4 md:p-6">
-                  {donations.length === 0 ? (
-                    <div className="text-center py-8">
-                      <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                        <Droplets size={20} className="text-slate-400" />
-                      </div>
-                      <p className="text-sm text-slate-500">No donations yet</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      {donations.slice(0, 5).map((d, idx) => (
-                        <div key={d.donation_id || idx} className="flex items-start gap-3">
-                          <div className="flex flex-col items-center">
-                            <div className={`w-3 h-3 rounded-full border-2 ${idx === 0 ? "bg-red border-red" : "bg-slate-200 border-slate-200"}`} />
-                            {idx < Math.min(donations.length, 5) - 1 && <div className="w-0.5 h-8 bg-slate-100" />}
-                          </div>
-                          <div className="flex-1 pb-3">
-                            <p className="text-sm font-semibold text-slate-900">{d.blood_group} - {d.hospital || "Blood Bank"}</p>
-                            <p className="text-xs text-slate-500">
-                              {d.created_at ? new Date(d.created_at).toLocaleDateString() : ""} &middot; {d.donated_units || 1} unit(s)
-                            </p>
-                          </div>
-                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0 ${DONATION_STATUS_STYLES[d.status] || "bg-amber-50 text-amber-700"}`}>
-                            {d.status || "Pending"}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </motion.div>
             </>
           )}
 
@@ -504,7 +428,7 @@ export default function UnifiedDashboard() {
                     </div>
                     <p className="text-sm text-slate-500">No blood requests yet</p>
                     <p className="text-xs text-slate-400 mt-1 mb-4">Click "Raise Blood Request" to create your first request</p>
-                    <button onClick={() => setRaiseOpen(true)} className="px-4 py-2 bg-red text-white rounded-full text-xs font-bold hover:bg-red-700 transition">Create Request</button>
+                    <Link to="/requests" className="px-4 py-2 bg-red text-white rounded-full text-xs font-bold hover:bg-red-700 transition inline-block">Create Request</Link>
                   </div>
                 ) : (
                   <div className="space-y-3">
@@ -610,13 +534,6 @@ export default function UnifiedDashboard() {
             </motion.div>
           )}
 
-          {/* Map */}
-          <motion.div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden" {...fadeUp}>
-            <div className="px-4 md:px-6 py-4 border-b border-slate-100">
-              <h3 className="text-base font-bold text-slate-900 flex items-center gap-2"><MapPin size={16} className="text-red" /> Nearby Blood Banks</h3>
-            </div>
-            <div className="p-4 md:p-6"><BloodMap showCamps={true} height="320px" /></div>
-          </motion.div>
         </div>
 
         {/* Right Sidebar */}
@@ -637,16 +554,14 @@ export default function UnifiedDashboard() {
                 {weight && <div className="flex justify-between"><span className="text-slate-500">Weight</span><span className="font-semibold">{weight} kg</span></div>}
                 <div className="flex justify-between"><span className="text-slate-500">Status</span><span className={`font-semibold ${available ? "text-emerald-600" : "text-slate-400"}`}>{available ? "Available" : "Unavailable"}</span></div>
               </div>
-              <Link to="/profile" className="mt-4 w-full flex items-center justify-center gap-1.5 px-4 py-2.5 border border-slate-200 rounded-xl text-sm font-semibold text-slate-600 hover:border-red hover:text-red transition">
-                <User size={15} /> Edit Profile
-              </Link>
             </motion.div>
           )}
 
           <NotificationPanel
             notifications={notifications}
-            onClear={() => setNotifications((prev) =>
-              prev.map((n) => n.notification_type === "blood_request" ? { ...n, status: "read" } : n)
+            onClear={() => setNotifications([])}
+            onReadAll={() => setNotifications((prev) =>
+              prev.map((n) => ({ ...n, status: "read" }))
             )}
           />
         </div>
@@ -659,15 +574,6 @@ export default function UnifiedDashboard() {
           requestBloodGroup={screeningRequest.blood_group}
           onComplete={(result) => handleScreeningComplete(screeningRequest.id, result)}
           onClose={() => setScreeningRequest(null)}
-        />
-      )}
-
-      {/* Raise Request Modal */}
-      {raiseOpen && (
-        <RaiseRequestModal
-          requesterName={user?.name || "Patient"}
-          onClose={() => setRaiseOpen(false)}
-          onSubmit={handleCreateRequest}
         />
       )}
 

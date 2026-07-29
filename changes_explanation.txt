@@ -1,0 +1,65 @@
+=== WHAT WAS CHANGED AND WHY ===
+
+1. REMOVED REFRESH BUTTON from all 4 admin pages:
+   - AdminDashboard.jsx
+   - AdminBloodBanks.jsx
+   - AdminDonations.jsx
+   - AdminRequests.jsx
+
+   These buttons called the same API fetch functions that already run
+   automatically on page load. So they were unnecessary.
+
+2. FIXED THE 30-SECOND AUTO-REFRESH (AdminDashboard.jsx only)
+   - The dashboard was refreshing every 30 seconds with a loading spinner,
+     which caused the page to "flicker" visibly.
+   - Now the background polling is "silent" — it still fetches fresh data
+     every 30 seconds, but WITHOUT showing the loading state.
+
+=== HOW THE SILENT POLLING WORKS ===
+
+There are now 2 fetch functions inside AdminDashboard.jsx:
+
+A) fetchAll() — Used on first page load and when approving/rejecting banks.
+   - Shows loading spinner (setLoading)
+   - Shows error messages if API fails
+   - Always updates the data (ignores comparison)
+
+B) pollData() — Used by the 30-second timer ONLY.
+   - Does NOT show loading spinner
+   - Does NOT show error messages
+   - Only updates React state if data actually CHANGED
+     (uses shallow comparison to check if arrays are different)
+
+Both functions share the same helper: loadAllData(isFullRefresh)
+
+=== WHAT IS SHALLOW COMPARISON ===
+
+A custom function shallowArrayEqual(a, b) compares two arrays:
+- If they have different lengths → different
+- If any item at the same index is different → different
+- If same → don't update state (avoids unnecessary re-render)
+
+For the dashboard object (which is not an array), we use JSON.stringify
+to compare before updating.
+
+=== FILES MODIFIED ===
+
+frontend/src/pages/AdminDashboard.jsx:
+  - Removed RefreshCw import
+  - Removed Refresh button from JSX
+  - Added shallowArrayEqual() helper function
+  - Added loadAllData() shared function
+  - Changed 30-second timer to use pollData() (silent, no loading)
+  - Kept fetchAll() for initial load and approve/reject actions
+
+frontend/src/pages/AdminBloodBanks.jsx:
+  - Removed RefreshCw import
+  - Removed Refresh button from JSX
+
+frontend/src/pages/AdminDonations.jsx:
+  - Removed RefreshCw import
+  - Removed Refresh button from JSX
+
+frontend/src/pages/AdminRequests.jsx:
+  - Removed RefreshCw import
+  - Removed Refresh button from JSX

@@ -30,6 +30,11 @@ export default function RaiseRequestModal({ onClose, onSubmit, requesterName = "
       setError("Please select the required-by date.");
       return;
     }
+    const today = new Date().toISOString().split("T")[0];
+    if (form.requiredBefore < today) {
+      setError("Required-by date cannot be in the past. Please choose today or a future date.");
+      return;
+    }
     const units = parseInt(form.unitsNeeded);
     if (isNaN(units) || units < 1) {
       setError("Units must be at least 1.");

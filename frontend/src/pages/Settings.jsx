@@ -3,7 +3,6 @@ import { motion } from "framer-motion";
 import {
   User,
   Shield,
-  Bell,
   Lock,
   Eye,
   EyeOff,
@@ -13,6 +12,7 @@ import {
 } from "lucide-react";
 import useAuth from "../context/useAuth";
 import api from "../services/api";
+import { getDonorProfile, updateDonorProfile } from "../services/dashboardService";
 
 const fadeUp = {
   initial: { opacity: 0, y: 20 },
@@ -24,7 +24,6 @@ const fadeUp = {
 const tabs = [
   { id: "profile", label: "Profile", icon: User },
   { id: "password", label: "Password", icon: Lock },
-  { id: "notifications", label: "Notifications", icon: Bell },
 ];
 
 export default function Settings({ role: propRole }) {
@@ -38,12 +37,15 @@ export default function Settings({ role: propRole }) {
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
 
+  const isDonor = hasRole("donor");
+
   const [profile, setProfile] = useState({
     first_name: "",
     last_name: "",
     email: "",
     phone: "",
     city: "",
+    weight: "",
   });
 
   useEffect(() => {
@@ -57,7 +59,14 @@ export default function Settings({ role: propRole }) {
           email: data.email || "",
           phone: data.phone || "",
           city: data.city || "",
+          weight: "",
         });
+        if (isDonor) {
+          const donorRes = await getDonorProfile().catch(() => null);
+          if (donorRes?.donor?.weight) {
+            setProfile((prev) => ({ ...prev, weight: donorRes.donor.weight }));
+          }
+        }
       } catch {
         if (user) {
           setProfile({
@@ -66,24 +75,17 @@ export default function Settings({ role: propRole }) {
             email: user?.email || "",
             phone: user?.phone || "",
             city: user?.city || "",
+            weight: "",
           });
         }
       }
     })();
-  }, []);
+  }, [isDonor]);
 
   const [passwordData, setPasswordData] = useState({
     current_password: "",
     new_password: "",
     confirm_password: "",
-  });
-
-  const [notifications, setNotifications] = useState({
-    email_notifications: true,
-    sms_notifications: true,
-    emergency_alerts: true,
-    donation_reminders: true,
-    marketing_emails: false,
   });
 
   function updateProfile(field, value) {
@@ -92,10 +94,6 @@ export default function Settings({ role: propRole }) {
 
   function updatePassword(field, value) {
     setPasswordData((prev) => ({ ...prev, [field]: value }));
-  }
-
-  function toggleNotification(key) {
-    setNotifications((prev) => ({ ...prev, [key]: !prev[key] }));
   }
 
   async function handleSaveProfile(e) {
@@ -111,6 +109,9 @@ export default function Settings({ role: propRole }) {
         phone: profile.phone,
         city: profile.city,
       });
+      if (isDonor && profile.weight) {
+        await updateDonorProfile({ weight: Number(profile.weight) }).catch(() => {});
+      }
       setSuccess("Profile updated successfully!");
     } catch (err) {
       setError(err.response?.data?.message || err.response?.data?.error || "Could not update profile.");
@@ -147,19 +148,6 @@ export default function Settings({ role: propRole }) {
       });
     } catch {
       setError("Could not change password. Check your current password.");
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  async function handleSaveNotifications() {
-    setSaving(true);
-    setError("");
-    setSuccess("");
-    try {
-      setSuccess("Preferences saved locally.");
-    } catch {
-      setError("Could not save preferences.");
     } finally {
       setSaving(false);
     }
@@ -261,6 +249,18 @@ export default function Settings({ role: propRole }) {
                 className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-red/20"
               />
             </div>
+            {isDonor && (
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Weight (kg)</label>
+                <input
+                  type="number"
+                  value={profile.weight}
+                  onChange={(e) => updateProfile("weight", e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-red/20"
+                  min={1}
+                />
+              </div>
+            )}
             <div className="flex items-center gap-2 text-xs text-slate-400 bg-slate-50 px-4 py-3 rounded-xl">
               <Shield size={14} />
               Your data is encrypted and never shared without your consent.
@@ -371,59 +371,6 @@ export default function Settings({ role: propRole }) {
         </motion.div>
       )}
 
-      {/* Notifications Tab */}
-      {activeTab === "notifications" && (
-        <motion.div className="bg-white rounded-2xl p-4 md:p-8 border border-slate-100 shadow-sm" {...fadeUp}>
-          <div className="space-y-4">
-            {[
-              { key: "email_notifications", label: "Email Notifications", desc: "Receive updates via email" },
-              { key: "sms_notifications", label: "SMS Notifications", desc: "Receive updates via text message" },
-              { key: "emergency_alerts", label: "Emergency Alerts", desc: "Get notified about urgent blood needs in your area" },
-              { key: "donation_reminders", label: "Donation Reminders", desc: "Reminders when you are eligible to donate again" },
-              { key: "marketing_emails", label: "Marketing Emails", desc: "Updates about camps, events, and news" },
-            ].map((item) => (
-              <div
-                key={item.key}
-                className="flex items-center justify-between py-3 px-4 rounded-xl hover:bg-slate-50 transition"
-              >
-                <div>
-                  <p className="text-sm font-semibold text-slate-800">{item.label}</p>
-                  <p className="text-xs text-slate-500">{item.desc}</p>
-                </div>
-                <button
-                  onClick={() => toggleNotification(item.key)}
-                  className={`relative w-11 h-6 rounded-full transition-colors ${
-                    notifications[item.key] ? "bg-emerald-500" : "bg-slate-300"
-                  }`}
-                >
-                  <span
-                    className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform ${
-                      notifications[item.key] ? "translate-x-5" : ""
-                    }`}
-                  />
-                </button>
-              </div>
-            ))}
-          </div>
-          <button
-            onClick={handleSaveNotifications}
-            disabled={saving}
-            className="mt-6 px-6 py-2.5 bg-red text-white rounded-full text-sm font-bold hover:bg-red-700 transition disabled:opacity-60 flex items-center gap-2"
-          >
-            {saving ? (
-              <>
-                <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                Saving...
-              </>
-            ) : (
-              <>
-                <Save size={16} />
-                Save Preferences
-              </>
-            )}
-          </button>
-        </motion.div>
-      )}
     </div>
   );
 }

@@ -38,7 +38,6 @@ const publicLinks = [
   { label: "Home", to: "/" },
   { label: "About", to: "/about" },
   { label: "Education", to: "/education" },
-  { label: "Blood Banks", to: "/bloodbank-register" },
   { label: "Contact", to: "/contact" },
 ];
 
@@ -47,6 +46,7 @@ const mapItem = { label: "Map", icon: "map", to: "/map" };
 const donorSidebar = [
   { label: "Dashboard", icon: "dashboard", to: "/dashboard" },
   { label: "Emergency Requests", icon: "emergency", to: "/requests" },
+  { label: "Camps", icon: "calendar_month", to: "/camps" },
   { label: "Blood Banks", icon: "location_on", to: "/blood-banks" },
   { label: "History", icon: "history", to: "/history" },
   mapItem,
@@ -56,6 +56,7 @@ const donorSidebar = [
 const patientSidebar = [
   { label: "Dashboard", icon: "dashboard", to: "/dashboard" },
   { label: "Blood Requests", icon: "bloodtype", to: "/requests" },
+  { label: "Camps", icon: "calendar_month", to: "/camps" },
   { label: "Nearby Donors", icon: "group", to: "/donors" },
   { label: "Blood Banks", icon: "location_on", to: "/blood-banks" },
   mapItem,
@@ -65,6 +66,7 @@ const patientSidebar = [
 const unifiedSidebar = [
   { label: "Dashboard", icon: "dashboard", to: "/dashboard" },
   { label: "Emergency Requests", icon: "emergency", to: "/requests" },
+  { label: "Camps", icon: "calendar_month", to: "/camps" },
   { label: "Blood Banks", icon: "location_on", to: "/blood-banks" },
   { label: "History", icon: "history", to: "/history" },
   { label: "Nearby Donors", icon: "group", to: "/donors" },
@@ -77,6 +79,7 @@ const bankSidebar = [
   { label: "Inventory", icon: "bloodtype", to: "/bloodbank/inventory" },
   { label: "Emergency", icon: "emergency", to: "/bloodbank/emergency" },
   { label: "Requests", icon: "notification_important", to: "/bloodbank/requests" },
+  { label: "Camps", icon: "calendar_month", to: "/bloodbank/camps" },
   mapItem,
   { label: "Settings", icon: "settings", to: "/bloodbank/settings" },
 ];
@@ -131,6 +134,15 @@ function MapPageWrapper() {
   );
 }
 
+function CampsPageWrapper() {
+  const { items } = useSidebar();
+  return (
+    <DashboardPage sidebarItems={items} title="Camps" subtitle="Blood Donation Camps">
+      <Camps />
+    </DashboardPage>
+  );
+}
+
 export default function AppRoutes() {
   return (
     <Routes>
@@ -138,7 +150,6 @@ export default function AppRoutes() {
       <Route path="/" element={<PublicPage><Landing /></PublicPage>} />
       <Route path="/about" element={<PublicPage><About /></PublicPage>} />
       <Route path="/contact" element={<PublicPage><Contact /></PublicPage>} />
-      <Route path="/camps" element={<PublicPage><Camps /></PublicPage>} />
       <Route path="/education" element={<PublicPage><Education /></PublicPage>} />
       <Route path="/login" element={<PublicPage><Login /></PublicPage>} />
       <Route path="/register" element={<PublicPage><Register /></PublicPage>} />
@@ -194,6 +205,14 @@ export default function AppRoutes() {
             <DashboardPage sidebarItems={unifiedSidebar} title="Blood Banks" subtitle="Find Blood Banks">
               <PublicBloodBanks />
             </DashboardPage>
+          </RoleBasedRoute>
+        }
+      />
+      <Route
+        path="/camps"
+        element={
+          <RoleBasedRoute allowedRoles={["donor", "patient"]}>
+            <CampsPageWrapper />
           </RoleBasedRoute>
         }
       />
@@ -501,6 +520,16 @@ export default function AppRoutes() {
           <RoleBasedRoute allowedRoles={["bloodbank"]}>
             <DashboardPage sidebarItems={bankSidebar} title="Blood Bank" subtitle="Inventory">
               <BloodBankInventory />
+            </DashboardPage>
+          </RoleBasedRoute>
+        }
+      />
+      <Route
+        path="/bloodbank/camps"
+        element={
+          <RoleBasedRoute allowedRoles={["bloodbank"]}>
+            <DashboardPage sidebarItems={bankSidebar} title="Blood Bank" subtitle="Camps">
+              <Camps />
             </DashboardPage>
           </RoleBasedRoute>
         }

@@ -81,6 +81,9 @@ def create_blood_request(data):
     except (ValueError, TypeError):
         return {"errors": {"required_before": "Invalid date format. Use YYYY-MM-DD."}}, 400
 
+    if required_before.date() < datetime.now().date():
+        return {"errors": {"required_before": "Required-by date cannot be in the past. Please choose today or a future date."}}, 400
+
     urgency_str = data.get("urgency_level", "Moderate")
     try:
         urgency_level = UrgencyLevel(urgency_str)
@@ -585,6 +588,9 @@ def patient_update_request_status(request_id, data):
             donation.status = DonationStatus.VERIFIED
             donation.donated_units = 1
             donation.verified_at = datetime.utcnow()
+
+            if donation.donor:
+                donation.donor.last_donation_date = datetime.utcnow().date()
 
             if donation.donor and donation.donor.user:
                 donor_name = f"{donation.donor.user.first_name} {donation.donor.user.last_name}"

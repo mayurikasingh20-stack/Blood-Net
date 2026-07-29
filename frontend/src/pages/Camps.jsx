@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { CalendarDays, MapPin, Droplet } from "lucide-react";
-import BloodMap from "../components/shared/BloodMap";
+import { CalendarDays, MapPin, Droplet, AlertCircle, Clock } from "lucide-react";
+import api from "../services/api";
 
 const fadeUp = {
   initial: { opacity: 0, y: 20 },
@@ -13,32 +13,42 @@ const fadeUp = {
 export default function Camps() {
   const [camps, setCamps] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    fetch("http://127.0.0.1:5000/api/map/camps")
-      .then((res) => res.json())
-      .then((data) => setCamps(data))
-      .catch(() => setCamps([]))
+    api.get("/camps/")
+      .then((res) => setCamps(res.data?.camps || []))
+      .catch(() => setError("Could not load camps."))
       .finally(() => setLoading(false));
   }, []);
 
-  return (
-    <div className="max-w-6xl mx-auto px-4 md:px-8 py-10 md:py-16">
-      <motion.div className="mb-8 md:mb-10" {...fadeUp}>
-        <span className="inline-flex items-center gap-2 text-red font-bold text-sm uppercase tracking-wider bg-red/10 px-4 py-1.5 rounded-full mb-4">
-          <Droplet size={16} /> Get Involved
-        </span>
-        <h1 className="text-2xl md:text-4xl font-bold text-slate-900 mb-3">
-          Upcoming Blood Donation Camps
-        </h1>
-        <p className="text-slate-500 max-w-2xl text-sm md:text-base">
-          Find a blood donation camp near you. No appointment needed - just show up with a valid ID.
-        </p>
-      </motion.div>
+  const today = new Date().toISOString().split("T")[0];
 
-      <motion.div className="mb-8 md:mb-10" {...fadeUp}>
-        <BloodMap showCamps={true} showBank={false} height="360px" />
-      </motion.div>
+  function getStatus(date) {
+    if (date < today) return "Completed";
+    if (date === today) return "Today";
+    return "Upcoming";
+  }
+
+  function getStatusColor(date) {
+    if (date < today) return "bg-green-50 text-green-600";
+    if (date === today) return "bg-blue-50 text-blue-600";
+    return "bg-amber-50 text-amber-700";
+  }
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <span className="text-xs font-bold uppercase tracking-wider text-red mb-1 block">Camps</span>
+        <h1 className="text-2xl md:text-3xl font-bold text-slate-900">Blood Donation Camps</h1>
+        <p className="text-sm text-slate-500 mt-1">View all blood donation camps.</p>
+      </div>
+
+      {error && (
+        <div className="flex items-center gap-2 text-sm text-amber-700 bg-amber-50 px-4 py-3 rounded-xl border border-amber-200">
+          <AlertCircle size={16} /> {error}
+        </div>
+      )}
 
       {loading && (
         <div className="text-center py-12">
@@ -52,8 +62,8 @@ export default function Camps() {
           <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-3">
             <CalendarDays size={20} className="text-slate-400" />
           </div>
-          <p className="text-sm font-semibold text-slate-800">No upcoming camps found</p>
-          <p className="text-xs text-slate-500 mt-1">Check back soon for new camp listings.</p>
+          <p className="text-sm font-semibold text-slate-800">No camps found</p>
+          <p className="text-xs text-slate-500 mt-1">No blood donation camps are available right now.</p>
         </motion.div>
       )}
 
@@ -69,14 +79,22 @@ export default function Camps() {
             <motion.div
               key={camp.id || idx}
               variants={fadeUp}
-              className="bg-white rounded-2xl p-5 md:p-7 border border-slate-100 shadow-sm hover:shadow-md transition-shadow"
+              className="bg-white rounded-2xl p-5 md:p-6 border border-slate-100 shadow-sm hover:shadow-md transition-shadow"
             >
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 rounded-xl bg-red/10 flex items-center justify-center">
-                  <Droplet size={18} className="text-red" />
+              <div className="flex items-start justify-between gap-3 mb-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-10 h-10 rounded-xl bg-red/10 flex items-center justify-center flex-shrink-0">
+                    <Droplet size={18} className="text-red" />
+                  </div>
+                  <h3 className="text-base md:text-lg font-bold text-slate-900 truncate">{camp.title}</h3>
                 </div>
-                <h3 className="text-base md:text-lg font-bold text-slate-900">{camp.title}</h3>
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap flex-shrink-0 ${getStatusColor(camp.date)}`}>
+                  {getStatus(camp.date)}
+                </span>
               </div>
+              {camp.description && (
+                <p className="text-sm text-slate-600 mb-3 ml-[52px]">{camp.description}</p>
+              )}
               <div className="space-y-2 text-sm text-slate-600 ml-[52px]">
                 {camp.date && (
                   <p className="flex items-center gap-2">
@@ -87,7 +105,7 @@ export default function Camps() {
                 {camp.venue && (
                   <p className="flex items-center gap-2">
                     <MapPin size={14} className="text-slate-400" />
-                    {camp.venue}
+                    {camp.venue}{camp.address ? ", " + camp.address : ""}
                   </p>
                 )}
               </div>

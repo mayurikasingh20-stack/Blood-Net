@@ -169,7 +169,7 @@ export default function DonorDonationHistory() {
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[
-              { label: "Total Donations", value: donations.length, icon: Droplets, color: "text-red", bg: "bg-red/10" },
+              { label: "Requests Accepted", value: donations.length, icon: Droplets, color: "text-red", bg: "bg-red/10" },
               { label: "Verified", value: donations.filter((d) => d.status === "verified").length, icon: CheckCircle, color: "text-emerald-600", bg: "bg-emerald-50" },
               { label: "Pending", value: donations.filter((d) => d.status === "pending").length, icon: Clock, color: "text-amber-600", bg: "bg-amber-50" },
               { label: "Cancelled", value: donations.filter((d) => d.status === "cancelled").length, icon: XCircle, color: "text-slate-500", bg: "bg-slate-100" },
