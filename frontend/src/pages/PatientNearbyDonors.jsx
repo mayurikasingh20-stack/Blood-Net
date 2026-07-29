@@ -117,6 +117,11 @@ export default function PatientNearbyDonors() {
                 {donor.available !== false ? "Available" : "Unavailable"}
               </span>
             </div>
+            {donor.phone && (
+              <div className="mt-3 pt-3 border-t border-slate-100 flex items-center gap-1.5 text-xs text-slate-500">
+                <Phone size={12} /> {donor.phone}
+              </div>
+            )}
           </motion.div>
         ))}
       </div>

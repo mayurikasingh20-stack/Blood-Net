@@ -150,9 +150,10 @@ export default function RaiseRequestModal({ onClose, onSubmit, requesterName = "
             </div>
             <div>
               <label className="text-sm font-semibold text-slate-700 block mb-1.5">Contact Phone <span className="text-red">*</span></label>
-              <input value={form.contactPhone} onChange={(e) => update("contactPhone", e.target.value)}
-                placeholder="+91 98765 43210"
+              <input value={form.contactPhone} onChange={(e) => update("contactPhone", e.target.value.replace(/\D/g, '').slice(0, 10))}
+                placeholder="9876543210"
                 className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-red/20"
+                maxLength={10}
               />
             </div>
           </div>

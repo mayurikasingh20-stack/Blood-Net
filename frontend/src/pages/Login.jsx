@@ -118,7 +118,13 @@ export default function Login() {
             </Button>
           </form>
 
-          <p className="mt-6 text-center text-sm text-slate-500">
+          <div className="mt-5 p-3 bg-slate-50 rounded-xl border border-slate-200">
+            <p className="text-xs text-slate-500 text-center">
+              By using this platform, your registered phone number will be visible to patients and blood banks for coordination purposes.
+            </p>
+          </div>
+
+          <p className="mt-4 text-center text-sm text-slate-500">
             <Link to="/register" className="font-semibold text-red hover:underline">
               Create an account
             </Link>

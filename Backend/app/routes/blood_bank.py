@@ -17,6 +17,8 @@ blood_bank_bp = Blueprint(
 
 
 @blood_bank_bp.post("/register")
+@jwt_required()
+@role_required("blood_bank")
 def register():
     data = request.get_json()
 

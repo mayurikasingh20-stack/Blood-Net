@@ -62,7 +62,7 @@ export default function Register() {
       if (!formData.firstName.trim() || !formData.lastName.trim() || !formData.phone.trim())
         return "Please fill in all required fields.";
       if (formData.email.trim() && !/^\S+@\S+\.\S+$/.test(formData.email)) return "Please enter a valid email address.";
-      if (!/^[+\d][\d\s-]{7,}$/.test(formData.phone)) return "Please enter a valid phone number.";
+      if (!/^\d{10}$/.test(formData.phone)) return "Please enter a valid 10-digit phone number.";
     }
     if (stepNum === 2) {
       if (!formData.password || !formData.confirmPassword || !formData.gender || !formData.dob || !formData.city.trim())
@@ -164,7 +164,7 @@ export default function Register() {
                   <Input label="Email address" name="email" type="email" value={formData.email}
                     onChange={(e) => update("email", e.target.value)} placeholder="name@example.com" hint="Optional" />
                   <Input label="Phone number" name="phone" type="tel" value={formData.phone}
-                    onChange={(e) => update("phone", e.target.value)} placeholder="+91 98765 43210" required />
+                    onChange={(e) => update("phone", e.target.value.replace(/\D/g, '').slice(0, 10))} placeholder="9876543210" required maxLength={10} />
                   <Select label="Gender" value={formData.gender}
                     onChange={(e) => update("gender", e.target.value)} options={genders} required />
                 </div>

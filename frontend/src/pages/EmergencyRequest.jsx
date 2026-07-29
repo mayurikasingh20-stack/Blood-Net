@@ -185,7 +185,7 @@ export default function EmergencyRequest() {
                 </div>
                 <div>
                   <label className="text-sm font-semibold text-slate-700 block mb-1">Contact Phone *</label>
-                  <input value={form.contact_phone} onChange={(e) => update("contact_phone", e.target.value)} placeholder="+91 98765 43210" className={inputClass} />
+                  <input value={form.contact_phone} onChange={(e) => update("contact_phone", e.target.value.replace(/\D/g, '').slice(0, 10))} placeholder="9876543210" className={inputClass} maxLength={10} />
                 </div>
                 <div>
                   <label className="text-sm font-semibold text-slate-700 block mb-1">Purpose (Optional)</label>
@@ -231,7 +231,7 @@ export default function EmergencyRequest() {
                 </div>
                 <div>
                   <label className="text-sm font-semibold text-slate-700 block mb-1">Contact Phone *</label>
-                  <input value={form.contact_phone} onChange={(e) => update("contact_phone", e.target.value)} placeholder="+91 98765 43210" className={inputClass} />
+                  <input value={form.contact_phone} onChange={(e) => update("contact_phone", e.target.value.replace(/\D/g, '').slice(0, 10))} placeholder="9876543210" className={inputClass} maxLength={10} />
                 </div>
                 <div>
                   <label className="text-sm font-semibold text-slate-700 block mb-1">Purpose (Optional)</label>

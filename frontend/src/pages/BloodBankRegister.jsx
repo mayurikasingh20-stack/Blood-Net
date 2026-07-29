@@ -17,7 +17,7 @@ export default function BloodBankRegister() {
     password: "", confirmPassword: "", gender: "", dob: "",
     city: "", address: "",
     facilityName: "", contactPerson: "",
-    facilityAddress: "", licenseId: "", operatingHours: "", website: "",
+    facilityAddress: "", licenseId: "", openTime: "", closeTime: "", website: "",
     available24x7: false,
   });
   const [showPassword, setShowPassword] = useState(false);
@@ -33,7 +33,7 @@ export default function BloodBankRegister() {
     if (!form.firstName || !form.lastName || !form.email || !form.phone || !form.password || !form.gender || !form.dob || !form.city)
       return "Please complete all required fields.";
     if (!/^\S+@\S+\.\S+$/.test(form.email)) return "Invalid email address.";
-    if (!/^[+\d][\d\s-]{7,}$/.test(form.phone)) return "Invalid phone number.";
+    if (!/^\d{10}$/.test(form.phone)) return "Enter a valid 10-digit phone number.";
     if (form.password.length < 6) return "Password must be at least 6 characters.";
     if (form.password !== form.confirmPassword) return "Passwords do not match.";
     return "";
@@ -86,7 +86,7 @@ export default function BloodBankRegister() {
         address: form.facilityAddress,
         available_24x7: form.available24x7,
       };
-      if (form.operatingHours) profilePayload.operating_hours = form.operatingHours;
+      if (form.openTime && form.closeTime) profilePayload.operating_hours = `${form.openTime} - ${form.closeTime}`;
       if (form.website) profilePayload.website = form.website;
 
       await api.post("/blood-bank/register", profilePayload);
@@ -176,9 +176,9 @@ export default function BloodBankRegister() {
                   </div>
                   <div>
                     <label className="text-sm font-semibold text-slate-700 block mb-1">Phone *</label>
-                    <input type="tel" value={form.phone} onChange={(e) => update("phone", e.target.value)}
-                      placeholder="+91 98765 43210"
-                      className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-red/20" />
+                    <input type="tel" value={form.phone} onChange={(e) => update("phone", e.target.value.replace(/\D/g, '').slice(0, 10))}
+                      placeholder="9876543210"
+                      className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-red/20" maxLength={10} />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
@@ -264,9 +264,13 @@ export default function BloodBankRegister() {
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="text-sm font-semibold text-slate-700 block mb-1">Operating Hours</label>
-                    <input value={form.operatingHours} onChange={(e) => update("operatingHours", e.target.value)}
-                      placeholder="e.g. 9:00 AM - 6:00 PM"
+                    <label className="text-sm font-semibold text-slate-700 block mb-1">Opening Time</label>
+                    <input type="time" value={form.openTime} onChange={(e) => update("openTime", e.target.value)}
+                      className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-red/20" />
+                  </div>
+                  <div>
+                    <label className="text-sm font-semibold text-slate-700 block mb-1">Closing Time</label>
+                    <input type="time" value={form.closeTime} onChange={(e) => update("closeTime", e.target.value)}
                       className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-red/20" />
                   </div>
                   <div>

@@ -14,7 +14,7 @@ import { DONATION_STATUS_STYLES } from "../utils/constants";
 import {
   getDonorDashboard, getMyDonations, getDonorProfile,
   updateAvailability, getNotifications, getOpenRequests,
-  getMyBloodRequests, cancelBloodRequest, acceptBloodRequest,
+  acceptBloodRequest,
 } from "../services/dashboardService";
 
 const fadeUp = {
@@ -40,10 +40,8 @@ export default function DonorDashboard() {
   const [donorProfile, setDonorProfile] = useState(null);
   const [donations, setDonations] = useState([]);
   const [openRequests, setOpenRequests] = useState([]);
-  const [myRequests, setMyRequests] = useState([]);
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [cancellingId, setCancellingId] = useState(null);
   const [error, setError] = useState("");
   const [available, setAvailable] = useState(true);
 
@@ -58,7 +56,6 @@ export default function DonorDashboard() {
     getMyDonations().then(d => setDonations(d?.donations || [])).catch(() => {});
     getOpenRequests().then(r => setOpenRequests(r?.blood_requests || [])).catch(() => {});
     getNotifications().then(n => setNotifications(n?.notifications || [])).catch(() => {});
-    getMyBloodRequests().then(r => setMyRequests(r?.blood_requests || [])).catch(() => {});
     getDonorDashboard().then(dash => {
       setDashboard(dash);
       if (dash?.availability !== undefined) setAvailable(dash.availability);
@@ -85,19 +82,6 @@ export default function DonorDashboard() {
   const [acceptingId, setAcceptingId] = useState(null);
   const [screeningRequest, setScreeningRequest] = useState(null);
 
-  async function handleCancel(id) {
-    if (!window.confirm("Cancel this blood request?")) return;
-    setCancellingId(id);
-    try {
-      await cancelBloodRequest(id);
-      setMyRequests((prev) => prev.filter((r) => r.id !== id));
-    } catch {
-      alert("Could not cancel request.");
-    } finally {
-      setCancellingId(null);
-    }
-  }
-
   async function handleAccept(requestId) {
     setAcceptingId(requestId);
     try {
@@ -123,7 +107,6 @@ export default function DonorDashboard() {
   const lastDonation = donorProfile?.donor?.last_donation_date;
   const weight = donorProfile?.donor?.weight;
   const nextEligible = computeNextEligible(lastDonation);
-  const myBloodGroup = donorProfile?.donor?.blood_group || dashboard?.blood_group || "";
 
   return (
     <div className="space-y-6 md:space-y-8 max-w-6xl mx-auto">
@@ -190,47 +173,6 @@ export default function DonorDashboard() {
             </div>
           </motion.div>
 
-          {/* My Blood Requests */}
-          {myRequests.length > 0 && (
-            <motion.div className="bg-white rounded-2xl border border-slate-100 shadow-sm" {...fadeUp}>
-              <div className="flex items-center justify-between px-4 md:px-6 py-4 border-b border-slate-100">
-                <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                  <Droplets size={16} className="text-red" />
-                  My Blood Requests
-                </h3>
-                <Link to="/donor/requests" className="text-xs text-red font-semibold hover:underline">View All</Link>
-              </div>
-              <div className="p-4 md:p-6 space-y-3">
-                {myRequests.slice(0, 5).map((req) => (
-                  <div key={req.id} className="flex items-center gap-3 p-3 md:p-4 rounded-xl bg-slate-50 hover:bg-red-50 transition">
-                    <div className="w-12 h-12 rounded-xl bg-red/10 flex items-center justify-center text-red font-bold text-base flex-shrink-0">
-                      {req.blood_group}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-bold text-slate-900 truncate">{req.hospital}</p>
-                      <p className="text-xs text-slate-500 truncate">{req.city} &middot; {req.units} unit(s) &middot; {new Date(req.created_at).toLocaleDateString()}</p>
-                    </div>
-                    <span className={`text-[10px] font-bold px-2 py-1 rounded-full ${
-                      req.status === "pending" ? "bg-amber-50 text-amber-700" :
-                      req.status === "matched" ? "bg-blue-50 text-blue-600" :
-                      req.status === "fulfilled" ? "bg-emerald-50 text-emerald-700" :
-                      "bg-slate-100 text-slate-500"
-                    }`}>
-                      {req.status === "fulfilled" ? "Fulfilled" : req.status.charAt(0).toUpperCase() + req.status.slice(1)}
-                    </span>
-                    {(req.status === "pending" || req.status === "matched") && (
-                      <button onClick={() => handleCancel(req.id)} disabled={cancellingId === req.id}
-                        className="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red transition disabled:opacity-50"
-                      >
-                        <XCircle size={14} />
-                      </button>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </motion.div>
-          )}
-
           {/* Blood Requests Near You */}
           <motion.div className="bg-white rounded-2xl border border-slate-100 shadow-sm" {...fadeUp}>
             <div className="flex items-center justify-between px-4 md:px-6 py-4 border-b border-slate-100">
@@ -295,7 +237,7 @@ export default function DonorDashboard() {
             <div className="flex items-center justify-between px-4 md:px-6 py-4 border-b border-slate-100">
               <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
                 <Activity size={16} className="text-red" />
-                Donation History
+                History
               </h3>
               {donations.length > 0 && (
                 <Link to="/donor/history" className="text-xs text-red font-semibold hover:underline">View All</Link>
@@ -374,7 +316,6 @@ export default function DonorDashboard() {
         <DonorScreeningModal
           requestId={screeningRequest.id}
           requestBloodGroup={screeningRequest.blood_group}
-          donorBloodGroup={myBloodGroup}
           onComplete={(result) => handleScreeningComplete(screeningRequest.id, result)}
           onClose={() => setScreeningRequest(null)}
         />

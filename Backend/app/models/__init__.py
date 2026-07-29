@@ -9,3 +9,4 @@ from .inventory_history import InventoryHistory
 from .notification import Notification
 from .public_blood_bank import PublicBloodBank
 from .camp import Camp
+from .contact_message import ContactMessage

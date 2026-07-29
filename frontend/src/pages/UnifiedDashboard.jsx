@@ -312,7 +312,7 @@ export default function UnifiedDashboard() {
                 <ThumbsUp size={20} className="text-blue-600" />
               </div>
               <p className="text-2xl font-bold text-slate-900">{totalDonations}</p>
-              <p className="text-xs text-slate-500 mt-0.5">Donations Made</p>
+              <p className="text-xs text-slate-500 mt-0.5">Accepted Requests</p>
             </motion.div>
             <motion.div variants={fadeUp} className="bg-white rounded-2xl p-4 md:p-5 border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
               <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-3 bg-emerald-50">
@@ -450,7 +450,7 @@ export default function UnifiedDashboard() {
                 <div className="flex items-center justify-between px-4 md:px-6 py-4 border-b border-slate-100">
                   <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
                     <Activity size={16} className="text-red" />
-                    Donation History
+                    History
                   </h3>
                   {donations.length > 0 && (
                     <Link to="/history" className="text-xs text-red font-semibold hover:underline">View All</Link>
@@ -657,7 +657,6 @@ export default function UnifiedDashboard() {
         <DonorScreeningModal
           requestId={screeningRequest.id}
           requestBloodGroup={screeningRequest.blood_group}
-          donorBloodGroup={bloodGroup}
           onComplete={(result) => handleScreeningComplete(screeningRequest.id, result)}
           onClose={() => setScreeningRequest(null)}
         />

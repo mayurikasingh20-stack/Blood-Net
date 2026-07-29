@@ -21,6 +21,7 @@ import BloodBankInventory from "../pages/BloodBankInventory";
 import BloodBankRequests from "../pages/BloodBankRequests";
 import AdminDashboard from "../pages/AdminDashboard";
 import AdminBloodBanks from "../pages/AdminBloodBanks";
+import AdminContactMessages from "../pages/AdminContactMessages";
 import AdminRequests from "../pages/AdminRequests";
 import AdminDonations from "../pages/AdminDonations";
 import EmergencyRequest from "../pages/EmergencyRequest";
@@ -37,6 +38,7 @@ const publicLinks = [
   { label: "Home", to: "/" },
   { label: "About", to: "/about" },
   { label: "Education", to: "/education" },
+  { label: "Blood Banks", to: "/bloodbank-register" },
   { label: "Contact", to: "/contact" },
 ];
 
@@ -46,7 +48,7 @@ const donorSidebar = [
   { label: "Dashboard", icon: "dashboard", to: "/dashboard" },
   { label: "Emergency Requests", icon: "emergency", to: "/requests" },
   { label: "Blood Banks", icon: "location_on", to: "/blood-banks" },
-  { label: "Donation History", icon: "history", to: "/history" },
+  { label: "History", icon: "history", to: "/history" },
   mapItem,
   { label: "Settings", icon: "settings", to: "/settings" },
 ];
@@ -64,7 +66,7 @@ const unifiedSidebar = [
   { label: "Dashboard", icon: "dashboard", to: "/dashboard" },
   { label: "Emergency Requests", icon: "emergency", to: "/requests" },
   { label: "Blood Banks", icon: "location_on", to: "/blood-banks" },
-  { label: "Donation History", icon: "history", to: "/history" },
+  { label: "History", icon: "history", to: "/history" },
   { label: "Nearby Donors", icon: "group", to: "/donors" },
   mapItem,
   { label: "Settings", icon: "settings", to: "/settings" },
@@ -84,6 +86,7 @@ const adminSidebar = [
   { label: "Blood Banks", icon: "location_city", to: "/admin/blood-banks" },
   { label: "Requests", icon: "bloodtype", to: "/admin/requests" },
   { label: "Donations", icon: "volunteer_activism", to: "/admin/donations" },
+  { label: "Messages", icon: "mail", to: "/admin/messages" },
   mapItem,
   { label: "Settings", icon: "settings", to: "/admin/settings" },
 ];
@@ -141,6 +144,7 @@ export default function AppRoutes() {
       <Route path="/register" element={<PublicPage><Register /></PublicPage>} />
       <Route path="/bloodbank-register" element={<BloodBankRegister />} />
       <Route path="/unauthorized" element={<PublicPage><Unauthorized /></PublicPage>} />
+      <Route path="/education" element={<PublicPage><Education /></PublicPage>} />
 
       {/* Unified Donor/Patient Routes (new single-portal routes) */}
       <Route
@@ -167,7 +171,7 @@ export default function AppRoutes() {
         path="/history"
         element={
           <RoleBasedRoute allowedRoles={["donor", "patient"]}>
-            <DashboardPage sidebarItems={unifiedSidebar} title="History" subtitle="Donation History">
+            <DashboardPage sidebarItems={unifiedSidebar} title="History" subtitle="Donation & Request History">
               <DonorDonationHistory />
             </DashboardPage>
           </RoleBasedRoute>
@@ -176,7 +180,7 @@ export default function AppRoutes() {
       <Route
         path="/donors"
         element={
-          <RoleBasedRoute allowedRoles={["donor", "patient"]}>
+          <RoleBasedRoute allowedRoles={["patient"]}>
             <DashboardPage sidebarItems={unifiedSidebar} title="Donors" subtitle="Nearby Donors">
               <PatientNearbyDonors />
             </DashboardPage>
@@ -261,6 +265,16 @@ export default function AppRoutes() {
           <RoleBasedRoute allowedRoles={["admin"]}>
             <DashboardPage sidebarItems={adminSidebar} title="Admin" subtitle="Donations">
               <AdminDonations />
+            </DashboardPage>
+          </RoleBasedRoute>
+        }
+      />
+      <Route
+        path="/admin/messages"
+        element={
+          <RoleBasedRoute allowedRoles={["admin"]}>
+            <DashboardPage sidebarItems={adminSidebar} title="Admin" subtitle="Contact Messages">
+              <AdminContactMessages />
             </DashboardPage>
           </RoleBasedRoute>
         }

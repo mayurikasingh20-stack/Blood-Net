@@ -13,6 +13,7 @@ import {
   AlertCircle,
   Droplet,
 } from "lucide-react";
+import api from "../services/api";
 
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -75,8 +76,8 @@ function validateForm(form) {
   if (!form.name.trim()) errors.name = "Name is required";
   if (!form.email.trim()) errors.email = "Email is required";
   else if (!/^\S+@\S+\.\S+$/.test(form.email)) errors.email = "Invalid email";
-  if (!form.phone.trim()) errors.phone = "Phone is required";
-  else if (!/^[+\d][\d\s-]{7,}$/.test(form.phone)) errors.phone = "Invalid phone";
+      if (!form.phone.trim()) errors.phone = "Phone is required";
+      else if (!/^\d{10}$/.test(form.phone)) errors.phone = "Enter a valid 10-digit phone number";
   if (!form.subject.trim()) errors.subject = "Subject is required";
   if (!form.message.trim()) errors.message = "Message is required";
   else if (form.message.trim().length < 10) errors.message = "At least 10 characters";
@@ -109,14 +110,11 @@ export default function Contact() {
     }
     setSending(true);
     try {
-      const messages = JSON.parse(localStorage.getItem("contact_messages") || "[]");
-      messages.push({ ...form, timestamp: new Date().toISOString() });
-      localStorage.setItem("contact_messages", JSON.stringify(messages));
-      await new Promise((r) => setTimeout(r, 800));
+      await api.post("/contact/send", form);
       setSubmitted(true);
       setForm({ name: "", email: "", phone: "", subject: "", message: "" });
-    } catch {
-      setErrors({ form: "Failed to send. Please try again." });
+    } catch (err) {
+      setErrors({ form: err.response?.data?.message || "Failed to send. Please try again." });
     } finally {
       setSending(false);
     }
@@ -231,11 +229,12 @@ export default function Contact() {
                     <input
                       type="tel"
                       value={form.phone}
-                      onChange={(e) => update("phone", e.target.value)}
+                      onChange={(e) => update("phone", e.target.value.replace(/\D/g, '').slice(0, 10))}
                       className={`w-full px-4 py-2.5 rounded-xl border text-sm transition focus:outline-none focus:ring-2 focus:ring-red/20 ${
                         errors.phone ? "border-red-300 bg-red-50" : "border-slate-200 hover:border-slate-300"
                       }`}
-                      placeholder="+91 98765 43210"
+                      placeholder="9876543210"
+                      maxLength={10}
                     />
                     {errors.phone && <p className="text-xs text-red mt-1">{errors.phone}</p>}
                   </div>

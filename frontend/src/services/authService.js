@@ -10,7 +10,7 @@ export async function loginUser({ identifier, password }) {
     refreshToken: response.data.refresh_token,
     user: {
       ...backendUser,
-      roles: backendUser.roles || [backendRoleToUiRole(backendUser.role)],
+      roles: (backendUser.roles || [backendRoleToUiRole(backendUser.role)]).map(backendRoleToUiRole),
       role: backendRoleToUiRole(backendUser.role),
       name: response.data.name || `${backendUser.first_name || ""} ${backendUser.last_name || ""}`.trim(),
     },
@@ -61,7 +61,7 @@ export async function getCurrentUser() {
 
   return {
     ...user,
-    roles: user.roles || [backendRoleToUiRole(user.role)],
+    roles: (user.roles || [backendRoleToUiRole(user.role)]).map(backendRoleToUiRole),
     role: backendRoleToUiRole(user.role),
     name: `${user.first_name || ""} ${user.last_name || ""}`.trim(),
   };

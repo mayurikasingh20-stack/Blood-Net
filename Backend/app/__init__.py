@@ -19,6 +19,7 @@ from app.routes.map import map_bp
 from app.routes.camps import camps_bp
 from app.routes.public import public_bp
 from app.routes.user import user_bp
+from app.routes.contact import contact_bp
 from app.models.user import User
 from app.models.inventory_history import InventoryHistory
 from app.utils.password import hash_password
@@ -74,6 +75,7 @@ def create_app():
     app.register_blueprint(map_bp)
     app.register_blueprint(camps_bp)
     app.register_blueprint(public_bp)
+    app.register_blueprint(contact_bp)
     app.register_blueprint(user_bp)
     with app.app_context():
         db.create_all()
