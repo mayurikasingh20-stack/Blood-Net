@@ -1,18 +1,17 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Droplets, User, Lock, ShieldCheck, ArrowLeft, ArrowRight } from "lucide-react";
+import { Droplets, User, Lock, ShieldCheck, Smartphone, ArrowLeft, ArrowRight } from "lucide-react";
 import Button from "../components/ui/Button";
 import Card from "../components/ui/Card";
 import Input from "../components/forms/Input";
-import PasswordInput from "../components/forms/PasswordInput";
 import Select from "../components/forms/Select";
 import TextArea from "../components/forms/TextArea";
-import Checkbox from "../components/forms/Checkbox";
 import ErrorMessage from "../components/feedback/ErrorMessage";
 import SuccessMessage from "../components/feedback/SuccessMessage";
 import { getAuthErrorMessage, registerUser } from "../services/authService";
 import { BLOOD_GROUPS } from "../utils/constants";
+import OtpVerification from "../components/shared/OtpVerification";
 
 function calculateAge(dobString) {
   if (!dobString) return null;
@@ -37,7 +36,8 @@ const genders = [
 const steps = [
   { title: "Account", icon: User },
   { title: "Security", icon: Lock },
-  { title: "Confirm", icon: ShieldCheck },
+  { title: "Details", icon: ShieldCheck },
+  { title: "Verify", icon: Smartphone },
 ];
 
 export default function Register() {
@@ -53,6 +53,8 @@ export default function Register() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
+  const [otpVerified, setOtpVerified] = useState(false);
+  const [otpError, setOtpError] = useState("");
   const navigate = useNavigate();
 
   const update = (name, value) => setFormData((current) => ({ ...current, [name]: value }));
@@ -86,7 +88,7 @@ export default function Register() {
     const err = validateStep(step);
     if (err) { setError(err); return; }
     setError("");
-    setStep((s) => Math.min(s + 1, 3));
+    setStep((s) => Math.min(s + 1, 4));
   }
 
   function prevStep() {
@@ -98,8 +100,7 @@ export default function Register() {
     event.preventDefault();
     setError("");
     setSuccess("");
-    const validationError = validateStep(3);
-    if (validationError) { setError(validationError); return; }
+    if (!otpVerified) { setError("Please verify your phone number first."); return; }
     const age = calculateAge(formData.dob);
     if (age < 18) { setError("You must be at least 18 years old to register."); return; }
     setLoading(true);
@@ -115,9 +116,9 @@ export default function Register() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-red-50 to-white flex items-center justify-center px-4 py-10">
+    <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center px-4 py-10">
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-2xl">
-        <Card padding="lg" className="shadow-xl border-red/10">
+        <Card padding="lg" className="bg-white rounded-2xl border border-slate-100 shadow-sm">
           <div className="text-center mb-6">
             <div className="w-14 h-14 bg-red/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
               <Droplets size={28} className="text-red" />
@@ -185,9 +186,9 @@ export default function Register() {
                   <Lock size={18} className="text-red" /> Security & Location
                 </h2>
                 <div className="grid gap-4 md:grid-cols-2">
-                  <PasswordInput label="Password" name="password" value={formData.password}
+                  <Input label="Password" name="password" type="password" value={formData.password}
                     onChange={(e) => update("password", e.target.value)} autoComplete="new-password" required />
-                  <PasswordInput label="Confirm password" name="confirmPassword" value={formData.confirmPassword}
+                  <Input label="Confirm password" name="confirmPassword" type="password" value={formData.confirmPassword}
                     onChange={(e) => update("confirmPassword", e.target.value)} autoComplete="new-password" required />
                   <Input label="Date of birth" name="dob" type="date" value={formData.dob}
                     onChange={(e) => update("dob", e.target.value)} required />
@@ -217,7 +218,7 @@ export default function Register() {
                   <ShieldCheck size={18} className="text-red" /> Donor Details
                 </h2>
 
-                <div className="rounded-xl border border-red/10 bg-red/5 p-4 space-y-4">
+                <div className="rounded-2xl border border-red/10 bg-red/5 p-4 space-y-4">
                   <p className="text-sm font-bold text-red">Blood Donation Profile (optional now, fill anytime)</p>
                   <div className="grid gap-4 md:grid-cols-2">
                     <Select label="Blood group" value={formData.bloodGroup}
@@ -229,29 +230,65 @@ export default function Register() {
                       onChange={(e) => update("lastDonationDate", e.target.value)} hint="Optional" />
                   </div>
                   <div className="space-y-2">
-                    <Checkbox label="I have a chronic medical condition" checked={formData.hasChronicCondition}
-                      onChange={(e) => update("hasChronicCondition", e.target.checked)} />
-                    <Checkbox label="I am currently on medication" checked={formData.onMedication}
-                      onChange={(e) => update("onMedication", e.target.checked)} />
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input type="checkbox" checked={formData.hasChronicCondition}
+                        onChange={(e) => update("hasChronicCondition", e.target.checked)}
+                        className="h-4 w-4 rounded border-slate-300 text-red focus:ring-red" />
+                      <span className="text-sm text-slate-700">I have a chronic medical condition</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input type="checkbox" checked={formData.onMedication}
+                        onChange={(e) => update("onMedication", e.target.checked)}
+                        className="h-4 w-4 rounded border-slate-300 text-red focus:ring-red" />
+                      <span className="text-sm text-slate-700">I am currently on medication</span>
+                    </label>
                   </div>
                 </div>
 
-                <Checkbox label="I confirm that all information provided is accurate and I agree to the terms of service."
-                  checked={formData.acceptedTerms}
-                  onChange={(e) => update("acceptedTerms", e.target.checked)} />
+                <label className="flex items-start gap-2 cursor-pointer">
+                  <input type="checkbox" checked={formData.acceptedTerms}
+                    onChange={(e) => update("acceptedTerms", e.target.checked)}
+                    className="mt-0.5 h-4 w-4 rounded border-slate-300 text-red focus:ring-red" />
+                  <span className="text-sm text-slate-700">I confirm that all information provided is accurate and I agree to the terms of service.</span>
+                </label>
 
                 {error && <ErrorMessage>{error}</ErrorMessage>}
-                {success && <SuccessMessage>{success}</SuccessMessage>}
 
                 <div className="flex justify-between pt-2">
                   <button type="button" onClick={prevStep}
                     className="flex items-center gap-2 px-6 py-2.5 border border-slate-200 rounded-full text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">
                     <ArrowLeft size={16} /> Back
                   </button>
-                  <Button type="submit" className="flex-1 max-w-xs" loading={loading}>
-                    Create Account
-                  </Button>
+                  <button type="button" onClick={nextStep}
+                    className="flex items-center gap-2 px-6 py-2.5 bg-red text-white rounded-full text-sm font-bold hover:bg-red-700 transition shadow-lg shadow-red/20">
+                    Next <ArrowRight size={16} />
+                  </button>
                 </div>
+              </motion.div>
+            )}
+
+            {/* Step 4: OTP Verification */}
+            {step === 4 && (
+              <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-4">
+                <button type="button" onClick={prevStep}
+                  className="flex items-center gap-2 text-sm text-slate-500 hover:text-slate-700 transition mb-2"
+                >
+                  <ArrowLeft size={16} /> Back
+                </button>
+                <OtpVerification
+                  phone={formData.phone}
+                  onVerified={() => { setOtpVerified(true); setOtpError(""); }}
+                  onError={(msg) => setOtpError(msg)}
+                />
+                {error && <ErrorMessage>{error}</ErrorMessage>}
+                {success && <SuccessMessage>{success}</SuccessMessage>}
+                {otpVerified && (
+                  <div className="pt-2">
+                    <Button type="submit" className="w-full rounded-full" loading={loading}>
+                      Create Account
+                    </Button>
+                  </div>
+                )}
               </motion.div>
             )}
           </form>

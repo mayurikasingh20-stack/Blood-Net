@@ -14,6 +14,7 @@ from app.models.camp import Camp
 from app.utils.helpers import create_notification
 from app.services.geocoding_service import geocode_address
 from datetime import date
+from app.models.donation import Donation
 
 
 def get_all_blood_banks():
@@ -275,8 +276,6 @@ def complete_blood_request(request_id):
         "message": "Blood request marked as completed."
     }, 200
     
-from app.models.donation import Donation
-
 
 def get_all_donations():
 
@@ -290,15 +289,21 @@ def get_all_donations():
 
     for donation in donations:
 
-        donor = donation.donor
         request = donation.blood_request
-        donor_user = donor.user
+        donor = donation.donor
+        if donor:
+            donor_name = f"{donor.user.first_name} {donor.user.last_name}"
+            donor_id = donor.id
+        else:
+            blood_bank = donation.blood_bank
+            donor_name = blood_bank.facility_name if blood_bank else "Unknown"
+            donor_id = None
 
         result.append({
             "donation_id": donation.id,
             "request_id": request.id,
-            "donor_id": donor.id,
-            "donor_name": f"{donor_user.first_name} {donor_user.last_name}",
+            "donor_id": donor_id,
+            "donor_name": donor_name,
             "blood_group": request.blood_group,
             "hospital": request.hospital,
             "city": request.city,

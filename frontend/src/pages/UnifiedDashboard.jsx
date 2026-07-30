@@ -432,7 +432,7 @@ export default function UnifiedDashboard() {
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    {myRequests.slice(0, 10).map((req) => (
+                    {myRequests.filter((r) => r.status !== "completed").slice(0, 10).map((req) => (
                       <div key={req.id} className="p-4 rounded-xl border border-slate-100 hover:border-slate-200 transition">
                         <div className="flex flex-wrap items-start justify-between gap-3">
                           <div className="flex items-center gap-3">
@@ -509,18 +509,11 @@ export default function UnifiedDashboard() {
                                 </motion.div>
                               )}
                             </AnimatePresence>
-                            <div className="flex gap-2 mt-3 pt-3 border-t border-slate-100">
-                              <button onClick={() => handlePatientUpdate(req.id, "fulfilled")}
-                                className="flex-1 py-1.5 bg-emerald-500 text-white rounded-full text-[10px] font-bold hover:bg-emerald-600 transition"
-                              >
-                                Mark Fulfilled
-                              </button>
-                              <button onClick={() => handlePatientUpdate(req.id, "not_fulfilled")}
-                                className="flex-1 py-1.5 border border-red/30 text-red rounded-full text-[10px] font-bold hover:bg-red-50 transition"
-                              >
-                                Not Fulfilled
-                              </button>
-                            </div>
+                            <button onClick={() => handlePatientUpdate(req.id, "not_fulfilled")}
+                              className="w-full py-1.5 border border-red/30 text-red rounded-full text-[10px] font-bold hover:bg-red-50 transition"
+                            >
+                              Not Fulfilled
+                            </button>
                           </div>
                         )}
                         {req.fulfilled_units > 0 && (
@@ -580,7 +573,7 @@ export default function UnifiedDashboard() {
       {/* Verify Modal */}
       {verifyModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
-          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-white rounded-3xl p-6 w-full max-w-sm">
+          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-white rounded-2xl p-6 w-full max-w-sm">
             <h3 className="text-lg font-bold text-slate-900 mb-2">Verify Donation</h3>
             <p className="text-sm text-slate-500 mb-4">
               Confirm donation from <strong>{verifyModal.donorName}</strong>

@@ -11,10 +11,7 @@ import Camps from "../pages/Camps";
 import Unauthorized from "../pages/Unauthorized";
 import NotFound from "../pages/NotFound";
 import BloodBankRegister from "../pages/BloodBankRegister";
-import DonorDashboard from "../pages/DonorDashboard";
 import DonorProfile from "../pages/DonorProfile";
-import PatientDashboard from "../pages/PatientDashboard";
-import PatientBloodRequests from "../pages/PatientBloodRequests";
 import PatientNearbyDonors from "../pages/PatientNearbyDonors";
 import BloodBankDashboard from "../pages/Bloodbank";
 import BloodBankInventory from "../pages/BloodBankInventory";
@@ -43,26 +40,6 @@ const publicLinks = [
 
 const mapItem = { label: "Map", icon: "map", to: "/map" };
 
-const donorSidebar = [
-  { label: "Dashboard", icon: "dashboard", to: "/dashboard" },
-  { label: "Emergency Requests", icon: "emergency", to: "/requests" },
-  { label: "Camps", icon: "calendar_month", to: "/camps" },
-  { label: "Blood Banks", icon: "location_on", to: "/blood-banks" },
-  { label: "History", icon: "history", to: "/history" },
-  mapItem,
-  { label: "Settings", icon: "settings", to: "/settings" },
-];
-
-const patientSidebar = [
-  { label: "Dashboard", icon: "dashboard", to: "/dashboard" },
-  { label: "Blood Requests", icon: "bloodtype", to: "/requests" },
-  { label: "Camps", icon: "calendar_month", to: "/camps" },
-  { label: "Nearby Donors", icon: "group", to: "/donors" },
-  { label: "Blood Banks", icon: "location_on", to: "/blood-banks" },
-  mapItem,
-  { label: "Settings", icon: "settings", to: "/settings" },
-];
-
 const unifiedSidebar = [
   { label: "Dashboard", icon: "dashboard", to: "/dashboard" },
   { label: "Emergency Requests", icon: "emergency", to: "/requests" },
@@ -80,6 +57,7 @@ const bankSidebar = [
   { label: "Emergency", icon: "emergency", to: "/bloodbank/emergency" },
   { label: "Requests", icon: "notification_important", to: "/bloodbank/requests" },
   { label: "Camps", icon: "calendar_month", to: "/bloodbank/camps" },
+  { label: "History", icon: "history", to: "/history" },
   mapItem,
   { label: "Settings", icon: "settings", to: "/bloodbank/settings" },
 ];
@@ -112,35 +90,11 @@ function DashboardPage({ sidebarItems, title, subtitle, children }) {
 
 function useSidebar() {
   const { hasRole } = useAuth();
-  const isDonor = hasRole("donor");
-  const isPatient = hasRole("patient");
   const isBank = hasRole("bloodbank") || hasRole("blood_bank");
   const isAdmin = hasRole("admin");
-
-  if (isAdmin) return { items: adminSidebar, title: "Admin", subtitle: "Platform Management" };
-  if (isBank) return { items: bankSidebar, title: "Blood Bank", subtitle: "Central Region HQ" };
-  if (isDonor && isPatient) return { items: unifiedSidebar, title: "Unified Portal", subtitle: "Donor & Patient" };
-  if (isDonor) return { items: donorSidebar, title: "Donor Portal", subtitle: "Welcome, Donor" };
-  if (isPatient) return { items: patientSidebar, title: "Patient Portal", subtitle: "Patient Health Hub" };
-  return { items: [], title: "", subtitle: "" };
-}
-
-function MapPageWrapper() {
-  const { items } = useSidebar();
-  return (
-    <DashboardPage sidebarItems={items} title="Map" subtitle="Explore Nearby">
-      <MapPage />
-    </DashboardPage>
-  );
-}
-
-function CampsPageWrapper() {
-  const { items } = useSidebar();
-  return (
-    <DashboardPage sidebarItems={items} title="Camps" subtitle="Blood Donation Camps">
-      <Camps />
-    </DashboardPage>
-  );
+  if (isAdmin) return adminSidebar;
+  if (isBank) return bankSidebar;
+  return unifiedSidebar;
 }
 
 export default function AppRoutes() {
@@ -155,9 +109,8 @@ export default function AppRoutes() {
       <Route path="/register" element={<PublicPage><Register /></PublicPage>} />
       <Route path="/bloodbank-register" element={<BloodBankRegister />} />
       <Route path="/unauthorized" element={<PublicPage><Unauthorized /></PublicPage>} />
-      <Route path="/education" element={<PublicPage><Education /></PublicPage>} />
 
-      {/* Unified Donor/Patient Routes (new single-portal routes) */}
+      {/* Donor/Patient Routes */}
       <Route
         path="/dashboard"
         element={
@@ -181,8 +134,8 @@ export default function AppRoutes() {
       <Route
         path="/history"
         element={
-          <RoleBasedRoute allowedRoles={["donor", "patient"]}>
-            <DashboardPage sidebarItems={unifiedSidebar} title="History" subtitle="Donation & Request History">
+          <RoleBasedRoute allowedRoles={["donor", "patient", "bloodbank"]}>
+            <DashboardPage sidebarItems={useSidebar()} title="History" subtitle="Donation & Request History">
               <DonorDonationHistory />
             </DashboardPage>
           </RoleBasedRoute>
@@ -212,7 +165,9 @@ export default function AppRoutes() {
         path="/camps"
         element={
           <RoleBasedRoute allowedRoles={["donor", "patient"]}>
-            <CampsPageWrapper />
+            <DashboardPage sidebarItems={unifiedSidebar} title="Camps" subtitle="Blood Donation Camps">
+              <Camps />
+            </DashboardPage>
           </RoleBasedRoute>
         }
       />
@@ -226,11 +181,12 @@ export default function AppRoutes() {
           </RoleBasedRoute>
         }
       />
+      {/* Shared Routes — sidebar adapts to user role */}
       <Route
         path="/settings"
         element={
           <RoleBasedRoute allowedRoles={["donor", "patient", "bloodbank", "admin"]}>
-            <DashboardPage sidebarItems={unifiedSidebar} title="Settings" subtitle="Account Settings">
+            <DashboardPage sidebarItems={useSidebar()} title="Settings" subtitle="Account Settings">
               <Settings />
             </DashboardPage>
           </RoleBasedRoute>
@@ -240,8 +196,18 @@ export default function AppRoutes() {
         path="/notifications"
         element={
           <RoleBasedRoute allowedRoles={["donor", "patient", "bloodbank", "admin"]}>
-            <DashboardPage sidebarItems={unifiedSidebar} title="Notifications" subtitle="Updates">
+            <DashboardPage sidebarItems={useSidebar()} title="Notifications" subtitle="Updates">
               <Notifications />
+            </DashboardPage>
+          </RoleBasedRoute>
+        }
+      />
+      <Route
+        path="/map"
+        element={
+          <RoleBasedRoute allowedRoles={["donor", "patient", "bloodbank", "admin"]}>
+            <DashboardPage sidebarItems={useSidebar()} title="Map" subtitle="Explore Nearby">
+              <MapPage />
             </DashboardPage>
           </RoleBasedRoute>
         }
@@ -305,160 +271,6 @@ export default function AppRoutes() {
             <DashboardPage sidebarItems={adminSidebar} title="Admin" subtitle="Settings">
               <Settings />
             </DashboardPage>
-          </RoleBasedRoute>
-        }
-      />
-      <Route
-        path="/admin/notifications"
-        element={
-          <RoleBasedRoute allowedRoles={["admin"]}>
-            <DashboardPage sidebarItems={adminSidebar} title="Admin" subtitle="Notifications">
-              <Notifications />
-            </DashboardPage>
-          </RoleBasedRoute>
-        }
-      />
-
-      {/* Backward Compatibility: Legacy Donor Routes */}
-      <Route
-        path="/donor-dashboard"
-        element={
-          <RoleBasedRoute allowedRoles={["donor"]}>
-            <DashboardPage sidebarItems={donorSidebar} title="Donor Portal" subtitle="Welcome, Donor">
-              <DonorDashboard />
-            </DashboardPage>
-          </RoleBasedRoute>
-        }
-      />
-      <Route
-        path="/donor/profile"
-        element={
-          <RoleBasedRoute allowedRoles={["donor"]}>
-            <DashboardPage sidebarItems={donorSidebar} title="Donor Portal" subtitle="My Profile">
-              <DonorProfile />
-            </DashboardPage>
-          </RoleBasedRoute>
-        }
-      />
-      <Route
-        path="/donor/settings"
-        element={
-          <RoleBasedRoute allowedRoles={["donor"]}>
-            <DashboardPage sidebarItems={donorSidebar} title="Donor Portal" subtitle="Settings">
-              <Settings />
-            </DashboardPage>
-          </RoleBasedRoute>
-        }
-      />
-      <Route
-        path="/donor/requests"
-        element={
-          <RoleBasedRoute allowedRoles={["donor"]}>
-            <DashboardPage sidebarItems={donorSidebar} title="Donor Portal" subtitle="Emergency Requests">
-              <EmergencyRequest />
-            </DashboardPage>
-          </RoleBasedRoute>
-        }
-      />
-      <Route
-        path="/donor/history"
-        element={
-          <RoleBasedRoute allowedRoles={["donor"]}>
-            <DashboardPage sidebarItems={donorSidebar} title="Donor Portal" subtitle="Donation History">
-              <DonorDonationHistory />
-            </DashboardPage>
-          </RoleBasedRoute>
-        }
-      />
-      <Route
-        path="/donor/notifications"
-        element={
-          <RoleBasedRoute allowedRoles={["donor"]}>
-            <DashboardPage sidebarItems={donorSidebar} title="Donor Portal" subtitle="Notifications">
-              <Notifications />
-            </DashboardPage>
-          </RoleBasedRoute>
-        }
-      />
-      <Route
-        path="/donor/blood-banks"
-        element={
-          <RoleBasedRoute allowedRoles={["donor"]}>
-            <DashboardPage sidebarItems={donorSidebar} title="Donor Portal" subtitle="Blood Banks">
-              <PublicBloodBanks />
-            </DashboardPage>
-          </RoleBasedRoute>
-        }
-      />
-
-      {/* Backward Compatibility: Legacy Patient Routes */}
-      <Route
-        path="/patient-dashboard"
-        element={
-          <RoleBasedRoute allowedRoles={["patient"]}>
-            <DashboardPage sidebarItems={patientSidebar} title="Patient Portal" subtitle="Patient Health Hub">
-              <PatientDashboard />
-            </DashboardPage>
-          </RoleBasedRoute>
-        }
-      />
-      <Route
-        path="/patient/requests"
-        element={
-          <RoleBasedRoute allowedRoles={["patient"]}>
-            <DashboardPage sidebarItems={patientSidebar} title="Patient Portal" subtitle="Blood Requests">
-              <PatientBloodRequests />
-            </DashboardPage>
-          </RoleBasedRoute>
-        }
-      />
-      <Route
-        path="/patient/donors"
-        element={
-          <RoleBasedRoute allowedRoles={["patient"]}>
-            <DashboardPage sidebarItems={patientSidebar} title="Patient Portal" subtitle="Nearby Donors">
-              <PatientNearbyDonors />
-            </DashboardPage>
-          </RoleBasedRoute>
-        }
-      />
-      <Route
-        path="/patient/settings"
-        element={
-          <RoleBasedRoute allowedRoles={["patient"]}>
-            <DashboardPage sidebarItems={patientSidebar} title="Patient Portal" subtitle="Settings">
-              <Settings />
-            </DashboardPage>
-          </RoleBasedRoute>
-        }
-      />
-      <Route
-        path="/patient/notifications"
-        element={
-          <RoleBasedRoute allowedRoles={["patient"]}>
-            <DashboardPage sidebarItems={patientSidebar} title="Patient Portal" subtitle="Notifications">
-              <Notifications />
-            </DashboardPage>
-          </RoleBasedRoute>
-        }
-      />
-      <Route
-        path="/patient/blood-banks"
-        element={
-          <RoleBasedRoute allowedRoles={["patient"]}>
-            <DashboardPage sidebarItems={patientSidebar} title="Patient Portal" subtitle="Blood Banks">
-              <PublicBloodBanks />
-            </DashboardPage>
-          </RoleBasedRoute>
-        }
-      />
-
-      {/* Shared Map Route */}
-      <Route
-        path="/map"
-        element={
-          <RoleBasedRoute allowedRoles={["donor", "patient", "bloodbank", "admin"]}>
-            <MapPageWrapper />
           </RoleBasedRoute>
         }
       />

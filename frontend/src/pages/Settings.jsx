@@ -170,7 +170,7 @@ export default function Settings({ role: propRole }) {
         </div>
       )}
       {error && (
-        <div className="flex items-center gap-2 text-sm text-red bg-red-50 px-4 py-3 rounded-xl border border-red-200">
+        <div className="flex items-center gap-2 text-sm text-red bg-red/10 px-4 py-3 rounded-xl border border-red/20">
           <AlertCircle size={16} />
           {error}
         </div>

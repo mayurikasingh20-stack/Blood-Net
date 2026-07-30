@@ -81,14 +81,14 @@ export default function Notifications() {
       </div>
 
       {error && (
-        <div className="flex items-center gap-2 text-sm text-red bg-red/10 px-4 py-3 rounded-xl">
+        <div className="flex items-center gap-2 text-sm text-red bg-red/10 px-4 py-3 rounded-xl border border-red/20">
           <AlertCircle size={16} /> {error}
         </div>
       )}
 
       <motion.div className="space-y-2">
         {notifications.length === 0 ? (
-          <div className="text-center py-16 bg-white rounded-2xl border border-slate-100">
+          <div className="text-center py-16 bg-white rounded-2xl border border-slate-100 shadow-sm">
             <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <Bell size={28} className="text-slate-400" />
             </div>
@@ -104,7 +104,7 @@ export default function Notifications() {
             return (
               <div key={n.id}
                 onClick={() => isUnread && handleMarkRead(n.id)}
-                className={`flex items-start gap-3 p-4 rounded-xl border cursor-pointer transition-all ${
+                className={`flex items-start gap-3 p-4 rounded-2xl border cursor-pointer transition-all ${
                   isUnread
                     ? "bg-white border-red/10 shadow-sm hover:shadow-md"
                     : "bg-slate-50/50 border-slate-100 hover:bg-slate-50"

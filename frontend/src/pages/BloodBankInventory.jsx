@@ -32,8 +32,8 @@ const fadeUp = {
 const statusColors = {
   AVAILABLE: "bg-emerald-50 text-emerald-600 border-emerald-200",
   LOW_STOCK: "bg-amber-50 text-amber-700 border-amber-200",
-  OUT_OF_STOCK: "bg-red-50 text-red border-red-200",
-  EXPIRED: "bg-red-50 text-red border-red-200",
+  OUT_OF_STOCK: "bg-red/10 text-red border-red/20",
+  EXPIRED: "bg-red/10 text-red border-red/20",
 };
 
 const statusLabels = {
@@ -338,7 +338,7 @@ export default function BloodBankInventory() {
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
           <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
-            className="bg-white rounded-3xl p-6 md:p-8 w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            className="bg-white rounded-2xl p-6 md:p-8 w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-lg font-bold text-slate-900">Update Blood Inventory</h3>
               <button onClick={() => { resetForm(); setShowModal(false); }} className="p-1.5 rounded-lg hover:bg-slate-100 transition"><XCircle size={20} className="text-slate-400" /></button>

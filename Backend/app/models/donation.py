@@ -25,7 +25,13 @@ class Donation(db.Model):
     donor_id = db.Column(
         db.Integer,
         db.ForeignKey("donors.id"),
-        nullable=False
+        nullable=True
+    )
+
+    blood_bank_id = db.Column(
+        db.Integer,
+        db.ForeignKey("blood_banks.id"),
+        nullable=True
     )
 
     status = db.Column(
@@ -75,6 +81,11 @@ class Donation(db.Model):
     donor = db.relationship(
         "Donor",
         back_populates="donations"
+    )
+    
+    blood_bank = db.relationship(
+        "BloodBank",
+        backref="donations"
     )
     
     rejection_reason = db.Column(db.Text)

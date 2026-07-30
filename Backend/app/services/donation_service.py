@@ -54,6 +54,11 @@ def accept_blood_request(request_id):
             "message": "This blood request is no longer accepting donors."
         }, 400
 
+    if blood_request.created_by == user.id:
+        return {
+            "message": "You cannot accept your own blood request."
+        }, 400
+
     existing = Donation.query.filter_by(
         donor_id=donor.id,
         blood_request_id=blood_request.id
@@ -168,11 +173,17 @@ def verify_fulfillment(donation_id, data):
         blood_request.status = RequestStatus.COMPLETED
         completed = True
 
-    donor_name = f"{donation.donor.user.first_name} {donation.donor.user.last_name}"
+    if donation.donor:
+        acceptor_name = f"{donation.donor.user.first_name} {donation.donor.user.last_name}"
+        acceptor_user_id = donation.donor.user_id
+    else:
+        acceptor_name = donation.blood_bank.facility_name
+        acceptor_user_id = donation.blood_bank.user_id
+
     create_notification(
-        user_id=donation.donor.user_id,
+        user_id=acceptor_user_id,
         title="Donation Verified",
-        message=f"{user.first_name} {user.last_name} confirmed your donation of {donated_units} unit(s) for request #{blood_request.id}.",
+        message=f"{user.first_name} {user.last_name} confirmed the donation of {donated_units} unit(s) by {acceptor_name} for request #{blood_request.id}.",
         notification_type="donation_verified",
         reference_id=donation.id
     )

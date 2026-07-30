@@ -30,11 +30,14 @@ export default function AdminRequests() {
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
-  const filtered = requests.filter((r) =>
-    (r.hospital || "").toLowerCase().includes(search.toLowerCase()) ||
-    (r.blood_group || "").includes(search.toUpperCase()) ||
-    (r.city || "").toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = requests.filter((r) => {
+    if (r.status === "completed") return false;
+    return (
+      (r.hospital || "").toLowerCase().includes(search.toLowerCase()) ||
+      (r.blood_group || "").includes(search.toUpperCase()) ||
+      (r.city || "").toLowerCase().includes(search.toLowerCase())
+    );
+  });
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto">

@@ -196,7 +196,7 @@ export default function Education() {
     <div className="bg-cream min-h-screen">
       {/* ==================== HERO ==================== */}
       <section className="relative overflow-hidden bg-gradient-to-br from-red/5 via-cream to-red/10 py-20 md:py-28">
-        <div className="absolute inset-0 opacity-[0.03] bg-[radial-gradient(circle_at_30%_50%,#b81f3a,transparent_70%)]" />
+        <div className="absolute inset-0 opacity-[0.03] bg-[radial-gradient(circle_at_30%_50%,#7F1D1D,transparent_70%)]" />
         <div className="max-w-6xl mx-auto px-4 md:px-8 relative">
           <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} className="text-center max-w-3xl mx-auto">
             <div className="w-16 h-16 rounded-2xl bg-red/10 flex items-center justify-center mx-auto mb-6">
@@ -433,7 +433,7 @@ export default function Education() {
 
         {/* ==================== CTA ==================== */}
         <motion.section {...stagger} className="scroll-mt-20">
-          <motion.div variants={fadeUp} className="relative overflow-hidden bg-gradient-to-br from-red via-red-deep to-red text-white rounded-3xl p-8 md:p-12 text-center shadow-xl">
+          <motion.div variants={fadeUp} className="relative overflow-hidden bg-gradient-to-br from-[#7F1D1D] via-[#7F1D1D] to-[#5C1010] text-white rounded-2xl p-8 md:p-12 text-center shadow-xl">
             <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_30%_50%,#ffffff,transparent_70%)]" />
             <div className="relative">
               <div className="w-14 h-14 rounded-2xl bg-white/20 flex items-center justify-center mx-auto mb-5 backdrop-blur-sm">

@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Building2, CheckCircle, ArrowLeft, ArrowRight, Loader, Shield, Eye, EyeOff } from "lucide-react";
-import api from "../services/api";
+import { Building2, CheckCircle, ArrowLeft, ArrowRight, Loader, Shield, Eye, EyeOff, Smartphone } from "lucide-react";
+import OtpVerification from "../components/shared/OtpVerification";
+import api, { setAuthToken } from "../services/api";
+import { saveAuth } from "../utils/authStorage";
 
 const genders = [
   { value: "Male", label: "Male" },
@@ -25,6 +27,7 @@ export default function BloodBankRegister() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
+  const [otpVerified, setOtpVerified] = useState(false);
   const navigate = useNavigate();
 
   const update = (field, value) => setForm((p) => ({ ...p, [field]: value }));
@@ -52,12 +55,16 @@ export default function BloodBankRegister() {
     setStep(2);
   };
 
-  const handlePrev = () => { setError(""); setStep(1); };
+  const handlePrev = () => {
+    setError("");
+    setStep((s) => Math.max(s - 1, 1));
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const err = validateStep2();
-    if (err) { setError(err); return; }
+    const err2 = validateStep2();
+    if (err2) { setError(err2); return; }
+    if (!otpVerified) { setError("Please verify your phone number first."); return; }
     setError("");
     setLoading(true);
 
@@ -77,6 +84,13 @@ export default function BloodBankRegister() {
 
       const regRes = await api.post("/auth/register", regPayload);
       if (regRes.status !== 201) throw new Error(regRes.data?.message || "Registration failed");
+
+      const token = regRes.data?.access_token;
+      const refreshToken = regRes.data?.refresh_token;
+      if (token) {
+        setAuthToken(token);
+        saveAuth({ token, refreshToken, user: regRes.data?.user }, true);
+      }
 
       const profilePayload = {
         email: form.email.trim().toLowerCase(),
@@ -108,7 +122,7 @@ export default function BloodBankRegister() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-red-50 flex items-center justify-center px-4 py-10">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-red/5 flex items-center justify-center px-4 py-10">
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-2xl">
         <div className="text-center mb-8">
           <div className="w-16 h-16 bg-red/10 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -119,7 +133,7 @@ export default function BloodBankRegister() {
         </div>
 
         <div className="flex items-center justify-center gap-3 mb-4">
-          {[1, 2].map((s) => (
+          {[1, 2, 3].map((s) => (
             <div key={s} className="flex items-center gap-2">
               <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition ${
                 step >= s ? "bg-red text-white" : "bg-slate-200 text-slate-500"
@@ -127,9 +141,9 @@ export default function BloodBankRegister() {
                 {step > s ? <CheckCircle size={16} /> : s}
               </div>
               <span className={`text-xs font-semibold ${step >= s ? "text-red" : "text-slate-400"}`}>
-                {s === 1 ? "Account" : "Facility"}
+                {s === 1 ? "Account" : s === 2 ? "Facility" : "Verify"}
               </span>
-              {s < 2 && <div className={`w-8 h-0.5 ${step > s ? "bg-red" : "bg-slate-200"}`} />}
+              {s < 3 && <div className={`w-8 h-0.5 ${step > s ? "bg-red" : "bg-slate-200"}`} />}
             </div>
           ))}
         </div>
@@ -141,7 +155,7 @@ export default function BloodBankRegister() {
           </div>
         </div>
 
-        <div className="bg-white rounded-3xl p-6 md:p-8 shadow-xl border border-slate-100">
+        <div className="bg-white rounded-2xl p-6 md:p-8 shadow-xl border border-slate-100">
           {error && (
             <div className="mb-4 text-sm text-red bg-red/10 px-4 py-3 rounded-xl border border-red/20">{error}</div>
           )}
@@ -288,26 +302,46 @@ export default function BloodBankRegister() {
               </div>
             )}
 
-            <div className="flex gap-3 mt-8">
-              {step === 2 && (
-                <button type="button" onClick={handlePrev}
-                  className="flex items-center justify-center gap-1.5 px-5 py-2.5 border border-slate-200 rounded-full text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">
-                  <ArrowLeft size={16} /> Back
-                </button>
-              )}
-              {step === 1 ? (
-                <button type="button" onClick={handleNext}
-                  className="flex-1 flex items-center justify-center gap-1.5 px-5 py-2.5 bg-red text-white rounded-full text-sm font-bold hover:bg-red-700 transition">
-                  Next <ArrowRight size={16} />
-                </button>
-              ) : (
-                <button type="submit" disabled={loading}
-                  className="flex-1 flex items-center justify-center gap-1.5 px-5 py-2.5 bg-red text-white rounded-full text-sm font-bold hover:bg-red-700 transition disabled:opacity-60">
-                  {loading ? <Loader size={16} className="animate-spin" /> : <Building2 size={16} />}
-                  {loading ? "Registering..." : "Submit for Approval"}
-                </button>
-              )}
-            </div>
+            {/* Step 3: OTP Verification */}
+            {step === 3 && (
+              <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-4">
+                <OtpVerification
+                  phone={form.phone}
+                  onVerified={() => setOtpVerified(true)}
+                  onError={() => setOtpVerified(false)}
+                />
+                {otpVerified && (
+                  <div className="flex gap-3 pt-2">
+                    <button type="button" onClick={handlePrev}
+                      className="flex items-center justify-center gap-1.5 px-5 py-2.5 border border-slate-200 rounded-full text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">
+                      <ArrowLeft size={16} /> Back
+                    </button>
+                    <button type="submit" disabled={loading}
+                      className="flex-1 flex items-center justify-center gap-1.5 px-5 py-2.5 bg-red text-white rounded-full text-sm font-bold hover:bg-red-700 transition disabled:opacity-60">
+                      {loading ? <Loader size={16} className="animate-spin" /> : <Building2 size={16} />}
+                      {loading ? "Registering..." : "Submit for Approval"}
+                    </button>
+                  </div>
+                )}
+              </motion.div>
+            )}
+
+            {step !== 3 && (
+              <div className="flex gap-3 mt-8">
+                {step > 1 && (
+                  <button type="button" onClick={handlePrev}
+                    className="flex items-center justify-center gap-1.5 px-5 py-2.5 border border-slate-200 rounded-full text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">
+                    <ArrowLeft size={16} /> Back
+                  </button>
+                )}
+                {step < 3 ? (
+                  <button type="button" onClick={handleNext}
+                    className="flex-1 flex items-center justify-center gap-1.5 px-5 py-2.5 bg-red text-white rounded-full text-sm font-bold hover:bg-red-700 transition">
+                    Next <ArrowRight size={16} />
+                  </button>
+                ) : null}
+              </div>
+            )}
           </form>
 
           <p className="mt-6 text-center text-sm text-slate-500">

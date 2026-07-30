@@ -1,8 +1,10 @@
+from datetime import datetime
 from flask import jsonify
 from flask_jwt_extended import get_jwt_identity
 from app.extensions import db
 from app.models.user import User
 from app.models.blood_bank import BloodBank
+from app.models.donation import Donation, DonationStatus
 from app.models.inventory import Inventory, InventoryStatus
 from sqlalchemy import func
 from app.models.blood_request import BloodRequest, RequestStatus
@@ -237,6 +239,62 @@ def blood_bank_dashboard():
     }, 200
 
 
+def accept_request_as_donor(request_id):
+    user_id = get_jwt_identity()
+    user = db.session.get(User, user_id)
+    if user is None:
+        return {"message": "User not found."}, 404
+
+    blood_bank = BloodBank.query.filter_by(user_id=user.id).first()
+    if blood_bank is None:
+        return {"message": "Blood bank profile not found."}, 404
+    if blood_bank.status != "approved":
+        return {"message": "Blood bank is not approved yet."}, 403
+
+    blood_request = db.session.get(BloodRequest, request_id)
+    if blood_request is None:
+        return {"message": "Blood request not found."}, 404
+    if blood_request.status != RequestStatus.PENDING:
+        return {"message": "This request is no longer accepting responses."}, 400
+
+    if blood_request.created_by == user.id:
+        return {"message": "You cannot accept your own blood request."}, 400
+
+    existing = Donation.query.filter_by(
+        blood_bank_id=blood_bank.id,
+        blood_request_id=blood_request.id
+    ).first()
+    if existing:
+        return {"message": "You have already responded to this request."}, 400
+
+    donation = Donation(
+        blood_bank_id=blood_bank.id,
+        blood_request_id=blood_request.id,
+        status=DonationStatus.ACCEPTED,
+        accepted_at=datetime.utcnow()
+    )
+    db.session.add(donation)
+    db.session.flush()
+
+    create_notification(
+        user_id=blood_request.created_by,
+        title="Blood Bank Accepted Request",
+        message=(
+            f"{blood_bank.facility_name} has accepted your "
+            f"{blood_request.blood_group} blood request."
+        ),
+        notification_type="donation_acceptance",
+        reference_id=donation.id
+    )
+
+    db.session.commit()
+
+    return {
+        "message": "Blood request accepted successfully.",
+        "donation_id": donation.id
+    }, 201
+
+
 def fulfill_request(request_id):
     user_id = get_jwt_identity()
     user = db.session.get(User, user_id)
@@ -254,6 +312,9 @@ def fulfill_request(request_id):
         return {"message": "Blood request not found."}, 404
     if blood_request.status != RequestStatus.PENDING:
         return {"message": "Request is no longer accepting fulfillment."}, 400
+
+    if blood_request.created_by == user.id:
+        return {"message": "You cannot fulfill your own blood request."}, 400
 
     blood_request.blood_bank_id = blood_bank.id
 

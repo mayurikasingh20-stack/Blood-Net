@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Phone } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import useAuth from "../context/useAuth";
 import api from "../services/api";
 import DonorScreeningModal from "../components/donor/DonorScreeningModal";
@@ -15,6 +16,7 @@ const urgencyLevels = [
 
 export default function EmergencyRequest() {
   const { user, hasRole } = useAuth();
+  const navigate = useNavigate();
   const isDonor = hasRole("donor");
   const isPatient = hasRole("patient");
   const isBloodBank = hasRole("bloodbank") || hasRole("blood_bank");
@@ -83,14 +85,18 @@ export default function EmergencyRequest() {
       await api.post("/blood-request/create", payload);
       setSuccess("Emergency request created successfully! Donors in your area will be notified.");
       setTimeout(() => {
-        setShowForm(false);
-        setStep(1);
-        setForm({
-          blood_group: "", units: 1, hospital: "", hospital_address: "",
-          city: "", required_before: "", contact_name: "", contact_phone: "",
-          urgency_level: "Moderate", purpose: "",
-        });
         setSuccess("");
+        if (hasRole("bloodbank")) {
+          navigate("/bloodbank/requests");
+        } else {
+          setShowForm(false);
+          setStep(1);
+          setForm({
+            blood_group: "", units: 1, hospital: "", hospital_address: "",
+            city: "", required_before: "", contact_name: "", contact_phone: "",
+            urgency_level: "Moderate", purpose: "",
+          });
+        }
       }, 3000);
       api.get("/blood-request/open")
         .then((res) => setRequests(res.data?.blood_requests || []))
@@ -122,7 +128,7 @@ export default function EmergencyRequest() {
 
       {/* Raise a Request Form (togglable) */}
       {showForm && (
-        <div className="bg-white rounded-3xl p-6 shadow-xl border border-slate-100">
+        <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm">
           <div className="mb-4">
             <h3 className="text-lg font-bold text-slate-900">Raise an Emergency Request</h3>
             <p className="text-sm text-slate-500 mt-1">Create a high-priority blood request for urgent needs.</p>

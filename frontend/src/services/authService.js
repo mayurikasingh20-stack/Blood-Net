@@ -74,6 +74,16 @@ export async function refreshAccessToken(refreshToken) {
   return response.data.access_token;
 }
 
+export async function sendTwilioOtp(phone) {
+  const res = await api.post("/auth/send-otp", { phone });
+  return res.data;
+}
+
+export async function verifyTwilioOtp(phone, code) {
+  const res = await api.post("/auth/verify-otp", { phone, code });
+  return res.data;
+}
+
 // Makes backend and network errors safe to show in the interface.
 export function getAuthErrorMessage(error) {
   if (error.response?.data?.error) {

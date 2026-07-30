@@ -23,18 +23,14 @@ export default function NotificationPanel({ notifications = [], onClear, onReadA
     try {
       await markAllNotificationsRead();
       if (onClear) onClear();
-    } catch {
-      // silently fail
-    }
+    } catch {}
   }
 
   async function handleReadAll() {
     try {
       await markAllNotificationsRead();
       if (onReadAll) onReadAll();
-    } catch {
-      // silently fail
-    }
+    } catch {}
   }
 
   return (
@@ -61,12 +57,12 @@ export default function NotificationPanel({ notifications = [], onClear, onReadA
               <CheckCircle size={18} className="text-slate-400" />
             </div>
             <p className="text-sm text-slate-500">No notifications</p>
-            <p className="text-xs text-slate-400 mt-1">You&apos;ll be notified when something happens</p>
+            <p className="text-xs text-slate-400 mt-1">You'll be notified when something happens</p>
           </div>
         ) : (
           <div className="space-y-2 max-h-[320px] overflow-y-auto">
             {notifications.slice(0, 10).map((n) => (
-              <div key={n.id} className={`flex items-center gap-3 p-3 rounded-xl transition ${n.status === "unread" ? "bg-red-50/50 hover:bg-red-50" : "hover:bg-slate-50"}`}>
+              <div key={n.id} className={`flex items-center gap-3 p-3 rounded-xl transition ${n.status === "unread" ? "bg-red/5 hover:bg-red/10" : "hover:bg-slate-50"}`}>
                 <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-red font-bold text-sm flex-shrink-0 ${n.status === "unread" ? "bg-red/10" : "bg-slate-100"}`}>
                   <NotificationIcon type={n.notification_type} />
                 </div>

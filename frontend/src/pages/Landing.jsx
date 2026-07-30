@@ -155,14 +155,14 @@ export default function Landing() {
   }, []);
 
   const urgencyConfig = {
-    Critical: { bg: "bg-red-50", badge: "bg-red text-white", icon: "text-red" },
+    Critical: { bg: "bg-red/10", badge: "bg-red text-white", icon: "text-red" },
     High: { bg: "bg-orange-50", badge: "bg-orange-500 text-white", icon: "text-orange-500" },
     Moderate: { bg: "bg-amber-50", badge: "bg-amber-500 text-white", icon: "text-amber-500" },
     Low: { bg: "bg-green-50", badge: "bg-green-500 text-white", icon: "text-green-500" },
   };
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC]">
+    <>
       {/* HERO SECTION */}
       <section className="relative min-h-screen flex items-center overflow-hidden bg-[#0B0F19] text-white">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(230,57,70,0.12),transparent_50%),radial-gradient(circle_at_80%_20%,rgba(37,99,235,0.06),transparent_40%)]" />
@@ -507,7 +507,7 @@ export default function Landing() {
 
       {/* CONTACT SECTION */}
       <motion.section className="max-w-6xl mx-auto px-4 md:px-8 py-16 md:py-24" {...fadeUp}>
-        <div className="bg-gradient-to-br from-red to-red-700 rounded-3xl p-8 md:p-16 text-white text-center">
+        <div className="bg-gradient-to-br from-[#7F1D1D] to-[#5C1010] rounded-2xl p-8 md:p-16 text-white text-center">
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             whileInView={{ opacity: 1, scale: 1 }}
@@ -544,6 +544,6 @@ export default function Landing() {
           </motion.div>
         </div>
       </motion.section>
-    </div>
+    </>
   );
 }

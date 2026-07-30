@@ -34,6 +34,8 @@ class User(db.Model):
 
     address = db.Column(db.String(255))
 
+    phone_verified = db.Column(db.Boolean, default=False, nullable=False)
+
     is_active = db.Column(db.Boolean, default=True)
 
     created_at = db.Column(

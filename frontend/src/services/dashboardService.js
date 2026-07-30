@@ -344,6 +344,11 @@ export async function fulfillBloodRequest(requestId) {
   return res.data;
 }
 
+export async function bloodBankAcceptRequest(requestId) {
+  const res = await api.post(`/blood-bank/accept-request/${requestId}`);
+  return res.data;
+}
+
 export async function getAdminCamps() {
   const res = await api.get("/admin/camps");
   return res.data;

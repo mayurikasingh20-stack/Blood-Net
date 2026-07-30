@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Droplets, Search, CheckCircle, Clock, XCircle, Loader, Heart } from "lucide-react";
+import { Droplets, Search, CheckCircle, Clock, XCircle, Loader, Heart, Building2 } from "lucide-react";
 import api from "../services/api";
 import { getMyDonations } from "../services/dashboardService";
 import useAuth from "../context/useAuth";
@@ -24,8 +24,14 @@ export default function DonorDonationHistory() {
   const { hasRole } = useAuth();
   const isDonor = hasRole("donor");
   const isPatient = hasRole("patient");
+  const isBloodBank = hasRole("bloodbank");
 
-  const [activeTab, setActiveTab] = useState(isDonor ? "donor" : "patient");
+  const roles = [];
+  if (isDonor) roles.push("donor");
+  if (isPatient) roles.push("patient");
+  if (isBloodBank) roles.push("bloodbank");
+
+  const [activeTab, setActiveTab] = useState(roles[0] || "donor");
 
   const [donations, setDonations] = useState([]);
   const [requests, setRequests] = useState([]);
@@ -39,17 +45,20 @@ export default function DonorDonationHistory() {
         const calls = [];
         if (isDonor) calls.push(getMyDonations().then(d => d?.donations || []).catch(() => []));
         if (isPatient) calls.push(api.get("/blood-request/my-requests").then(r => r.data?.blood_requests || []).catch(() => []));
+        if (isBloodBank) calls.push(api.get("/blood-request/my-requests").then(r => r.data?.blood_requests || []).catch(() => []));
         const results = await Promise.all(calls);
 
-        if (isDonor) setDonations(results[0]);
-        if (isPatient) setRequests(isDonor ? results[1] : results[0]);
+        let idx = 0;
+        if (isDonor) setDonations(results[idx++]);
+        if (isPatient) setRequests(results[idx++]);
+        if (isBloodBank) setRequests(results[idx++]);
       } catch {
         setError("Failed to load history.");
       } finally {
         setLoading(false);
       }
     })();
-  }, [isDonor, isPatient]);
+  }, [isDonor, isPatient, isBloodBank]);
 
   const filteredDonations = donations.filter((d) =>
     !search ||
@@ -89,28 +98,25 @@ export default function DonorDonationHistory() {
         </div>
       </div>
 
-      {isDonor && isPatient && (
+      {roles.length > 1 && (
         <div className="flex gap-1 bg-slate-100 p-1 rounded-xl w-fit">
-          <button
-            onClick={() => setActiveTab("donor")}
-            className={`px-5 py-2 rounded-lg text-sm font-bold transition ${
-              activeTab === "donor"
-                ? "bg-white text-red shadow-sm border border-slate-200"
-                : "text-slate-500 hover:text-slate-700"
-            }`}
-          >
-            <Droplets size={14} className="inline mr-1.5" />Donor History
-          </button>
-          <button
-            onClick={() => setActiveTab("patient")}
-            className={`px-5 py-2 rounded-lg text-sm font-bold transition ${
-              activeTab === "patient"
-                ? "bg-white text-red shadow-sm border border-slate-200"
-                : "text-slate-500 hover:text-slate-700"
-            }`}
-          >
-            <Heart size={14} className="inline mr-1.5" />Patient History
-          </button>
+          {roles.map((role) => (
+            <button key={role}
+              onClick={() => setActiveTab(role)}
+              className={`px-5 py-2 rounded-lg text-sm font-bold transition ${
+                activeTab === role
+                  ? "bg-white text-red shadow-sm border border-slate-200"
+                  : "text-slate-500 hover:text-slate-700"
+              }`}
+            >
+              {role === "donor" ? <Droplets size={14} className="inline mr-1.5" /> :
+               role === "patient" ? <Heart size={14} className="inline mr-1.5" /> :
+               <Building2 size={14} className="inline mr-1.5" />}
+              {role === "donor" ? "Donor History" :
+               role === "patient" ? "Patient History" :
+               "Blood Bank History"}
+            </button>
+          ))}
         </div>
       )}
 
@@ -218,7 +224,61 @@ export default function DonorDonationHistory() {
                       </td>
                       <td className="px-4 py-3">
                         <span className={`text-[10px] font-bold px-2 py-1 rounded-full border ${
-                          r.urgency === "emergency" ? "bg-red-50 text-red border-red-200" : "bg-slate-50 text-slate-600 border-slate-200"
+                          r.urgency === "emergency" ? "bg-red/10 text-red border-red/20" : "bg-slate-50 text-slate-600 border-slate-200"
+                        }`}>
+                          {r.urgency || "normal"}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className={`text-[10px] font-bold px-2 py-1 rounded-full border ${requestStatusStyles[r.status] || requestStatusStyles.pending}`}>
+                          {r.status || "pending"}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-slate-400 text-xs">
+                        {r.created_at ? new Date(r.created_at).toLocaleDateString() : "\u2014"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </motion.div>
+      )}
+
+      {activeTab === "bloodbank" && isBloodBank && (
+        <motion.div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+          {filteredRequests.length === 0 ? (
+            <div className="text-center py-12">
+              <div className="w-14 h-14 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                <Building2 size={22} className="text-slate-400" />
+              </div>
+              <p className="text-sm text-slate-500">{requests.length === 0 ? "No blood requests yet" : "No matching requests"}</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-slate-50 border-b border-slate-100">
+                  <tr>
+                    {["Blood Group", "Hospital", "City", "Units", "Urgency", "Status", "Date"].map((h) => (
+                      <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {filteredRequests.map((r) => (
+                    <tr key={r.request_id || r.id} className="hover:bg-slate-50/50 transition">
+                      <td className="px-4 py-3">
+                        <span className="font-bold text-slate-900">{r.blood_group}</span>
+                      </td>
+                      <td className="px-4 py-3 text-slate-600">{r.hospital || r.hospital_name || "\u2014"}</td>
+                      <td className="px-4 py-3 text-slate-600">{r.city || "\u2014"}</td>
+                      <td className="px-4 py-3">
+                        <span className="font-semibold">{r.units_required || r.units || "\u2014"}</span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className={`text-[10px] font-bold px-2 py-1 rounded-full border ${
+                          r.urgency === "emergency" ? "bg-red/10 text-red border-red/20" : "bg-slate-50 text-slate-600 border-slate-200"
                         }`}>
                           {r.urgency || "normal"}
                         </span>

@@ -47,9 +47,9 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-red-50 to-white flex items-center justify-center px-4 py-10">
+    <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center px-4 py-10">
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-md">
-        <Card padding="lg" className="shadow-xl border-red/10">
+        <Card padding="lg" className="bg-white rounded-2xl border border-slate-100 shadow-sm">
           {/* Logo */}
           <div className="flex items-center justify-center gap-2 mb-8">
             <div className="w-10 h-10 bg-red rounded-xl flex items-center justify-center">
@@ -87,7 +87,7 @@ export default function Login() {
 
             <div>
               <label className="block" htmlFor="password">
-                <span className="mb-1.5 block text-sm font-semibold text-ink">PASSWORD <span className="text-red">*</span></span>
+                <span className="mb-1.5 block text-sm font-semibold text-slate-700">PASSWORD <span className="text-red">*</span></span>
                 <div className="relative">
                   <input
                     id="password"
@@ -96,7 +96,7 @@ export default function Login() {
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Enter your password"
                     autoComplete="new-password" required
-                    className="w-full rounded-lg border border-ink/20 bg-paper px-3 py-2.5 text-sm transition placeholder:text-ink-soft/60 hover:border-ink/40 focus:border-red focus:outline-none pr-10"
+                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm transition placeholder:text-slate-400 hover:border-slate-300 focus:border-red focus:outline-none focus:ring-2 focus:ring-red/20 pr-10"
                   />
                   <button
                     type="button"
@@ -113,12 +113,12 @@ export default function Login() {
             {error && <ErrorMessage>{error}</ErrorMessage>}
             {success && <SuccessMessage>{success}</SuccessMessage>}
 
-            <Button type="submit" className="w-full" size="lg" loading={loading}>
+            <Button type="submit" className="w-full rounded-full" size="lg" loading={loading}>
               Sign In
             </Button>
           </form>
 
-          <div className="mt-5 p-3 bg-slate-50 rounded-xl border border-slate-200">
+          <div className="mt-5 p-3 bg-slate-50 rounded-2xl border border-slate-200">
             <p className="text-xs text-slate-500 text-center">
               By using this platform, your registered phone number will be visible to patients and blood banks for coordination purposes.
             </p>

@@ -85,6 +85,7 @@ def register_user(data):
         dob=dob,
         city=data["city"],
         address=data.get("address"),
+        phone_verified=False,
     )
 
     donor_profile = None
@@ -133,7 +134,24 @@ def register_user(data):
             "error": str(exc),
         }, 500
 
-    return {"message": "registered successfully"}, 201
+    access_token = create_access_token(identity=str(new_user.id))
+    refresh_token = create_refresh_token(identity=str(new_user.id))
+
+    return {
+        "message": "registered successfully",
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "name": f"{new_user.first_name} {new_user.last_name}",
+        "user": {
+            "id": new_user.id,
+            "first_name": new_user.first_name,
+            "last_name": new_user.last_name,
+            "email": new_user.email,
+            "phone": new_user.phone,
+            "role": new_user.role,
+            "roles": new_user.get_roles(),
+        },
+    }, 201
 
 
 def login_user(data):
@@ -166,10 +184,11 @@ def login_user(data):
     if not user or not verify_password(user.password_hash, password):
         return {"message": "Credentials not matched"}, 401
 
+    if not user.phone_verified:
+        return {"message": "Phone number not verified. Please verify your phone via OTP before logging in."}, 403
+
     if user.has_role("blood_bank"):
         blood_bank = BloodBank.query.filter_by(user_id=user.id).first()
-        if blood_bank and blood_bank.status == "pending":
-            return {"message": "Your account is currently under verification. The administrator has not yet approved your registration. Please wait a few minutes and try again later."}, 403
         if blood_bank and blood_bank.status == "rejected":
             return {"message": "Your registration request has been rejected by the administrator. Please contact the administrator or register again with valid information."}, 403
 

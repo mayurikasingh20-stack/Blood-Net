@@ -5,7 +5,7 @@ import useAuth from "../context/useAuth";
 import api from "../services/api";
 
 const urgencyColors = {
-  Critical: "bg-red-50 text-red border-red-200",
+  Critical: "bg-red/10 text-red border-red/20",
   High: "bg-orange-50 text-orange-600 border-orange-200",
   Moderate: "bg-amber-50 text-amber-700 border-amber-200",
   Low: "bg-slate-100 text-slate-500 border-slate-200",
@@ -52,6 +52,7 @@ export default function BloodBankRequests() {
   }
 
   const filtered = requests.filter((r) => {
+    if (r.status === "completed") return false;
     const term = searchTerm.toLowerCase();
     return (
       (r.blood_group || "").toLowerCase().includes(term) ||

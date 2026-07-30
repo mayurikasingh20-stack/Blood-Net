@@ -1,17 +1,83 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, current_app
 from flask_jwt_extended import jwt_required, get_jwt_identity, create_access_token
 from app.extensions import db
 from app.models.user import User
 from app.models.donor import Donor
 from app.models.patient import Patient
 from app.services.auth_service import login_user, register_user
+from app.services.twilio_service import send_otp, check_otp
 from app.utils.helpers import get_missing_fields
+from app.utils.validators import normalize_phone
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/api/auth")
 
+@auth_bp.post("/send-otp")
+def send_otp_route():
+    data = request.get_json(silent=True) or {}
+    phone = data.get("phone", "").strip()
+    if not phone:
+        return jsonify({"message": "Phone number is required."}), 400
+
+    normalized = normalize_phone(phone)
+    if not normalized:
+        return jsonify({"message": "Invalid phone number. Use E.164 format (e.g. +911234567890)."}), 400
+
+    if User.query.filter_by(phone=normalized).first():
+        return jsonify({"message": "Phone number already registered."}), 409
+
+    twilio_phone = f"+91{normalized}"
+
+    try:
+        status = send_otp(twilio_phone)
+        return jsonify({"message": "OTP sent successfully.", "status": status}), 200
+    except Exception as e:
+        current_app.logger.error(f"Twilio send-otp failed: {e}")
+        return jsonify({"message": "Failed to send OTP. Check phone number and try again."}), 500
+
+
+@auth_bp.post("/verify-otp")
+def verify_otp_route():
+    data = request.get_json(silent=True) or {}
+    phone = data.get("phone", "").strip()
+    code = data.get("code", "").strip()
+
+    if not phone or not code:
+        return jsonify({"message": "Phone and code are required."}), 400
+
+    normalized = normalize_phone(phone)
+    if not normalized:
+        return jsonify({"message": "Invalid phone number."}), 400
+
+    twilio_phone = f"+91{normalized}"
+
+    try:
+        status = check_otp(twilio_phone, code)
+        if status == "approved":
+            if not hasattr(current_app, '_verified_phones'):
+                current_app._verified_phones = set()
+            current_app._verified_phones.add(normalized)
+            return jsonify({"message": "Phone verified successfully.", "verified": True}), 200
+        else:
+            return jsonify({"message": "Invalid or expired code. Please try again.", "verified": False}), 400
+    except Exception as e:
+        current_app.logger.error(f"Twilio verify-otp failed: {e}")
+        return jsonify({"message": "Verification failed. Please try again."}), 500
+
+
 @auth_bp.post("/register")
 def register():
-    response, status_code = register_user(request.get_json())
+    data = request.get_json() or {}
+    response, status_code = register_user(data)
+
+    if status_code == 201 and hasattr(current_app, '_verified_phones'):
+        phone = normalize_phone(data.get("phone", ""))
+        if phone and phone in current_app._verified_phones:
+            user = User.query.filter_by(phone=phone).first()
+            if user:
+                user.phone_verified = True
+                db.session.commit()
+                current_app._verified_phones.discard(phone)
+
     return jsonify(response), status_code
     
 @auth_bp.post("/login")

@@ -1,11 +1,10 @@
 import { Navigate } from "react-router-dom";
 import useAuth from "../context/useAuth";
-import LoadingPage from "../pages/LoadingPage";
 
 function RoleBasedRoute({ allowedRoles, children }) {
   const { user, token, loading, hasRole } = useAuth();
 
-  if (loading) return <LoadingPage />;
+  if (loading) return <div aria-busy="true" className="flex min-h-screen items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-red border-t-transparent" /></div>;
 
   if (!token) {
     return <Navigate to="/login" replace />;

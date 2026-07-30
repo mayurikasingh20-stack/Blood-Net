@@ -166,15 +166,15 @@ export default function Contact() {
 
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 md:gap-8">
           {/* Contact Form */}
-          <motion.div className="lg:col-span-3 bg-white rounded-3xl p-6 md:p-8 border border-slate-100 shadow-sm" {...fadeUp}>
+          <motion.div className="lg:col-span-3 bg-white rounded-2xl p-6 md:p-8 border border-slate-100 shadow-sm" {...fadeUp}>
             {submitted ? (
               <motion.div
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 className="text-center py-12"
               >
-                <div className="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <CheckCircle size={32} className="text-green" />
+                <div className="w-16 h-16 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <CheckCircle size={32} className="text-emerald-600" />
                 </div>
                 <h3 className="text-xl font-bold text-slate-900 mb-2">Message Sent!</h3>
                 <p className="text-slate-500 text-sm mb-6">
@@ -300,7 +300,7 @@ export default function Contact() {
 
           {/* Map Sidebar */}
           <motion.div className="lg:col-span-2 space-y-4 md:space-y-6" {...stagger}>
-            <div className="bg-white rounded-3xl overflow-hidden border border-slate-100 shadow-sm h-[280px] md:h-[320px]">
+            <div className="bg-white rounded-2xl overflow-hidden border border-slate-100 shadow-sm h-[280px] md:h-[320px]">
               <MapContainer
                 center={[26.2389, 73.0243]}
                 zoom={13}
@@ -343,7 +343,7 @@ export default function Contact() {
               </div>
             </div>
 
-            <div className="bg-gradient-to-br from-red to-red-700 rounded-2xl p-5 md:p-6 text-white">
+            <div className="bg-gradient-to-br from-[#7F1D1D] to-[#5C1010] rounded-2xl p-5 md:p-6 text-white">
               <h4 className="font-bold mb-1">Emergency?</h4>
               <p className="text-sm text-white/80 mb-3">Call our 24/7 helpline for urgent blood requirements.</p>
               <a

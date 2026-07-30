@@ -89,7 +89,7 @@ export default function PublicBloodBanks() {
           <button
             onClick={handleSearch}
             disabled={searching}
-            className="flex items-center gap-2 px-5 py-2 bg-red text-white text-sm font-semibold rounded-xl hover:bg-red-700 transition disabled:opacity-50"
+            className="flex items-center gap-2 px-5 py-2 bg-red text-white text-sm font-semibold rounded-full hover:bg-red-700 transition disabled:opacity-50"
           >
             {searching ? <Loader size={14} className="animate-spin" /> : <Search size={14} />}
             Search
@@ -97,7 +97,7 @@ export default function PublicBloodBanks() {
           {searched && (
             <button
               onClick={handleClear}
-              className="flex items-center gap-2 px-4 py-2 border border-slate-200 text-slate-600 text-sm font-semibold rounded-xl hover:bg-slate-50 transition"
+              className="flex items-center gap-2 px-4 py-2 border border-slate-200 text-slate-600 text-sm font-semibold rounded-full hover:bg-slate-50 transition"
             >
               <X size={14} />
               Clear
@@ -123,7 +123,7 @@ export default function PublicBloodBanks() {
             {searched && (
               <button
                 onClick={handleClear}
-                className="mt-3 text-xs font-semibold text-red hover:text-red-700 transition"
+                className="mt-3 text-xs font-semibold text-red hover:text-red transition"
               >
                 Clear Search
               </button>
@@ -165,7 +165,7 @@ export default function PublicBloodBanks() {
               </div>
               {bank.latitude && bank.longitude && (
                 <a href={`https://www.google.com/maps?q=${bank.latitude},${bank.longitude}`} target="_blank" rel="noopener noreferrer"
-                  className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-red hover:text-red-700 transition"
+                  className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-red hover:text-red transition"
                 >
                   <ExternalLink size={12} /> View on Map
                 </a>

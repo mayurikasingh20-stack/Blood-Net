@@ -6,7 +6,7 @@ import { motion } from "framer-motion";
 import { Droplets, AlertTriangle, Bell, CheckCircle, Activity, ThumbsUp, XCircle, MapPin, Calendar, CalendarX, Edit3, Trash2, Plus, X, RefreshCw, LocateFixed } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import useAuth from "../context/useAuth";
-import { getBloodBankDashboard, getInventory, getNotifications, getOpenRequests, getMyCamps, createCamp, updateCamp, deleteCamp, fulfillBloodRequest } from "../services/dashboardService";
+import { getBloodBankDashboard, getInventory, getNotifications, getOpenRequests, getMyCamps, createCamp, updateCamp, deleteCamp, fulfillBloodRequest, bloodBankAcceptRequest } from "../services/dashboardService";
 import api from "../services/api";
 import { BLOOD_GROUPS } from "../utils/constants";
 import NotificationPanel from "../components/shared/NotificationPanel";
@@ -108,9 +108,11 @@ export default function BloodBankDashboard() {
   const [campForm, setCampForm] = useState({ title: "", description: "", date: "", time: "", venue: "", address: "", lat: "", lng: "" });
   const [campSaving, setCampSaving] = useState(false);
   const [fulfillingId, setFulfillingId] = useState(null);
+  const [acceptingId, setAcceptingId] = useState(null);
   const [respondedIds, setRespondedIds] = useState(new Set());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [sectionErrors, setSectionErrors] = useState({});
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -129,14 +131,17 @@ export default function BloodBankDashboard() {
   }, []);
 
   async function loadAllData(isFullRefresh) {
+    const errs = {};
+    const safe = (label, fn, fallback) => fn().catch((e) => { errs[label] = true; return fallback; });
     const [dashData, invData, reqRes, openReqData, notifData, campsData] = await Promise.all([
-      getBloodBankDashboard().catch(() => null),
-      getInventory().catch(() => ({ inventory: [] })),
-      api.get("/blood-request/my-requests").catch(() => ({ data: { blood_requests: [] } })),
-      getOpenRequests().catch(() => ({ blood_requests: [] })),
-      getNotifications().catch(() => ({ notifications: [] })),
-      getMyCamps().catch(() => ({ camps: [] })),
+      safe("dashboard", getBloodBankDashboard, null),
+      safe("inventory", getInventory, { inventory: [] }),
+      safe("myRequests", () => api.get("/blood-request/my-requests"), { data: { blood_requests: [] } }),
+      safe("openRequests", getOpenRequests, { blood_requests: [] }),
+      safe("notifications", getNotifications, { notifications: [] }),
+      safe("camps", getMyCamps, { camps: [] }),
     ]);
+    setSectionErrors(errs);
 
     setDashboard((prev) => isFullRefresh || JSON.stringify(dashData) !== JSON.stringify(prev) ? dashData : prev);
 
@@ -185,6 +190,18 @@ export default function BloodBankDashboard() {
       alert(err.response?.data?.message || "Failed to fulfill request.");
     } finally {
       setFulfillingId(null);
+    }
+  }
+
+  async function handleAccept(requestId) {
+    setAcceptingId(requestId);
+    try {
+      await bloodBankAcceptRequest(requestId);
+      setRespondedIds((prev) => new Set(prev).add(requestId));
+    } catch (err) {
+      alert(err.response?.data?.message || "Failed to accept request.");
+    } finally {
+      setAcceptingId(null);
     }
   }
 
@@ -255,6 +272,14 @@ export default function BloodBankDashboard() {
       {error && (
         <div className="flex items-center gap-2 text-sm text-amber-700 bg-amber-50 px-4 py-3 rounded-xl border border-amber-200">
           <AlertTriangle size={16} /> {error}
+        </div>
+      )}
+      {Object.keys(sectionErrors).length > 0 && (
+        <div className="flex items-center justify-between text-sm text-red-700 bg-red-50 px-4 py-3 rounded-xl border border-red-200">
+          <span className="flex items-center gap-2"><AlertTriangle size={16} /> Some sections failed to load</span>
+          <button onClick={fetchData} className="flex items-center gap-1 text-xs font-semibold text-red-700 hover:text-red-900">
+            <RefreshCw size={14} /> Retry
+          </button>
         </div>
       )}
 
@@ -337,9 +362,15 @@ export default function BloodBankDashboard() {
 
           {pendingRequests > 0 && (
             <motion.div className="bg-white rounded-2xl p-4 md:p-6 border border-slate-100 shadow-sm" {...fadeUp}>
-              <h3 className="text-base font-bold text-slate-900 mb-3 flex items-center gap-2">
-                <Bell size={16} className="text-blue-500" /> My Pending Requests
-              </h3>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                  <Bell size={16} className="text-blue-500" /> My Pending Requests
+                </h3>
+                <button onClick={() => navigate("/bloodbank/requests")}
+                  className="text-xs font-semibold text-blue-600 hover:text-blue-800 transition">
+                  View All &rarr;
+                </button>
+              </div>
               <div className="space-y-2">
                 {requests.filter((r) => r.status === "pending").slice(0, 3).map((req) => (
                   <div key={req.id} className="flex items-center justify-between text-sm px-3 py-2 bg-blue-50 rounded-xl">
@@ -387,6 +418,13 @@ export default function BloodBankDashboard() {
                         }`}>
                           {req.urgency_level}
                         </span>
+                        <button
+                          onClick={() => handleAccept(req.id)}
+                          disabled={acceptingId === req.id || respondedIds.has(req.id)}
+                          className="text-[10px] font-bold px-2 py-1 rounded-full bg-blue-50 text-blue-600 hover:bg-blue-100 transition disabled:opacity-50"
+                        >
+                          {acceptingId === req.id ? "..." : respondedIds.has(req.id) ? "Accepted" : "Accept"}
+                        </button>
                         <button
                           onClick={() => handleFulfill(req.id)}
                           disabled={fulfillingId === req.id}

@@ -220,7 +220,7 @@ export default function BloodMap({
         {searchBloodGroup && (
           <button
             onClick={handleSearchBloodGroup}
-            className="px-4 py-2 bg-red text-white rounded-xl text-sm font-bold hover:bg-red-700 transition"
+            className="px-4 py-2 bg-red text-white rounded-full text-sm font-bold hover:bg-red transition"
           >
             Filter
           </button>
@@ -232,7 +232,7 @@ export default function BloodMap({
         {loading && (
           <div className="absolute inset-0 z-[1001] bg-white/80 flex items-center justify-center">
             <div className="flex flex-col items-center gap-3">
-              <div className="w-8 h-8 border-2 border-red border-t-transparent rounded-full animate-spin" />
+              <div className="w-8 h-8 border-4 border-red/30 border-t-red rounded-full animate-spin" />
               <p className="text-sm text-slate-500">Loading map data...</p>
             </div>
           </div>
@@ -248,7 +248,7 @@ export default function BloodMap({
               <p className="text-xs text-slate-500">{error}</p>
               <button
                 onClick={() => window.location.reload()}
-                className="mt-3 px-4 py-1.5 bg-red text-white rounded-full text-xs font-bold hover:bg-red-700 transition"
+                className="mt-3 px-4 py-1.5 bg-red text-white rounded-full text-xs font-bold hover:bg-red transition"
               >
                 Retry
               </button>
@@ -325,7 +325,7 @@ export default function BloodMap({
                       href={`https://www.google.com/maps/dir/?api=1&destination=${bank.lat},${bank.lng}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="mt-3 w-full flex items-center justify-center gap-1.5 px-3 py-2 bg-red text-white rounded-lg text-xs font-bold hover:bg-red-700 transition"
+                      className="mt-3 w-full flex items-center justify-center gap-1.5 px-3 py-2 bg-red text-white rounded-full text-xs font-bold hover:bg-red transition"
                     >
                       <Navigation size={12} /> Navigate
                     </a>
@@ -378,7 +378,7 @@ export default function BloodMap({
                       href={`https://www.google.com/maps/dir/?api=1&destination=${bank.lat},${bank.lng}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="mt-3 w-full flex items-center justify-center gap-1.5 px-3 py-2 bg-red text-white rounded-lg text-xs font-bold hover:bg-red-700 transition"
+                      className="mt-3 w-full flex items-center justify-center gap-1.5 px-3 py-2 bg-red text-white rounded-full text-xs font-bold hover:bg-red transition"
                     >
                       <Navigation size={12} /> Navigate
                     </a>
@@ -401,7 +401,7 @@ export default function BloodMap({
                       href={`https://www.google.com/maps/dir/?api=1&destination=${camp.lat},${camp.lng}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="mt-3 w-full flex items-center justify-center gap-1.5 px-3 py-2 bg-red text-white rounded-lg text-xs font-bold hover:bg-red-700 transition"
+                      className="mt-3 w-full flex items-center justify-center gap-1.5 px-3 py-2 bg-red text-white rounded-full text-xs font-bold hover:bg-red transition"
                     >
                       <Navigation size={12} /> Navigate
                     </a>

@@ -122,8 +122,8 @@ export default function DonorScreeningModal({ requestId, requestBloodGroup, dono
           <AlertCircle size={28} className="text-red" />
         </div>
         <h3 className="text-lg font-bold text-slate-900 mb-2">Your blood group is not the same</h3>
-        <div className="bg-red-50 rounded-xl p-4 mb-4">
-          <p className="text-sm text-red-700">
+        <div className="bg-red/5 rounded-xl p-4 mb-4">
+          <p className="text-sm text-red">
             Request needs <strong>{requestBloodGroup}</strong> but your blood group is <strong>{donorBloodGroup}</strong>.
           </p>
         </div>
@@ -146,8 +146,8 @@ export default function DonorScreeningModal({ requestId, requestBloodGroup, dono
         <h3 className="text-lg font-bold text-slate-900 mb-2">Not Eligible to Donate</h3>
         <p className="text-sm text-slate-600 mb-4">{intervalData?.reason}</p>
         {intervalData?.next_eligible_date && (
-          <div className="bg-amber-50 rounded-xl p-3 mb-4">
-            <p className="text-xs text-amber-700 font-semibold">Next Eligible Date</p>
+          <div className="bg-amber/10 rounded-xl p-3 mb-4">
+            <p className="text-xs text-amber-800 font-semibold">Next Eligible Date</p>
             <p className="text-sm font-bold text-amber-800">
               {new Date(intervalData.next_eligible_date).toLocaleDateString("en-IN", {
                 day: "numeric", month: "short", year: "numeric",
@@ -231,7 +231,7 @@ export default function DonorScreeningModal({ requestId, requestBloodGroup, dono
             <button
               onClick={nextQuestion}
               disabled={!isCurrentAnswered()}
-              className="flex items-center gap-1 px-5 py-2.5 bg-red text-white rounded-full text-sm font-bold hover:bg-red-700 transition disabled:opacity-50 ml-auto"
+              className="flex items-center gap-1 px-5 py-2.5 bg-red text-white rounded-full text-sm font-bold hover:bg-red transition disabled:opacity-50 ml-auto"
             >
               Next <ChevronRight size={16} />
             </button>
@@ -239,7 +239,7 @@ export default function DonorScreeningModal({ requestId, requestBloodGroup, dono
             <button
               onClick={handleSubmit}
               disabled={!isCurrentAnswered() || submitting}
-              className="px-5 py-2.5 bg-red text-white rounded-full text-sm font-bold hover:bg-red-700 transition disabled:opacity-50 ml-auto"
+              className="px-5 py-2.5 bg-red text-white rounded-full text-sm font-bold hover:bg-red transition disabled:opacity-50 ml-auto"
             >
               {submitting ? "Submitting..." : "Submit Screening"}
             </button>
@@ -252,8 +252,8 @@ export default function DonorScreeningModal({ requestId, requestBloodGroup, dono
   function renderPassed() {
     return (
       <div className="text-center py-4">
-        <div className="w-14 h-14 rounded-full bg-emerald-50 flex items-center justify-center mx-auto mb-4">
-          <CheckCircle size={28} className="text-emerald-600" />
+        <div className="w-14 h-14 rounded-full bg-emerald/10 flex items-center justify-center mx-auto mb-4">
+          <CheckCircle size={28} className="text-emerald" />
         </div>
         <h3 className="text-lg font-bold text-slate-900 mb-2">You Are Eligible!</h3>
         <p className="text-sm text-slate-600 mb-6">You are eligible to donate blood. Click below to confirm your acceptance.</p>
@@ -267,7 +267,7 @@ export default function DonorScreeningModal({ requestId, requestBloodGroup, dono
           <button
             onClick={handleConfirmAccept}
             disabled={submitting}
-            className="flex-[2] py-2.5 bg-emerald-600 text-white rounded-full text-sm font-bold hover:bg-emerald-700 transition disabled:opacity-60 flex items-center justify-center gap-2"
+            className="flex-[2] py-2.5 bg-emerald text-white rounded-full text-sm font-bold hover:bg-emerald transition disabled:opacity-60 flex items-center justify-center gap-2"
           >
             {submitting ? <Loader size={16} className="animate-spin" /> : <CheckCircle size={16} />}
             {submitting ? "Confirming..." : "Confirm Acceptance"}
@@ -286,11 +286,11 @@ export default function DonorScreeningModal({ requestId, requestBloodGroup, dono
         <h3 className="text-lg font-bold text-slate-900 mb-2">Not Eligible to Donate</h3>
         <p className="text-sm text-slate-600 mb-4">You are currently not eligible to donate blood.</p>
         {result?.failed_reasons?.length > 0 && (
-          <div className="bg-red-50 rounded-xl p-4 mb-4 text-left">
+          <div className="bg-red/5 rounded-xl p-4 mb-4 text-left">
             <p className="text-xs font-bold text-red mb-2">Reasons:</p>
             <ul className="space-y-1">
               {result.failed_reasons.map((reason, i) => (
-                <li key={i} className="flex items-start gap-2 text-xs text-red-700">
+                <li key={i} className="flex items-start gap-2 text-xs text-red">
                   <span className="mt-0.5">•</span>
                   {reason}
                 </li>
@@ -331,7 +331,7 @@ export default function DonorScreeningModal({ requestId, requestBloodGroup, dono
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="bg-white rounded-3xl p-6 md:p-8 w-full max-w-lg max-h-[90vh] overflow-y-auto"
+        className="bg-white rounded-2xl p-6 md:p-8 w-full max-w-lg max-h-[90vh] overflow-y-auto"
       >
         <div className="flex items-center justify-between mb-4">
           <div>

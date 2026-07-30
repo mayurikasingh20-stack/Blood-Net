@@ -3,7 +3,7 @@ node_modules/
 frontend/node_modules/
 Backend/venv/
 Backend/.venv/
-
+venv/
 
 __pycache__/
 *.pyc
@@ -12,3 +12,19 @@ __pycache__/
 .DS_Store
 .vscode/
 .idea/
+
+# Build output
+frontend/dist/
+
+# Runtime logs and artifacts
+*.log
+*.err
+stdout.txt
+stderr.txt
+frontend-runtime.err
+
+# Environment files
+frontend/.env
+
+# Large dataset files (not used in app)
+dataset/
