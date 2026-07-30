@@ -52,11 +52,6 @@ export async function getUserDashboard() {
 
 // ============== DONOR ==============
 
-export async function getDonorDashboard() {
-  const res = await api.get("/donor/dashboard");
-  return res.data;
-}
-
 export async function getDonorProfile() {
   const res = await api.get("/donor/profile");
   return res.data; // { user: {...}, donor: { blood_group, weight, ... } }
@@ -83,11 +78,6 @@ export async function searchDonors(bloodGroup) {
 }
 
 // ============== PATIENT ==============
-
-export async function getPatientDashboard() {
-  const res = await api.get("/patient/dashboard");
-  return res.data;
-}
 
 export async function getPatientProfile() {
   const res = await api.get("/patient/profile");

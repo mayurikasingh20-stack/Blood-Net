@@ -12,6 +12,7 @@ import Unauthorized from "../pages/Unauthorized";
 import NotFound from "../pages/NotFound";
 import BloodBankRegister from "../pages/BloodBankRegister";
 import DonorProfile from "../pages/DonorProfile";
+import PatientBloodRequests from "../pages/PatientBloodRequests";
 import PatientNearbyDonors from "../pages/PatientNearbyDonors";
 import BloodBankDashboard from "../pages/Bloodbank";
 import BloodBankInventory from "../pages/BloodBankInventory";
@@ -274,6 +275,20 @@ export default function AppRoutes() {
           </RoleBasedRoute>
         }
       />
+<Route
+  path="/admin/notifications"
+  element={
+    <RoleBasedRoute allowedRoles={["admin"]}>
+      <DashboardPage
+        sidebarItems={adminSidebar}
+        title="Admin"
+        subtitle="Notifications"
+      >
+        <Notifications />
+      </DashboardPage>
+    </RoleBasedRoute>
+  }
+/>
 
       {/* Blood Bank Routes */}
       <Route
