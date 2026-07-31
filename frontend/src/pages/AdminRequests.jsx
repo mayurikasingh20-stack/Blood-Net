@@ -30,6 +30,16 @@ export default function AdminRequests() {
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
+  async function openDocument(path) {
+    try {
+      const res = await api.get(`/blood-request/document/${path}`, { responseType: "blob" });
+      const url = URL.createObjectURL(res.data);
+      window.open(url, "_blank");
+    } catch {
+      alert("Failed to open document.");
+    }
+  }
+
   const filtered = requests.filter((r) => {
     if (r.status === "completed") return false;
     return (
@@ -75,6 +85,7 @@ export default function AdminRequests() {
                 <th className="text-left px-6 py-3 text-xs font-bold text-slate-500 uppercase">Severity</th>
                 <th className="text-left px-6 py-3 text-xs font-bold text-slate-500 uppercase">Status</th>
                 <th className="text-left px-6 py-3 text-xs font-bold text-slate-500 uppercase hidden md:table-cell">Date</th>
+                <th className="text-left px-6 py-3 text-xs font-bold text-slate-500 uppercase hidden md:table-cell">Doc</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
@@ -100,6 +111,13 @@ export default function AdminRequests() {
                   </td>
                   <td className="px-6 py-3 text-slate-500 hidden md:table-cell">
                     {r.created_at ? new Date(r.created_at).toLocaleDateString() : "—"}
+                  </td>
+                  <td className="px-6 py-3 hidden md:table-cell">
+                    {r.request_document ? (
+                      <button onClick={() => openDocument(r.request_document)} className="text-xs font-bold text-red hover:underline">View</button>
+                    ) : (
+                      <span className="text-slate-300">—</span>
+                    )}
                   </td>
                 </tr>
               ))}

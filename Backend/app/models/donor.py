@@ -38,7 +38,6 @@ class Donor(db.Model):
         default=True
     )
 
-    # Screening audit fields
     screening_completed = db.Column(
         db.Boolean,
         default=False
@@ -56,7 +55,6 @@ class Donor(db.Model):
         nullable=True
     )
 
-    # Medical history (optional, for reference)
     diabetes = db.Column(db.Boolean, default=False)
     hypertension = db.Column(db.Boolean, default=False)
     asthma = db.Column(db.Boolean, default=False)
@@ -68,7 +66,6 @@ class Donor(db.Model):
     tattoo_piercing_date = db.Column(db.Date, nullable=True)
     chronic_illness = db.Column(db.Text, nullable=True)
 
-    # Family history
     family_thalassemia = db.Column(db.Boolean, default=False)
     family_sickle_cell = db.Column(db.Boolean, default=False)
     family_hereditary_disorders = db.Column(db.Text, nullable=True)

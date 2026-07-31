@@ -43,6 +43,7 @@ export default function EmergencyRequest() {
     urgency_level: "Moderate",
     purpose: "",
   });
+  const [documentFile, setDocumentFile] = useState(null);
 
   useEffect(() => {
     api.get("/blood-request/open")
@@ -97,7 +98,10 @@ export default function EmergencyRequest() {
       : form;
     setLoading(true);
     try {
-      await api.post("/blood-request/create", payload);
+      const fd = new FormData();
+      Object.entries(payload).forEach(([key, value]) => fd.append(key, value));
+      if (documentFile) fd.append("request_document", documentFile);
+      await api.post("/blood-request/create", fd, { headers: { "Content-Type": "multipart/form-data" } });
       setSuccess("Emergency request created successfully! Donors in your area will be notified.");
       setTimeout(() => {
         setSuccess("");
@@ -106,6 +110,7 @@ export default function EmergencyRequest() {
         } else {
           setShowForm(false);
           setStep(1);
+          setDocumentFile(null);
           setForm({
             blood_group: "", units: 1, hospital: "", hospital_address: "",
             city: "", required_before: "", contact_name: "", contact_phone: "",
@@ -214,6 +219,11 @@ export default function EmergencyRequest() {
                   <label className="text-sm font-semibold text-slate-700 block mb-1">Purpose (Optional)</label>
                   <textarea rows={2} value={form.purpose} onChange={(e) => update("purpose", e.target.value)} placeholder="e.g. Low stock, urgent requirement" className={inputClass} />
                 </div>
+                <div>
+                  <label className="text-sm font-semibold text-slate-700 block mb-1">Supporting Document (Optional)</label>
+                  <input type="file" accept=".pdf,.png,.jpg,.jpeg" onChange={(e) => setDocumentFile(e.target.files?.[0] || null)} className={inputClass} />
+                  <p className="text-xs text-slate-400 mt-1">PDF, PNG, JPG or JPEG (max 5 MB). Visible to the admin.</p>
+                </div>
                 <div className="flex gap-3">
                   <button type="button" onClick={() => setStep(1)} className="flex-1 py-3 border border-slate-200 rounded-full text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">Back</button>
                   <button type="submit" disabled={loading} className="flex-[2] py-3 bg-red text-white rounded-full text-sm font-bold hover:bg-red-500 transition disabled:opacity-60">
@@ -259,6 +269,11 @@ export default function EmergencyRequest() {
                 <div>
                   <label className="text-sm font-semibold text-slate-700 block mb-1">Purpose (Optional)</label>
                   <textarea rows={2} value={form.purpose} onChange={(e) => update("purpose", e.target.value)} placeholder="e.g. Surgery, accident, etc." className={inputClass} />
+                </div>
+                <div>
+                  <label className="text-sm font-semibold text-slate-700 block mb-1">Supporting Document (Optional)</label>
+                  <input type="file" accept=".pdf,.png,.jpg,.jpeg" onChange={(e) => setDocumentFile(e.target.files?.[0] || null)} className={inputClass} />
+                  <p className="text-xs text-slate-400 mt-1">PDF, PNG, JPG or JPEG (max 5 MB). Visible to the admin.</p>
                 </div>
                 <div className="flex gap-3">
                   <button type="button" onClick={() => setStep(2)} className="flex-1 py-3 border border-slate-200 rounded-full text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">Back</button>

@@ -1,6 +1,5 @@
 import api from "./api";
 
-// ============== AUTH ==============
 export async function loginUser({ identifier, password, role }) {
   const payload = { password, role: role === "bloodbank" ? "blood_bank" : role, identifier };
   const res = await api.post("/auth/login", payload);
@@ -43,18 +42,14 @@ export async function getCurrentUser() {
   return { ...res.data, name: `${res.data.first_name || ""} ${res.data.last_name || ""}`.trim() };
 }
 
-// ============== UNIFIED USER ==============
-
 export async function getUserDashboard() {
   const res = await api.get("/user/dashboard");
   return res.data;
 }
 
-// ============== DONOR ==============
-
 export async function getDonorProfile() {
   const res = await api.get("/donor/profile");
-  return res.data; // { user: {...}, donor: { blood_group, weight, ... } }
+  return res.data;
 }
 
 export async function updateDonorProfile(data) {
@@ -64,24 +59,22 @@ export async function updateDonorProfile(data) {
 
 export async function updateAvailability(data) {
   const res = await api.patch("/donor/availability", data);
-  return res.data; // { message, available }
+  return res.data;
 }
 
 export async function getAllDonors() {
   const res = await api.get("/donor/all");
-  return res.data; // { count, donors: [...] }
+  return res.data;
 }
 
 export async function searchDonors(bloodGroup) {
   const res = await api.get(`/donor/search?blood_group=${bloodGroup}`);
-  return res.data; // { count, donors: [...] }
+  return res.data;
 }
-
-// ============== PATIENT ==============
 
 export async function getPatientProfile() {
   const res = await api.get("/patient/profile");
-  return res.data; // { patient: { ... } }
+  return res.data;
 }
 
 export async function updatePatientProfile(formData) {
@@ -90,8 +83,6 @@ export async function updatePatientProfile(formData) {
   });
   return res.data;
 }
-
-// ============== BLOOD BANK ==============
 
 export async function getBloodBankDashboard() {
   const res = await api.get("/blood-bank/dashboard");
@@ -110,16 +101,14 @@ export async function updateBloodBankProfile(formData) {
   return res.data;
 }
 
-// ============== BLOOD REQUESTS ==============
-
 export async function getMyBloodRequests() {
   const res = await api.get("/blood-request/my-requests");
-  return res.data; // { blood_requests: [...] }
+  return res.data;
 }
 
 export async function createBloodRequest(data) {
   const res = await api.post("/blood-request/create", data);
-  return res.data; // { message, request_id }
+  return res.data;
 }
 
 export async function updateBloodRequest(id, data) {
@@ -149,19 +138,17 @@ export async function removeAcceptedResponse(donationId) {
 
 export async function getMatchingDonors(requestId) {
   const res = await api.get(`/blood-request/${requestId}/matching-donors`);
-  return res.data; // { matching_donors: [...], total_matches }
+  return res.data;
 }
 
 export async function getOpenRequests() {
   const res = await api.get("/blood-request/open");
-  return res.data; // { blood_requests: [...] }
+  return res.data;
 }
-
-// ============== DONATIONS ==============
 
 export async function acceptBloodRequest(requestId) {
   const res = await api.post(`/donations/accept/${requestId}`);
-  return res.data; // { message, donation_id }
+  return res.data;
 }
 
 export async function cancelDonation(donationId) {
@@ -171,14 +158,12 @@ export async function cancelDonation(donationId) {
 
 export async function getMyDonations() {
   const res = await api.get("/donations/my-donations");
-  return res.data; // { donations: [...] }
+  return res.data;
 }
-
-// ============== INVENTORY ==============
 
 export async function getInventory() {
   const res = await api.get("/inventory/");
-  return res.data; // { inventory: [...] }
+  return res.data;
 }
 
 export async function addInventoryItem(data) {
@@ -206,8 +191,6 @@ export async function searchInventory(bloodGroup) {
   return res.data;
 }
 
-// ============== ADMIN ==============
-
 export async function getAdminDashboard() {
   const res = await api.get("/admin/dashboard");
   return res.data;
@@ -215,7 +198,7 @@ export async function getAdminDashboard() {
 
 export async function getAllBloodBanks() {
   const res = await api.get("/admin/blood-banks");
-  return res.data; // { blood_banks: [...] }
+  return res.data;
 }
 
 export async function approveBloodBank(id) {
@@ -230,7 +213,7 @@ export async function rejectBloodBank(id, reason) {
 
 export async function getAllBloodRequests() {
   const res = await api.get("/admin/blood-requests");
-  return res.data; // { blood_requests: [...] }
+  return res.data;
 }
 
 export async function completeBloodRequest(id) {
@@ -240,7 +223,7 @@ export async function completeBloodRequest(id) {
 
 export async function getAllDonations() {
   const res = await api.get("/admin/donations");
-  return res.data; // { donations: [...] }
+  return res.data;
 }
 
 export async function verifyDonation(id, donatedUnits) {
@@ -253,11 +236,9 @@ export async function rejectDonation(id, reason) {
   return res.data;
 }
 
-// ============== NOTIFICATIONS ==============
-
 export async function getNotifications() {
   const res = await api.get("/notifications/");
-  return res.data; // { notifications: [...] }
+  return res.data;
 }
 
 export async function markNotificationRead(id) {
@@ -270,8 +251,6 @@ export async function markAllNotificationsRead() {
   return res.data;
 }
 
-// ============== PUBLIC BLOOD BANKS (No Auth) ==============
-
 export async function getPublicBloodBanks(params = {}) {
   const query = new URLSearchParams();
   if (params.state_code) query.set("state_code", params.state_code);
@@ -279,28 +258,24 @@ export async function getPublicBloodBanks(params = {}) {
   if (params.search) query.set("search", params.search);
   const qs = query.toString();
   const res = await api.get(`/public-blood-banks/${qs ? "?" + qs : ""}`);
-  return res.data; // { blood_banks: [...] }
+  return res.data;
 }
 
 export async function getRandomPublicBloodBanks(limit = 10) {
   const res = await api.get(`/public-blood-banks/random?limit=${limit}`);
-  return res.data; // { blood_banks: [...] }
+  return res.data;
 }
 
 export async function searchPublicBloodBanks(query = "") {
   const qs = query ? `?q=${encodeURIComponent(query)}` : "";
   const res = await api.get(`/public-blood-banks/search${qs}`);
-  return res.data; // { blood_banks: [...], count }
+  return res.data;
 }
-
-// ============== BLOOD BANK PROFILE REGISTRATION ==============
 
 export async function registerBloodBankProfile(data) {
   const res = await api.post("/blood-bank/register", data);
   return res.data;
 }
-
-// ============== CAMPS ==============
 
 export async function getMyCamps() {
   const res = await api.get("/camps/my-camps");
@@ -332,8 +307,6 @@ export async function getCurrentCamps() {
   return res.data;
 }
 
-// ============== BLOOD BANK FULFILL ==============
-
 export async function fulfillBloodRequest(requestId) {
   const res = await api.post(`/blood-bank/fulfill-request/${requestId}`);
   return res.data;
@@ -346,7 +319,7 @@ export async function bloodBankAcceptRequest(requestId) {
 
 export async function getBloodBankAcceptedRequests() {
   const res = await api.get("/blood-bank/my-accepted-requests");
-  return res.data; // { accepted_requests: [...] }
+  return res.data;
 }
 
 export async function getAdminCamps() {

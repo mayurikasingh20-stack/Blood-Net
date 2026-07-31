@@ -44,14 +44,14 @@ export default function Notifications() {
       setNotifications((prev) =>
         prev.map((n) => (n.id === id ? { ...n, status: "read" } : n))
       );
-    } catch { /* ignore */ }
+    } catch {}
   };
 
   const handleMarkAllRead = async () => {
     try {
       await markAllNotificationsRead();
       setNotifications((prev) => prev.map((n) => ({ ...n, status: "read" })));
-    } catch { /* ignore */ }
+    } catch {}
   };
 
   if (loading) return (

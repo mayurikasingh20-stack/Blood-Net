@@ -35,14 +35,12 @@ def normalize_phone(phone):
 def validate_inventory_data(data):
     errors = {}
 
-    # Blood Group
     blood_group = data.get("blood_group")
     if not blood_group:
         errors["blood_group"] = "Blood group is required."
     elif blood_group not in VALID_BLOOD_GROUPS:
         errors["blood_group"] = "Invalid blood group."
 
-    # Units
     units = data.get("units")
     if units is None:
         errors["units"] = "Units are required."
@@ -54,12 +52,10 @@ def validate_inventory_data(data):
         except (TypeError, ValueError):
             errors["units"] = "Units must be an integer."
 
-    # Collection Date
     collection_date = data.get("collection_date")
     if not collection_date:
         errors["collection_date"] = "Collection date is required."
 
-    # Expiry Date
     expiry_date = data.get("expiry_date")
     if not expiry_date:
         errors["expiry_date"] = "Expiry date is required."

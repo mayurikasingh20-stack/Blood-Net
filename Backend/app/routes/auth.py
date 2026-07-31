@@ -12,10 +12,10 @@ from app.utils.validators import normalize_phone
 auth_bp = Blueprint("auth", __name__, url_prefix="/api/auth")
 
 @auth_bp.post("/send-otp")
+@jwt_required()
 def send_otp_route():
     data = request.get_json(silent=True) or {}
     phone = data.get("phone", "").strip()
-    purpose = (data.get("purpose") or "register").strip().lower()
     if not phone:
         return jsonify({"message": "Phone number is required."}), 400
 
@@ -24,14 +24,12 @@ def send_otp_route():
         return jsonify({"message": "Invalid phone number. Use E.164 format (e.g. +911234567890)."}), 400
 
     existing = User.query.filter_by(phone=normalized).first()
-    if purpose == "forgot_password":
-        if not existing:
-            return jsonify({"message": "No account found with this phone number."}), 404
-        current_user_id = get_jwt_identity()
-        if current_user_id is None or existing.id != current_user_id:
-            return jsonify({"message": "You can only reset the password of your own account."}), 403
-    elif existing:
-        return jsonify({"message": "Phone number already registered."}), 409
+    if not existing:
+        return jsonify({"message": "No account found with this phone number."}), 404
+
+    current_user_id = get_jwt_identity()
+    if str(existing.id) != str(current_user_id):
+        return jsonify({"message": "You can only reset the password of your own account."}), 403
 
     twilio_phone = f"+91{normalized}"
 

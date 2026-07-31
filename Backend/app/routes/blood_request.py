@@ -1,4 +1,5 @@
-from flask import Blueprint, request
+from flask import Blueprint, request, jsonify, current_app, send_from_directory
+import os
 from flask_jwt_extended import jwt_required
 
 from app.utils.decorator import role_required
@@ -25,8 +26,19 @@ blood_request_bp = Blueprint(
 @jwt_required()
 @role_required("patient", "blood_bank", "donor")
 def create():
-    data = request.get_json()
-    return create_blood_request(data)
+    document = request.files.get("request_document")
+    if request.files or request.form:
+        data = request.form
+    else:
+        data = request.get_json(silent=True) or {}
+    return create_blood_request(data, document)
+
+
+@blood_request_bp.get("/document/<path:filename>")
+@jwt_required()
+def request_document(filename):
+    upload_folder = current_app.config["UPLOAD_FOLDER"]
+    return send_from_directory(upload_folder, filename)
 
 
 @blood_request_bp.get("/my-requests")

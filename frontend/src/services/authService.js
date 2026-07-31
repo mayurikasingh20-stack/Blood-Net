@@ -17,8 +17,6 @@ export async function loginUser({ identifier, password }) {
   };
 }
 
-// Registers a user. Confirm password and terms are checked in the form,
-// so they are not sent because the backend does not support those fields.
 export async function registerUser(formData) {
   const payload = {
     first_name: formData.firstName.trim(),
@@ -54,7 +52,6 @@ export async function registerUser(formData) {
   return response.data;
 }
 
-// Checks whether the stored JWT is still valid and gets the latest user details.
 export async function getCurrentUser() {
   const response = await api.get("/auth/profile");
   const user = response.data;
@@ -94,7 +91,6 @@ export async function verifyTwilioOtp(phone, code) {
   return res.data;
 }
 
-// Makes backend and network errors safe to show in the interface.
 export function getAuthErrorMessage(error) {
   if (error.response?.data?.error) {
     return error.response.data.error;

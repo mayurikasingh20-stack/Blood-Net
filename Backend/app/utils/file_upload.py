@@ -52,13 +52,10 @@ def save_uploaded_file(file, folder_name):
     return os.path.join(
         folder_name,
         unique_name
-    )
+    ).replace("\\", "/")
 
 
 def delete_uploaded_file(file_path):
-    """
-    Delete an uploaded file if it exists.
-    """
 
     if not file_path:
         return

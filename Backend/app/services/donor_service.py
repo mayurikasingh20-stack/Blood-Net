@@ -167,7 +167,6 @@ def update_availability(data):
 
     donor.available = data["available"]
 
-    # Save changes
     db.session.commit()
 
     return {

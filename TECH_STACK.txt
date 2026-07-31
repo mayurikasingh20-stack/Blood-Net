@@ -1,0 +1,214 @@
+================================================================================
+TECH STACK — Blood-Net (Blood Donation Management System)
+Generated: July 31, 2026
+================================================================================
+
+OVERVIEW
+--------
+Blood-Net is a full-stack blood donation management web application with:
+- Backend  : Flask (Python) REST API in /Backend
+- Frontend : React (Vite) SPA in /frontend
+- Database : SQLite (via Flask-SQLAlchemy)
+
+================================================================================
+1. BACKEND TECH STACK (Python / Flask)
+================================================================================
+
+1.1 Core Framework
+------------------
+- Flask >=3.1,<4
+    The main web framework. Application factory pattern (create_app in
+    app/__init__.py), Blueprints for routing, app.config.Config for settings.
+    Uses Flask-JWT-Extended for all authentication and authorization.
+
+1.2 Extensions / Libraries (from requirements.txt)
+--------------------------------------------------
+- Flask-SQLAlchemy >=3.1,<4
+    ORM for database models (User, Donor, Patient, BloodBank, Donation,
+    BloodRequest, Inventory, InventoryHistory, Camp, Notification,
+    ContactMessage, PublicBloodBank, and admin action audit tables).
+- Flask-JWT-Extended >=4.7,<5
+    JSON Web Token authentication. Issues ACCESS tokens (30 min expiry) and
+    REFRESH tokens (30 day expiry). Provides @jwt_required(), get_jwt_identity(),
+    custom token error handlers (expired / invalid / missing).
+    NOTE: Flask-Login is NOT used. Session-based login was replaced by JWT.
+- Flask-Cors >=6,<7
+    CORS support so the React frontend (Vite dev server / dist build) can call
+    the Flask API cross-origin.
+- Flask-Migrate >=4,<5
+    Database migrations via Alembic (flask db commands).
+- python-dotenv >=1,<2
+    Loads environment variables from /Backend/.env (SECRET_KEY, JWT_SECRET_KEY,
+    DATABASE_URL, Twilio credentials).
+- requests >=2.32,<3
+    HTTP client used for external calls, e.g. geocoding (Nominatim/OpenStreetMap
+    via geocoding_service.py).
+- twilio >=9,<10
+    Twilio client used for sending and verifying OTP codes (twilio_service.py:
+    send_otp, check_otp) for phone verification and password reset.
+
+1.3 Indirect / Transitive Python Dependencies
+---------------------------------------------
+- SQLAlchemy >=2.x
+    Underlying ORM used directly in services (func, or_, case) for queries.
+- Werkzeug (comes with Flask)
+    Used directly for password hashing: generate_password_hash /
+    check_password_hash (utils/password.py) and secure_filename (file_upload.py).
+- Alembic (comes with Flask-Migrate)
+    Migration tooling.
+- Jinja2 (comes with Flask)
+    Template engine dependency (not directly used for rendering since the
+    frontend is a React SPA; API returns JSON).
+- ItsDangerous (comes with Flask)
+    Dependency for Flask signing (used by Flask core).
+- Click / MarkupSafe / Blinker / colorama / etc.
+    Standard Flask dependency chain.
+
+1.4 Python Standard Library Modules Used
+-----------------------------------------
+- os, re            : config, env, regex validation (validators.py)
+- datetime          : date/time handling for donation cycles, expiry checks
+- functools.wraps   : custom decorators (utils/decorator.py role_required)
+- random            : OTP generation fallback
+- uuid              : generated filenames for uploaded license files
+- enum              : model enums (RequestStatus, UrgencyLevel, DonationStatus,
+                      InventoryStatus, NotificationStatus, InventoryAction)
+- traceback         : error logging in services/routes
+- jsonify / request / Blueprint / current_app : Flask request handling
+
+1.5 External Services (APIs)
+----------------------------
+- OpenStreetMap Nominatim
+    Geocoding: converts blood bank addresses to lat/lng (geocoding_service.py).
+- Twilio Verify
+    Sends and validates OTPs for mobile verification / password reset.
+- Leaflet/OSM tile layer (frontend side) for map rendering.
+
+================================================================================
+2. DATABASE (SQLite)
+================================================================================
+- SQLite via sqlalchemy:// URI (sqlite:///bloodnet.db, instance/bloodnet.db)
+- Managed entirely through Flask-SQLAlchemy ORM (no raw SQL except ORM queries).
+- Models (16+): User, Donor, Patient, BloodBank, BloodBankAdminAction,
+  BloodRequest, Donation, Inventory, InventoryHistory, Camp, Notification,
+  ContactMessage, PublicBloodBank, UserAdminAction, and more (see
+  Backend/app/models/).
+- Seed script: Backend/seed_test_users.py (test users).
+
+================================================================================
+3. FRONTEND TECH STACK (JavaScript / React)
+================================================================================
+
+3.1 Core Libraries (from package.json "dependencies")
+-----------------------------------------------------
+- React ^19.2.6 / react-dom ^19.2.6
+    UI framework (function components + Hooks).
+- react-router-dom ^7.15.1
+    Client-side routing. AppRoutes, ProtectedRoute, RoleBasedRoute,
+    public/auth/dashboard layouts, BrowserRouter.
+- axios ^1.16.1
+    HTTP client for all API calls (src/services/api.js with token injection).
+- framer-motion ^12.42.2
+    Animations (motion, AnimatePresence) in UI components and pages.
+- leaflet ^1.9.4 + react-leaflet ^5.0.0
+    Interactive map for blood banks / nearby donors (BloodMap.jsx, MapPage.jsx,
+    PatientNearbyDonors.jsx). Uses "leaflet/dist/leaflet.css".
+- tailwindcss ^4.3.2 + @tailwindcss/vite ^4.3.2
+    Utility-first CSS (index.css, Vite plugin).
+- lucide-react ^1.24.0
+    Icon set used throughout the UI (Droplets, MapPin, Bell, User, etc.).
+
+3.2 Build / Tooling (devDependencies)
+-------------------------------------
+- Vite ^8.0.12
+    Dev server and build tool.
+- @vitejs/plugin-react ^6.0.1
+    React Fast Refresh / JSX transform for Vite.
+- ESLint ^10.3.0
+    Linting (eslint.config.js) with plugins:
+    - @eslint/js, eslint-plugin-react-hooks, eslint-plugin-react-refresh,
+      globals.
+- @types/react, @types/react-dom
+    Type definitions (project itself uses JSX, not TypeScript).
+
+3.3 Architecture / Patterns Used
+--------------------------------
+- Context API for auth state (src/context/AuthContext.jsx, useAuth.js,
+  authContextObject.js).
+- Custom service layer (src/services/): api.js, authService.js, dashboardService.js.
+- Reusable UI components (src/components/ui, forms, feedback, navigation,
+  shared, donor).
+- Utility helpers (src/utils/): authStorage.js (localStorage token persistence),
+  roleHelpers.js, constants.js, donationCycles.js.
+- Protected / role-based routing via ProtectedRoute.jsx and RoleBasedRoute.jsx.
+
+================================================================================
+4. AUTHENTICATION & SECURITY (IMPORTANT — Flask-Login question)
+================================================================================
+- FLASK-LOGIN IS NOT USED in this project. The Flask-Login package is neither
+  installed nor imported.
+- Authentication is handled with Flask-JWT-Extended:
+    * POST /api/auth/login  -> returns access + refresh JWT tokens.
+    * @jwt_required()       -> protects routes (access token in Authorization:
+                              Bearer header).
+    * get_jwt_identity()    -> current user id inside protected routes.
+    * Refresh tokens with 30-day expiry.
+- Passwords: Werkzeug generate_password_hash / check_password_hash (PBKDF2).
+- Role-based authorization via custom decorator (utils/decorator.py role_required).
+- Frontend stores tokens in localStorage (utils/authStorage.js) and attaches
+  them via axios interceptor (services/api.js).
+
+================================================================================
+5. ENVIRONMENT / DEPLOYMENT CONFIG
+================================================================================
+- .env file: SECRET_KEY, JWT_SECRET_KEY, DATABASE_URL,
+  TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_VERIFY_SERVICE_SID.
+- Uploads folder: /Backend/uploads/licenses (blood bank license PDFs, max
+  size 5 MB via MAX_CONTENT_LENGTH).
+- Entry point: Backend/run.py (create_app()).
+- Frontend build output: /frontend/dist (served as static files).
+- Dev workflow: Vite dev server proxies API requests to Flask backend.
+
+================================================================================
+6. FULL PACKAGE LISTS
+================================================================================
+
+Backend requirements.txt (direct dependencies):
+  Flask>=3.1,<4
+  Flask-Cors>=6,<7
+  Flask-JWT-Extended>=4.7,<5
+  Flask-Migrate>=4,<5
+  Flask-SQLAlchemy>=3.1,<4
+  python-dotenv>=1,<2
+  requests>=2.32,<3
+  twilio>=9,<10
+
+Frontend package.json (dependencies):
+  @tailwindcss/vite ^4.3.2
+  axios ^1.16.1
+  framer-motion ^12.42.2
+  leaflet ^1.9.4
+  lucide-react ^1.24.0
+  react ^19.2.6
+  react-dom ^19.2.6
+  react-leaflet ^5.0.0
+  react-router-dom ^7.15.1
+  tailwindcss ^4.3.2
+
+Frontend package.json (devDependencies):
+  @eslint/js ^10.0.1
+  @types/react ^19.2.14
+  @types/react-dom ^19.2.3
+  @vitejs/plugin-react ^6.0.1
+  eslint ^10.3.0
+  eslint-plugin-react-hooks ^7.1.1
+  eslint-plugin-react-refresh ^0.5.2
+  globals ^17.6.0
+  vite ^8.0.12
+
+================================================================================
+7. QUICK ANSWER — FLASK-LOGIN?
+================================================================================
+NO. Flask-Login is not installed and not used. All authentication is done with
+Flask-JWT-Extended (JWT tokens) + Werkzeug password hashing.
+================================================================================

@@ -26,14 +26,12 @@ class BloodRequest(db.Model):
         primary_key=True
     )
 
-    # User who created the request
     created_by = db.Column(
         db.Integer,
         db.ForeignKey("users.id"),
         nullable=False
     )
 
-    # Request can belong to either a Patient or a Blood Bank
     patient_id = db.Column(
         db.Integer,
         db.ForeignKey("patients.id"),
@@ -97,6 +95,11 @@ class BloodRequest(db.Model):
         nullable=False
     )
 
+    request_document = db.Column(
+        db.String(255),
+        nullable=True
+    )
+
     fulfilled_units = db.Column(
         db.Integer,
         default=0,
@@ -119,8 +122,6 @@ class BloodRequest(db.Model):
         server_default=db.func.now(),
         onupdate=db.func.now()
     )
-
-    # ---------------- Relationships ---------------- #
 
     requester = db.relationship(
         "User",

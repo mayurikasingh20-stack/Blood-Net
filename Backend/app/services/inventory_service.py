@@ -188,9 +188,6 @@ def adjust_inventory(data):
 
 
 def get_inventory():
-    """
-    Return all inventory belonging to the logged-in blood bank.
-    """
 
     user_id = get_jwt_identity()
 
@@ -227,9 +224,6 @@ def get_inventory():
     }, 200
     
 def get_inventory_by_id(inventory_id):
-    """
-    Return a single inventory item.
-    """
 
     user_id = get_jwt_identity()
 

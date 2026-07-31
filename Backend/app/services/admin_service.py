@@ -226,6 +226,7 @@ def get_all_blood_requests():
             "city": request.city,
             "urgency_level": request.urgency_level.value,
             "status": request.status.value,
+            "request_document": request.request_document,
             "created_by": request.created_by,
             "created_at": request.created_at.isoformat()
         })
@@ -259,6 +260,7 @@ def get_blood_request_by_id(request_id):
             "purpose": blood_request.purpose,
             "contact_name": blood_request.contact_name,
             "contact_phone": blood_request.contact_phone,
+            "request_document": blood_request.request_document,
             "status": blood_request.status.value,
             "created_at": blood_request.created_at.isoformat(),
             "updated_at": blood_request.updated_at.isoformat()

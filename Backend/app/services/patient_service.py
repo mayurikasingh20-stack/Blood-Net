@@ -176,7 +176,6 @@ def update_patient_profile(data, doctor_note):
                 "doctor_notes"
             )
 
-            # Reset verification because the supporting document changed
             patient.verification_status = "pending"
             patient.verified_at = None
             patient.rejection_reason = None

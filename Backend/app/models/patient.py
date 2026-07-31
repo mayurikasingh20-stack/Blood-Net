@@ -9,7 +9,6 @@ class Patient(db.Model):
         primary_key=True
     )
 
-    # One-to-One relationship with User
     user_id = db.Column(
         db.Integer,
         db.ForeignKey("users.id"),
@@ -17,7 +16,6 @@ class Patient(db.Model):
         unique=True
     )
 
-    # Blood Requirement Details
     blood_group_needed = db.Column(
         db.String(5),
         nullable=False
@@ -55,13 +53,11 @@ class Patient(db.Model):
         nullable=False
     )
 
-    # Verification Document
     doctor_note_path = db.Column(
         db.String(255),
         nullable=True
     )
 
-    # Verification Status
     verification_status = db.Column(
         db.Enum(
             "Pending",
@@ -83,7 +79,6 @@ class Patient(db.Model):
         nullable=True
     )
 
-    # Request Status
     status = db.Column(
         db.Enum(
             "Pending",
@@ -112,7 +107,6 @@ class Patient(db.Model):
         onupdate=db.func.now()
     )
 
-    # Relationship with User
     user = db.relationship(
         "User",
         back_populates="patient",

@@ -91,6 +91,9 @@ def create_app():
         if "phone_verified" not in [c["name"] for c in inspector.get_columns("users")]:
             db.session.execute(sa.text("ALTER TABLE users ADD COLUMN phone_verified BOOLEAN NOT NULL DEFAULT 0"))
             db.session.commit()
+        if "request_document" not in [c["name"] for c in inspector.get_columns("blood_requests")]:
+            db.session.execute(sa.text("ALTER TABLE blood_requests ADD COLUMN request_document VARCHAR(255)"))
+            db.session.commit()
         seed_admin_users()
 
     @app.errorhandler(500)

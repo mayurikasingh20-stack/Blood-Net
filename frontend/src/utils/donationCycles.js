@@ -6,7 +6,6 @@ export const DONATION_CYCLES = {
   "Bone Marrow": 365,
 };
 
-// Given the donor's most recent donation, figures out if they're past the required gap
 export function getEligibility(lastDonation) {
   if (!lastDonation) return { eligible: true, nextEligibleDate: null, daysLeft: 0 };
 

@@ -26,13 +26,11 @@ def accept_blood_request(request_id):
             "message": "You are currently unavailable for donation."
         }, 400
 
-    # Validate screening was completed and passed
     if not donor.screening_completed or donor.screening_result != "passed":
         return {
             "message": "You must complete the eligibility screening before accepting a request."
         }, 400
 
-    # Validate donation interval on backend
     eligible_interval, _ = donor.check_donation_interval()
     if not eligible_interval:
         return {

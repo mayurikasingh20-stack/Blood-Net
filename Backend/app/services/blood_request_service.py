@@ -10,6 +10,7 @@ from app.models.blood_bank import BloodBank
 from app.models.donation import Donation, DonationStatus
 from app.models.blood_request import BloodRequest, RequestStatus, UrgencyLevel
 from app.utils.helpers import create_notification
+from app.utils.file_upload import save_uploaded_file
 from app.utils.validators import VALID_BLOOD_GROUPS
 
 URGENCY_ORDER = {"Critical": 0, "High": 1, "Moderate": 2, "Low": 3}
@@ -44,7 +45,7 @@ def validate_request_data(data):
     return errors
 
 
-def create_blood_request(data):
+def create_blood_request(data, document=None):
     user_id = get_jwt_identity()
     user = db.session.get(User, user_id)
     if user is None:
@@ -53,6 +54,13 @@ def create_blood_request(data):
     errors = validate_request_data(data)
     if errors:
         return {"errors": errors}, 400
+
+    request_document = None
+    if document is not None:
+        try:
+            request_document = save_uploaded_file(document, "request_documents")
+        except ValueError as e:
+            return {"message": str(e)}, 400
 
     patient = None
     blood_bank = None
@@ -104,6 +112,7 @@ def create_blood_request(data):
         purpose=data.get("purpose"),
         contact_name=data["contact_name"],
         contact_phone=data["contact_phone"],
+        request_document=request_document,
     )
 
     db.session.add(request)
@@ -201,6 +210,7 @@ def get_my_requests():
             "purpose": request.purpose,
             "contact_name": request.contact_name,
             "contact_phone": request.contact_phone,
+            "request_document": request.request_document,
             "fulfilled_units": request.fulfilled_units,
             "status": request.status.value,
             "created_at": request.created_at.isoformat(),
@@ -266,7 +276,6 @@ def get_open_requests():
 
     query = BloodRequest.query.filter_by(status=RequestStatus.PENDING)
 
-    # If the current user is a donor, exclude requests they have already accepted
     if user.has_role("donor"):
         donor = Donor.query.filter_by(user_id=user.id).first()
         if donor is not None:
@@ -422,6 +431,7 @@ def get_request_by_id(request_id):
             "purpose": blood_request.purpose,
             "contact_name": blood_request.contact_name,
             "contact_phone": blood_request.contact_phone,
+            "request_document": blood_request.request_document,
             "fulfilled_units": blood_request.fulfilled_units,
             "status": blood_request.status.value,
             "created_at": (
@@ -676,7 +686,6 @@ def get_matching_donors(request_id):
             "message": "Blood request not found."
         }, 404
 
-    # Only request owner or admin
     if (
         not user.has_role("admin")
         and blood_request.created_by != user.id
