@@ -5,6 +5,7 @@ from flask_jwt_extended import create_access_token, create_refresh_token
 
 from app.extensions import db
 from app.models.user import User
+from app.models.user_admin_action import UserAdminAction
 from app.models.donor import Donor
 from app.models.patient import Patient
 from app.models.blood_bank import BloodBank
@@ -184,13 +185,42 @@ def login_user(data):
     if not user or not verify_password(user.password_hash, password):
         return {"message": "Credentials not matched"}, 401
 
+    if not user.is_active:
+        action = (
+            UserAdminAction.query
+            .filter_by(user_id=user.id, action="block")
+            .order_by(UserAdminAction.created_at.desc())
+            .first()
+        )
+        reason = action.reason if action else None
+        message = (
+            "Your account has been blocked by the administrator."
+        )
+        if reason:
+            message += f" Reason: {reason}."
+        message += (
+            " You can send a message via the Contact page "
+            "to request an unlock."
+        )
+        return {"message": message}, 403
+
     if not user.phone_verified:
         return {"message": "Phone number not verified. Please verify your phone via OTP before logging in."}, 403
 
     if user.has_role("blood_bank"):
         blood_bank = BloodBank.query.filter_by(user_id=user.id).first()
         if blood_bank and blood_bank.status == "rejected":
-            return {"message": "Your registration request has been rejected by the administrator. Please contact the administrator or register again with valid information."}, 403
+            reason = blood_bank.rejection_reason
+            message = (
+                "Your blood bank account has been blocked by the administrator."
+            )
+            if reason:
+                message += f" Reason: {reason}."
+            message += (
+                " You can send a message via the Contact page "
+                "to request an unlock."
+            )
+            return {"message": message}, 403
 
     access_token = create_access_token(identity=str(user.id))
     refresh_token = create_refresh_token(identity=str(user.id))

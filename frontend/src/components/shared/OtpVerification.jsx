@@ -4,7 +4,7 @@ import { sendTwilioOtp, verifyTwilioOtp } from "../../services/authService";
 
 const COOLDOWN_SECONDS = 30;
 
-export default function OtpVerification({ phone, onVerified, onError }) {
+export default function OtpVerification({ phone, purpose, onVerified, onError }) {
   const [step, setStep] = useState("idle");
   const [code, setCode] = useState(["", "", "", "", "", ""]);
   const [cooldown, setCooldown] = useState(0);
@@ -55,7 +55,7 @@ export default function OtpVerification({ phone, onVerified, onError }) {
     setError("");
     setStep("sending");
     try {
-      await sendTwilioOtp(phone);
+      await sendTwilioOtp(phone, purpose);
       setStep("sent");
       setCooldown(COOLDOWN_SECONDS);
     } catch (err) {
@@ -122,7 +122,7 @@ export default function OtpVerification({ phone, onVerified, onError }) {
 
       {step === "idle" && (
         <button type="button" onClick={handleSend}
-          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-red text-white rounded-full text-sm font-bold hover:bg-red-700 transition"
+          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-red text-white rounded-full text-sm font-bold hover:bg-red-500 transition"
         >
           <Send size={15} /> Send Verification Code
         </button>
@@ -154,7 +154,7 @@ export default function OtpVerification({ phone, onVerified, onError }) {
           </div>
 
           <button type="button" onClick={handleVerify} disabled={step === "verifying" || code.join("").length !== 6}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-red text-white rounded-full text-sm font-bold hover:bg-red-700 transition disabled:opacity-60"
+            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-red text-white rounded-full text-sm font-bold hover:bg-red-500 transition disabled:opacity-60"
           >
             {step === "verifying" ? (
               <><Loader size={15} className="animate-spin" /> Verifying...</>

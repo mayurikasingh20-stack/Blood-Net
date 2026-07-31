@@ -51,7 +51,7 @@ function ConfirmDonationModal({ request, onClose, onConfirm }) {
           <button
             onClick={handleConfirmClick}
             disabled={confirming}
-            className="flex-1 bg-red text-white rounded-full py-3 font-semibold hover:bg-red transition disabled:opacity-60"
+            className="flex-1 bg-red text-white rounded-full py-3 font-semibold hover:bg-red-500 transition disabled:opacity-60"
           >
             {confirming ? "Confirming..." : "Confirm Donation"}
           </button>

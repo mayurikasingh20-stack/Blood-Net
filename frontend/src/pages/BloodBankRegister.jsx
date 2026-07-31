@@ -21,6 +21,7 @@ export default function BloodBankRegister() {
     facilityName: "", contactPerson: "",
     facilityAddress: "", licenseId: "", openTime: "", closeTime: "", website: "",
     available24x7: false,
+    acceptedTerms: false,
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -49,10 +50,18 @@ export default function BloodBankRegister() {
   };
 
   const handleNext = () => {
-    const err = validateStep1();
-    if (err) { setError(err); return; }
-    setError("");
-    setStep(2);
+    if (step === 1) {
+      const err = validateStep1();
+      if (err) { setError(err); return; }
+      setError("");
+      setStep(2);
+      return;
+    }
+    if (step === 2) {
+      if (!form.acceptedTerms) { setError("Please accept the Terms & Conditions before continuing."); return; }
+      setError("");
+      setStep(3);
+    }
   };
 
   const handlePrev = () => {
@@ -299,6 +308,27 @@ export default function BloodBankRegister() {
                     className="w-4 h-4 rounded border-slate-300 text-red focus:ring-red" />
                   <span className="text-sm text-slate-700 font-medium">Available 24x7</span>
                 </label>
+
+                <div className="rounded-2xl border border-slate-200 bg-slate-50">
+                  <div className="flex items-center gap-2 px-4 py-3 border-b border-slate-200">
+                    <Shield size={16} className="text-red" />
+                    <h3 className="text-sm font-bold text-slate-900">Terms &amp; Conditions</h3>
+                  </div>
+                  <div className="px-4 py-3 space-y-2.5 max-h-44 overflow-y-auto text-xs leading-relaxed text-slate-600">
+                    <p>1. <strong>Contact visibility:</strong> By registering, you agree that your registered phone number and city will be visible to patients, donors and blood banks on the platform for coordination purposes.</p>
+                    <p>2. <strong>Accuracy:</strong> You confirm that the blood bank details and license information you provide are true and valid.</p>
+                    <p>3. <strong>Admin approval:</strong> Your registration is subject to review and approval by an administrator before your blood bank becomes active.</p>
+                    <p>4. <strong>Responsible use:</strong> You agree to maintain accurate inventory, honour blood requests in a timely manner, and not misuse contact information obtained on the platform.</p>
+                    <p>5. <strong>Compliance:</strong> You agree to comply with all applicable regulations governing blood collection, storage, and distribution.</p>
+                    <p>6. <strong>Communication:</strong> You may receive SMS or call notifications regarding blood requests and platform updates.</p>
+                  </div>
+                </div>
+
+                <label className="flex items-start gap-2 cursor-pointer">
+                  <input type="checkbox" checked={form.acceptedTerms} onChange={(e) => update("acceptedTerms", e.target.checked)}
+                    className="mt-0.5 w-4 h-4 rounded border-slate-300 text-red focus:ring-red" />
+                  <span className="text-sm text-slate-700">I have read and agree to the <span className="font-semibold text-red">Terms &amp; Conditions</span> and confirm that all information provided is accurate.</span>
+                </label>
               </div>
             )}
 
@@ -317,7 +347,7 @@ export default function BloodBankRegister() {
                       <ArrowLeft size={16} /> Back
                     </button>
                     <button type="submit" disabled={loading}
-                      className="flex-1 flex items-center justify-center gap-1.5 px-5 py-2.5 bg-red text-white rounded-full text-sm font-bold hover:bg-red-700 transition disabled:opacity-60">
+                      className="flex-1 flex items-center justify-center gap-1.5 px-5 py-2.5 bg-red text-white rounded-full text-sm font-bold hover:bg-red-500 transition disabled:opacity-60">
                       {loading ? <Loader size={16} className="animate-spin" /> : <Building2 size={16} />}
                       {loading ? "Registering..." : "Submit for Approval"}
                     </button>
@@ -336,7 +366,7 @@ export default function BloodBankRegister() {
                 )}
                 {step < 3 ? (
                   <button type="button" onClick={handleNext}
-                    className="flex-1 flex items-center justify-center gap-1.5 px-5 py-2.5 bg-red text-white rounded-full text-sm font-bold hover:bg-red-700 transition">
+                    className="flex-1 flex items-center justify-center gap-1.5 px-5 py-2.5 bg-red text-white rounded-full text-sm font-bold hover:bg-red-500 transition">
                     Next <ArrowRight size={16} />
                   </button>
                 ) : null}

@@ -43,6 +43,7 @@ def seed_admin_users():
                 gender="Male",
                 dob=date(1990, 1, 1),
                 city="System",
+                phone_verified=True,
             )
             db.session.add(new_admin)
     db.session.commit()
@@ -83,6 +84,9 @@ def create_app():
         inspector = sa.inspect(db.engine)
         if "license_id" not in [c["name"] for c in inspector.get_columns("blood_banks")]:
             db.session.execute(sa.text("ALTER TABLE blood_banks ADD COLUMN license_id VARCHAR(100)"))
+            db.session.commit()
+        if "is_active" not in [c["name"] for c in inspector.get_columns("blood_banks")]:
+            db.session.execute(sa.text("ALTER TABLE blood_banks ADD COLUMN is_active BOOLEAN NOT NULL DEFAULT 1"))
             db.session.commit()
         if "phone_verified" not in [c["name"] for c in inspector.get_columns("users")]:
             db.session.execute(sa.text("ALTER TABLE users ADD COLUMN phone_verified BOOLEAN NOT NULL DEFAULT 0"))

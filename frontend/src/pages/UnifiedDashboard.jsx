@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   ThumbsUp, CheckCircle, Clock, Droplets, Heart, Plus,
   XCircle, AlertCircle, Bell, User,
-  Activity, ChevronDown, ChevronUp, Phone,
+  Activity, ChevronDown, ChevronUp, Phone, Building2, Trash2,
 } from "lucide-react";
 import useAuth from "../context/useAuth";
 import NotificationPanel from "../components/shared/NotificationPanel";
@@ -15,7 +15,7 @@ import {
   getUserDashboard, getDonorProfile, getMyDonations, getOpenRequests,
   updateAvailability, acceptBloodRequest, getNotifications,
   getMyBloodRequests, cancelBloodRequest,
-  verifyDonationFulfillment, patientUpdateRequestStatus,
+  verifyDonationFulfillment, patientUpdateRequestStatus, removeAcceptedResponse,
 } from "../services/dashboardService";
 
 const fadeUp = {
@@ -171,6 +171,16 @@ export default function UnifiedDashboard() {
     }
   }
 
+  async function handleRemoveResponse(donationId) {
+    if (!window.confirm("Remove this response from the request?")) return;
+    try {
+      await removeAcceptedResponse(donationId);
+      fetchData();
+    } catch (err) {
+      alert(err.response?.data?.message || "Could not remove response.");
+    }
+  }
+
   async function handleCancel(id) {
     if (!window.confirm("Cancel this blood request?")) return;
     try {
@@ -213,7 +223,7 @@ export default function UnifiedDashboard() {
             {isDonor && isPatient ? "Unified Portal" : isDonor ? "Donor Portal" : "Patient Portal"}
           </span>
           <h1 className="text-2xl md:text-3xl font-bold text-slate-900">
-            Welcome back, {user?.name?.split(" ")[0] || "User"}
+            Welcome, {user?.name?.split(" ")[0] || "User"}
           </h1>
           <p className="text-sm text-slate-500 mt-1">
             {isDonor && isPatient
@@ -226,7 +236,7 @@ export default function UnifiedDashboard() {
         <div className="flex items-center gap-2">
           {isPatient && (
             <Link to="/requests"
-              className="px-5 py-2.5 bg-red text-white rounded-full text-sm font-bold hover:bg-red-700 transition flex items-center gap-2 shadow-lg shadow-red/20"
+              className="px-5 py-2.5 bg-red text-white rounded-full text-sm font-bold hover:bg-red-500 transition flex items-center gap-2 shadow-lg shadow-red/20"
             >
               <Plus size={16} /> Raise Request
             </Link>
@@ -399,7 +409,7 @@ export default function UnifiedDashboard() {
                           <button
                             onClick={() => setScreeningRequest(req)}
                             disabled={acceptingId === req.id}
-                            className="flex items-center gap-1 px-3 py-1.5 bg-red text-white rounded-full text-xs font-bold hover:bg-red-700 transition disabled:opacity-50"
+                            className="flex items-center gap-1 px-3 py-1.5 bg-red text-white rounded-full text-xs font-bold hover:bg-red-500 transition disabled:opacity-50"
                           >
                             <ThumbsUp size={12} />
                             {acceptingId === req.id ? "..." : "Accept"}
@@ -428,7 +438,7 @@ export default function UnifiedDashboard() {
                     </div>
                     <p className="text-sm text-slate-500">No blood requests yet</p>
                     <p className="text-xs text-slate-400 mt-1 mb-4">Click "Raise Blood Request" to create your first request</p>
-                    <Link to="/requests" className="px-4 py-2 bg-red text-white rounded-full text-xs font-bold hover:bg-red-700 transition inline-block">Create Request</Link>
+                    <Link to="/requests" className="px-4 py-2 bg-red text-white rounded-full text-xs font-bold hover:bg-red-500 transition inline-block">Create Request</Link>
                   </div>
                 ) : (
                   <div className="space-y-3">
@@ -462,60 +472,109 @@ export default function UnifiedDashboard() {
                             )}
                           </div>
                         </div>
-                        {req.accepted_donors && req.accepted_donors.length > 0 && (
-                          <div className="mt-3">
-                            <button
-                              onClick={() => setExpandedRequest(expandedRequest === req.id ? null : req.id)}
-                              className="flex items-center gap-1 text-xs font-semibold text-red hover:text-red-700 transition"
-                            >
-                              {expandedRequest === req.id ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-                              View {req.accepted_donors.length} donor{req.accepted_donors.length > 1 ? "s" : ""}
-                            </button>
-                            <AnimatePresence>
-                              {expandedRequest === req.id && (
-                                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="mt-2 space-y-2">
-                                  {req.accepted_donors.map((donor) => (
-                                    <div key={donor.donor_id} className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-100">
-                                      <div className="w-10 h-10 rounded-full bg-red/10 flex items-center justify-center text-red font-bold text-sm flex-shrink-0">
-                                        {donor.name?.charAt(0) || "?"}
-                                      </div>
-                                      <div className="flex-1 min-w-0">
-                                        <p className="text-sm font-bold text-slate-900 truncate flex items-center gap-1">
-                                          <User size={12} className="text-slate-400" /> {donor.name}
-                                        </p>
-                                        <p className="text-xs text-slate-500">{donor.blood_group} &middot; {donor.city || "—"}</p>
-                                      </div>
-                                      <div className="flex items-center gap-2 text-xs text-slate-500">
-                                        <Phone size={12} className="text-slate-400" />
-                                        <span className="font-semibold text-slate-700">{donor.phone}</span>
-                                      </div>
-                                      <div className="flex items-center gap-1.5">
-                                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                                          donor.status === "verified" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"
-                                        }`}>
-                                          {donor.status === "verified" ? `Verified (${donor.donated_units} unit)` : "Accepted"}
-                                        </span>
-                                        {donor.status === "accepted" && (
+                        {(req.accepted_donors?.length > 0 || req.accepted_banks?.length > 0) && (() => {
+                          const totalResponders = (req.accepted_donors?.length || 0) + (req.accepted_banks?.length || 0);
+                          return (
+                            <div className="mt-3">
+                              <button
+                                onClick={() => setExpandedRequest(expandedRequest === req.id ? null : req.id)}
+                                className="flex items-center gap-1 text-xs font-semibold text-red hover:text-red-700 transition"
+                              >
+                                {expandedRequest === req.id ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                                View {totalResponders} responder{totalResponders > 1 ? "s" : ""}
+                              </button>
+                              <AnimatePresence>
+                                {expandedRequest === req.id && (
+                                  <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="mt-2 space-y-2">
+                                    {req.accepted_donors?.map((donor) => (
+                                      <div key={donor.donor_id} className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-100">
+                                        <div className="w-10 h-10 rounded-full bg-red/10 flex items-center justify-center text-red font-bold text-sm flex-shrink-0">
+                                          {donor.name?.charAt(0) || "?"}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                          <p className="text-sm font-bold text-slate-900 truncate flex items-center gap-1">
+                                            <User size={12} className="text-slate-400" /> {donor.name}
+                                          </p>
+                                          <p className="text-xs text-slate-500">{donor.blood_group} &middot; {donor.city || "—"}</p>
+                                        </div>
+                                        <div className="flex items-center gap-2 text-xs text-slate-500">
+                                          <Phone size={12} className="text-slate-400" />
+                                          <span className="font-semibold text-slate-700">{donor.phone}</span>
+                                        </div>
+                                        <div className="flex items-center gap-1.5">
+                                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                                            donor.status === "verified" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"
+                                          }`}>
+                                            {donor.status === "verified" ? `Verified (${donor.donated_units} unit)` : "Accepted"}
+                                          </span>
+                                          {donor.status === "accepted" && (
+                                            <button
+                                              onClick={() => setVerifyModal({ donationId: donor.donation_id, donorName: donor.name, requestId: req.id })}
+                                              className="px-2 py-0.5 bg-emerald-500 text-white rounded-full text-[10px] font-bold hover:bg-emerald-600 transition"
+                                            >
+                                              Verify
+                                            </button>
+                                          )}
                                           <button
-                                            onClick={() => setVerifyModal({ donationId: donor.donation_id, donorName: donor.name, requestId: req.id })}
-                                            className="px-2 py-0.5 bg-emerald-500 text-white rounded-full text-[10px] font-bold hover:bg-emerald-600 transition"
+                                            onClick={() => handleRemoveResponse(donor.donation_id)}
+                                            title="Remove response"
+                                            className="p-1 rounded-lg text-slate-400 hover:bg-red-50 hover:text-red transition"
                                           >
-                                            Verify
+                                            <Trash2 size={13} />
                                           </button>
-                                        )}
+                                        </div>
                                       </div>
-                                    </div>
-                                  ))}
-                                </motion.div>
-                              )}
-                            </AnimatePresence>
-                            <button onClick={() => handlePatientUpdate(req.id, "not_fulfilled")}
-                              className="w-full py-1.5 border border-red/30 text-red rounded-full text-[10px] font-bold hover:bg-red-50 transition"
-                            >
-                              Not Fulfilled
-                            </button>
-                          </div>
-                        )}
+                                    ))}
+                                    {req.accepted_banks?.map((bank) => (
+                                      <div key={bank.bank_id} className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-100">
+                                        <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 font-bold text-sm flex-shrink-0">
+                                          {bank.name?.charAt(0) || "B"}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                          <p className="text-sm font-bold text-slate-900 truncate flex items-center gap-1">
+                                            <Building2 size={12} className="text-slate-400" /> {bank.name}
+                                          </p>
+                                          <p className="text-xs text-slate-500">{bank.blood_group} &middot; {bank.city || "—"}</p>
+                                        </div>
+                                        <div className="flex items-center gap-2 text-xs text-slate-500">
+                                          <Phone size={12} className="text-slate-400" />
+                                          <span className="font-semibold text-slate-700">{bank.phone}</span>
+                                        </div>
+                                        <div className="flex items-center gap-1.5">
+                                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                                            bank.status === "verified" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"
+                                          }`}>
+                                            {bank.status === "verified" ? `Verified (${bank.donated_units} unit)` : "Accepted"}
+                                          </span>
+                                          {bank.status === "accepted" && (
+                                            <button
+                                              onClick={() => setVerifyModal({ donationId: bank.donation_id, donorName: bank.name, requestId: req.id })}
+                                              className="px-2 py-0.5 bg-emerald-500 text-white rounded-full text-[10px] font-bold hover:bg-emerald-600 transition"
+                                            >
+                                              Verify
+                                            </button>
+                                          )}
+                                          <button
+                                            onClick={() => handleRemoveResponse(bank.donation_id)}
+                                            title="Remove response"
+                                            className="p-1 rounded-lg text-slate-400 hover:bg-red-50 hover:text-red transition"
+                                          >
+                                            <Trash2 size={13} />
+                                          </button>
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </motion.div>
+                                )}
+                              </AnimatePresence>
+                              <button onClick={() => handlePatientUpdate(req.id, "not_fulfilled")}
+                                className="w-full py-1.5 border border-red/30 text-red rounded-full text-[10px] font-bold hover:bg-red-50 transition"
+                              >
+                                Not Fulfilled
+                              </button>
+                            </div>
+                          );
+                        })()}
                         {req.fulfilled_units > 0 && (
                           <div className="mt-2 text-xs text-slate-500">Fulfilled: {req.fulfilled_units}/{req.units} units</div>
                         )}

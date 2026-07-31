@@ -82,6 +82,14 @@ class User(db.Model):
         cascade="all, delete"
     )
 
+    admin_actions = db.relationship(
+        "UserAdminAction",
+        back_populates="user",
+        foreign_keys="UserAdminAction.user_id",
+        cascade="all, delete-orphan",
+        order_by="UserAdminAction.created_at.desc()"
+    )
+
     def has_role(self, role):
         roles = self.role.split(",") if self.role else []
         return role in roles

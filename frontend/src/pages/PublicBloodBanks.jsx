@@ -89,7 +89,7 @@ export default function PublicBloodBanks() {
           <button
             onClick={handleSearch}
             disabled={searching}
-            className="flex items-center gap-2 px-5 py-2 bg-red text-white text-sm font-semibold rounded-full hover:bg-red-700 transition disabled:opacity-50"
+            className="flex items-center gap-2 px-5 py-2 bg-red text-white text-sm font-semibold rounded-full hover:bg-red-500 transition disabled:opacity-50"
           >
             {searching ? <Loader size={14} className="animate-spin" /> : <Search size={14} />}
             Search

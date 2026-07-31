@@ -295,6 +295,56 @@ def accept_request_as_donor(request_id):
     }, 201
 
 
+def get_accepted_requests():
+    user_id = get_jwt_identity()
+    user = db.session.get(User, user_id)
+    if user is None:
+        return {"message": "User not found."}, 404
+
+    blood_bank = BloodBank.query.filter_by(user_id=user.id).first()
+    if blood_bank is None:
+        return {"message": "Blood bank profile not found."}, 404
+
+    donations = (
+        Donation.query
+        .filter_by(blood_bank_id=blood_bank.id)
+        .join(BloodRequest)
+        .filter(
+            BloodRequest.status.in_([
+                RequestStatus.PENDING,
+                RequestStatus.COMPLETED
+            ])
+        )
+        .order_by(Donation.accepted_at.desc())
+        .all()
+    )
+
+    data = []
+    for donation in donations:
+        req = donation.blood_request
+        if req is None:
+            continue
+        fulfilled = req.status == RequestStatus.COMPLETED
+        data.append({
+            "id": donation.id,
+            "blood_request_id": req.id,
+            "blood_group": req.blood_group,
+            "units": req.units,
+            "hospital": req.hospital,
+            "city": req.city,
+            "urgency_level": req.urgency_level.value,
+            "required_before": req.required_before.isoformat(),
+            "contact_name": req.contact_name,
+            "contact_phone": req.contact_phone,
+            "fulfilled_units": req.fulfilled_units,
+            "fulfilled": fulfilled,
+            "status": req.status.value,
+            "accepted_at": donation.accepted_at.isoformat() if donation.accepted_at else None,
+        })
+
+    return {"accepted_requests": data}, 200
+
+
 def fulfill_request(request_id):
     user_id = get_jwt_identity()
     user = db.session.get(User, user_id)

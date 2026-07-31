@@ -1,7 +1,10 @@
 from flask import jsonify
 from datetime import datetime
+from flask_jwt_extended import get_jwt_identity
 from app.extensions import db
 from app.models.user import User
+from app.models.user_admin_action import UserAdminAction
+from app.models.blood_bank_admin_action import BloodBankAdminAction
 from app.models.blood_bank import BloodBank
 from app.models.donor import Donor
 from app.models.patient import Patient
@@ -37,7 +40,13 @@ def get_all_blood_banks():
             "verification_status": blood_bank.status,
             "city": user.city,
             "email": user.email,
-            "phone": user.phone
+            "phone": user.phone,
+            "rejection_reason": blood_bank.rejection_reason,
+            "last_action": (
+                blood_bank.admin_actions[0].to_dict()
+                if blood_bank.admin_actions
+                else None
+            ),
         })
     return jsonify({
         "blood_banks": result
@@ -86,7 +95,7 @@ def get_blood_bank_by_id(blood_bank_id):
         }
     }), 200
 
-def approve_blood_bank(blood_bank_id):
+def approve_blood_bank(blood_bank_id, admin_id=None, reason=None):
     blood_bank = db.session.get(
         BloodBank,
         blood_bank_id
@@ -99,6 +108,11 @@ def approve_blood_bank(blood_bank_id):
         return jsonify({
             "message": "Blood bank is already approved."
         }), 400
+    reason = (reason or "").strip()
+    if not reason:
+        return jsonify({
+            "message": "Reason is required."
+        }), 400
     blood_bank.status = "approved"
     blood_bank.verified_at = datetime.utcnow()
     blood_bank.rejection_reason = None
@@ -108,11 +122,26 @@ def approve_blood_bank(blood_bank_id):
         if result is not None:
             blood_bank.latitude, blood_bank.longitude = result
 
+    try:
+        admin_id = int(admin_id) if admin_id is not None else None
+    except (TypeError, ValueError):
+        admin_id = None
+
+    db.session.add(
+        BloodBankAdminAction(
+            blood_bank_id=blood_bank.id,
+            admin_id=admin_id,
+            action="unblock",
+            reason=reason
+        )
+    )
+
     create_notification(
         user_id=blood_bank.user_id,
         title="Blood Bank Approved",
         message=(
-            "Your blood bank has been approved by admin."
+            "Your blood bank account has been approved by admin. "
+            f"Reason: {reason}."
         ),
         notification_type="blood_bank_approval",
         reference_id=blood_bank.id
@@ -124,7 +153,7 @@ def approve_blood_bank(blood_bank_id):
         "message": "Blood bank approved successfully."
     }), 200
 
-def reject_blood_bank(blood_bank_id, data):
+def reject_blood_bank(blood_bank_id, data, admin_id=None):
     blood_bank = db.session.get(
         BloodBank,
         blood_bank_id
@@ -149,12 +178,27 @@ def reject_blood_bank(blood_bank_id, data):
     blood_bank.verified_at = None
     blood_bank.rejection_reason = rejection_reason
 
+    try:
+        admin_id = int(admin_id) if admin_id is not None else None
+    except (TypeError, ValueError):
+        admin_id = None
+
+    db.session.add(
+        BloodBankAdminAction(
+            blood_bank_id=blood_bank.id,
+            admin_id=admin_id,
+            action="block",
+            reason=rejection_reason
+        )
+    )
+
     create_notification(
         user_id=blood_bank.user_id,
         title="Blood Bank Rejected",
         message=(
-            "Your blood bank registration has been rejected by admin. "
-            f"Reason: {rejection_reason}"
+            "Your blood bank account has been blocked by the administrator. "
+            f"Reason: {rejection_reason}. "
+            "You can send a message via the Contact page to request an unlock."
         ),
         notification_type="blood_bank_rejection",
         reference_id=blood_bank.id
@@ -507,6 +551,98 @@ def get_all_camps():
         item["blood_bank_name"] = c.blood_bank.facility_name if c.blood_bank else None
         result.append(item)
     return {"camps": result}, 200
+
+
+def _serialize_user(user):
+    return {
+        "id": user.id,
+        "first_name": user.first_name,
+        "last_name": user.last_name,
+        "email": user.email,
+        "phone": user.phone,
+        "role": user.role,
+        "roles": user.get_roles(),
+        "city": user.city,
+        "phone_verified": user.phone_verified,
+        "is_active": user.is_active,
+        "created_at": (
+            user.created_at.isoformat()
+            if user.created_at
+            else None
+        ),
+        "last_action": (
+            user.admin_actions[0].to_dict()
+            if user.admin_actions
+            else None
+        ),
+    }
+
+
+def get_all_users():
+    users = User.query.order_by(User.created_at.desc()).all()
+    return {
+        "users": [
+            _serialize_user(user)
+            for user in users
+        ]
+    }, 200
+
+
+def set_user_active(user_id, active, admin_id=None, reason=None):
+    user = db.session.get(User, user_id)
+    if user is None:
+        return {"message": "User not found."}, 404
+    if user.has_role("admin"):
+        return {
+            "message": "Admin accounts cannot be blocked."
+        }, 400
+    reason = (reason or "").strip()
+    if not reason:
+        return {
+            "message": "Reason is required."
+        }, 400
+    if user.is_active == active:
+        status = "active" if active else "blocked"
+        return {
+            "message": f"User is already {status}."
+        }, 400
+
+    try:
+        admin_id = int(admin_id) if admin_id is not None else None
+    except (TypeError, ValueError):
+        admin_id = None
+
+    user.is_active = active
+
+    db.session.add(
+        UserAdminAction(
+            user_id=user.id,
+            admin_id=admin_id,
+            action="block" if not active else "unblock",
+            reason=reason
+        )
+    )
+
+    create_notification(
+        user_id=user.id,
+        title="Account Blocked" if not active else "Account Unblocked",
+        message=(
+            "Your account has been blocked by the administrator. "
+            f"Reason: {reason}. "
+            "You can send a message via the Contact page to request an unlock."
+            if not active else
+            "Your account has been unblocked by the administrator. "
+            f"Reason: {reason}."
+        ),
+        notification_type="account_blocked" if not active else "account_unblocked",
+        reference_id=user.id
+    )
+    db.session.commit()
+
+    action = "blocked" if not active else "unblocked"
+    return {
+        "message": f"User {action} successfully."
+    }, 200
 
 
 def admin_dashboard():

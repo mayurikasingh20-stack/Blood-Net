@@ -191,7 +191,7 @@ export default function BloodBankInventory() {
           <p className="text-sm text-slate-500 mt-1">Manage blood units, track stock levels, and monitor supply.</p>
         </div>
         <button onClick={() => { resetForm(); setShowModal(true); }}
-          className="px-5 py-2.5 bg-red text-white rounded-full text-sm font-bold hover:bg-red-700 transition flex items-center gap-2 shadow-lg shadow-red/20">
+          className="px-5 py-2.5 bg-red text-white rounded-full text-sm font-bold hover:bg-red-500 transition flex items-center gap-2 shadow-lg shadow-red/20">
           <Plus size={16} /> Update Inventory
         </button>
       </div>
@@ -392,7 +392,7 @@ export default function BloodBankInventory() {
                 <button type="button" onClick={() => { resetForm(); setShowModal(false); }}
                   className="w-1/3 py-2.5 border border-slate-200 rounded-full text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">Cancel</button>
                 <button type="submit" disabled={submitting}
-                  className="w-2/3 py-2.5 bg-red text-white rounded-full text-sm font-bold hover:bg-red-700 transition disabled:opacity-60 flex items-center justify-center gap-2">
+                  className="w-2/3 py-2.5 bg-red text-white rounded-full text-sm font-bold hover:bg-red-500 transition disabled:opacity-60 flex items-center justify-center gap-2">
                   {submitting ? <Loader size={16} className="animate-spin" /> : null}
                   {submitting ? "Updating..." : "Update Inventory"}
                 </button>

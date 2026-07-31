@@ -194,7 +194,7 @@ export default function Landing() {
               >
                 <Link
                   to="/register?role=donor"
-                  className="px-8 py-3.5 bg-[#E63946] text-white rounded-full text-sm font-bold text-center hover:bg-red-700 transition shadow-lg shadow-[#E63946]/30 flex items-center justify-center gap-2"
+                  className="px-8 py-3.5 bg-[#E63946] text-white rounded-full text-sm font-bold text-center hover:bg-red-500 transition shadow-lg shadow-[#E63946]/30 flex items-center justify-center gap-2"
                 >
                   <Droplet size={18} /> Become a Donor
                 </Link>
@@ -327,7 +327,7 @@ export default function Landing() {
           <div className="text-center mt-10">
             <Link
               to="/register?role=donor"
-              className="inline-flex items-center gap-2 px-6 py-3 bg-red text-white rounded-full text-sm font-bold hover:bg-red-700 transition shadow-lg shadow-red/30"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-red text-white rounded-full text-sm font-bold hover:bg-red-500 transition shadow-lg shadow-red/30"
             >
               <Droplet size={16} /> Become a Donor & Help Them
             </Link>

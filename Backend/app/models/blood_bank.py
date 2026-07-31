@@ -104,6 +104,12 @@ class BloodBank(db.Model):
         cascade="all, delete-orphan",
         lazy=True
     )
+    admin_actions = db.relationship(
+        "BloodBankAdminAction",
+        back_populates="blood_bank",
+        cascade="all, delete-orphan",
+        order_by="BloodBankAdminAction.created_at.desc()"
+    )
 
     def __repr__(self):
         return f"<BloodBank {self.facility_name}>"

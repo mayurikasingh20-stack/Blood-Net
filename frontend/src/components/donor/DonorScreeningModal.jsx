@@ -231,7 +231,7 @@ export default function DonorScreeningModal({ requestId, requestBloodGroup, dono
             <button
               onClick={nextQuestion}
               disabled={!isCurrentAnswered()}
-              className="flex items-center gap-1 px-5 py-2.5 bg-red text-white rounded-full text-sm font-bold hover:bg-red transition disabled:opacity-50 ml-auto"
+              className="flex items-center gap-1 px-5 py-2.5 bg-red text-white rounded-full text-sm font-bold hover:bg-red-500 transition disabled:opacity-50 ml-auto"
             >
               Next <ChevronRight size={16} />
             </button>
@@ -239,7 +239,7 @@ export default function DonorScreeningModal({ requestId, requestBloodGroup, dono
             <button
               onClick={handleSubmit}
               disabled={!isCurrentAnswered() || submitting}
-              className="px-5 py-2.5 bg-red text-white rounded-full text-sm font-bold hover:bg-red transition disabled:opacity-50 ml-auto"
+              className="px-5 py-2.5 bg-red text-white rounded-full text-sm font-bold hover:bg-red-500 transition disabled:opacity-50 ml-auto"
             >
               {submitting ? "Submitting..." : "Submit Screening"}
             </button>

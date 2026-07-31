@@ -182,7 +182,7 @@ export default function Contact() {
                 </p>
                 <button
                   onClick={() => setSubmitted(false)}
-                  className="px-6 py-2.5 bg-red text-white rounded-full text-sm font-bold hover:bg-red-700 transition"
+                  className="px-6 py-2.5 bg-red text-white rounded-full text-sm font-bold hover:bg-red-500 transition"
                 >
                   Send Another Message
                 </button>
@@ -280,7 +280,7 @@ export default function Contact() {
                 <button
                   type="submit"
                   disabled={sending}
-                  className="w-full md:w-auto px-8 py-3 bg-red text-white rounded-full text-sm font-bold hover:bg-red-700 transition disabled:opacity-60 flex items-center justify-center gap-2"
+                  className="w-full md:w-auto px-8 py-3 bg-red text-white rounded-full text-sm font-bold hover:bg-red-500 transition disabled:opacity-60 flex items-center justify-center gap-2"
                 >
                   {sending ? (
                     <>

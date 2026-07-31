@@ -17,6 +17,7 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [blocked, setBlocked] = useState(false);
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -27,6 +28,7 @@ export default function Login() {
     event.preventDefault();
     setError("");
     setSuccess("");
+    setBlocked(false);
 
     if (!identifier.trim() || !password) {
       setError("Please enter your email or phone number and password.");
@@ -40,7 +42,9 @@ export default function Login() {
       setSuccess("Sign in successful. Redirecting you now...");
       window.setTimeout(() => navigate(dashboardPathForRole(authData.user.role), { replace: true }), 500);
     } catch (requestError) {
-      setError(getAuthErrorMessage(requestError));
+      const message = getAuthErrorMessage(requestError);
+      setError(message);
+      setBlocked(message.includes("blocked by the administrator"));
     } finally {
       setLoading(false);
     }
@@ -59,9 +63,9 @@ export default function Login() {
           </div>
 
           {/* Heading */}
-          <h1 className="text-2xl md:text-3xl font-bold text-slate-900 text-center mb-2">
+          {/* <h1 className="text-2xl md:text-3xl font-bold text-slate-900 text-center mb-2">
             Welcome Back
-          </h1>
+          </h1> */}
 
           {/* Description */}
           <p className="text-sm text-slate-500 text-center mb-8">
@@ -111,18 +115,19 @@ export default function Login() {
             </div>
 
             {error && <ErrorMessage>{error}</ErrorMessage>}
+            {blocked && (
+              <p className="text-center text-sm">
+                <Link to="/contact" className="font-semibold text-red hover:underline">
+                  Send a message to request an unlock
+                </Link>
+              </p>
+            )}
             {success && <SuccessMessage>{success}</SuccessMessage>}
 
             <Button type="submit" className="w-full rounded-full" size="lg" loading={loading}>
               Sign In
             </Button>
           </form>
-
-          <div className="mt-5 p-3 bg-slate-50 rounded-2xl border border-slate-200">
-            <p className="text-xs text-slate-500 text-center">
-              By using this platform, your registered phone number will be visible to patients and blood banks for coordination purposes.
-            </p>
-          </div>
 
           <p className="mt-4 text-center text-sm text-slate-500">
             <Link to="/register" className="font-semibold text-red hover:underline">

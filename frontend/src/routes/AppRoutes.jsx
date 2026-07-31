@@ -12,7 +12,7 @@ import Unauthorized from "../pages/Unauthorized";
 import NotFound from "../pages/NotFound";
 import BloodBankRegister from "../pages/BloodBankRegister";
 import DonorProfile from "../pages/DonorProfile";
-import PatientBloodRequests from "../pages/PatientBloodRequests";
+
 import PatientNearbyDonors from "../pages/PatientNearbyDonors";
 import BloodBankDashboard from "../pages/Bloodbank";
 import BloodBankInventory from "../pages/BloodBankInventory";
@@ -22,6 +22,7 @@ import AdminBloodBanks from "../pages/AdminBloodBanks";
 import AdminContactMessages from "../pages/AdminContactMessages";
 import AdminRequests from "../pages/AdminRequests";
 import AdminDonations from "../pages/AdminDonations";
+import AdminUsers from "../pages/AdminUsers";
 import EmergencyRequest from "../pages/EmergencyRequest";
 import Settings from "../pages/Settings";
 import DonorDonationHistory from "../pages/DonorDonationHistory";
@@ -47,7 +48,7 @@ const unifiedSidebar = [
   { label: "Camps", icon: "calendar_month", to: "/camps" },
   { label: "Blood Banks", icon: "location_on", to: "/blood-banks" },
   { label: "History", icon: "history", to: "/history" },
-  { label: "Nearby Donors", icon: "group", to: "/donors" },
+  { label: "Find Donor", icon: "group", to: "/donors" },
   mapItem,
   { label: "Settings", icon: "settings", to: "/settings" },
 ];
@@ -65,6 +66,7 @@ const bankSidebar = [
 
 const adminSidebar = [
   { label: "Dashboard", icon: "dashboard", to: "/admin" },
+  { label: "Users", icon: "manage_accounts", to: "/admin/users" },
   { label: "Blood Banks", icon: "location_city", to: "/admin/blood-banks" },
   { label: "Requests", icon: "bloodtype", to: "/admin/requests" },
   { label: "Donations", icon: "volunteer_activism", to: "/admin/donations" },
@@ -221,6 +223,16 @@ export default function AppRoutes() {
           <RoleBasedRoute allowedRoles={["admin"]}>
             <DashboardPage sidebarItems={adminSidebar} title="Admin" subtitle="Platform Management">
               <AdminDashboard />
+            </DashboardPage>
+          </RoleBasedRoute>
+        }
+      />
+      <Route
+        path="/admin/users"
+        element={
+          <RoleBasedRoute allowedRoles={["admin"]}>
+            <DashboardPage sidebarItems={adminSidebar} title="Admin" subtitle="Users">
+              <AdminUsers />
             </DashboardPage>
           </RoleBasedRoute>
         }

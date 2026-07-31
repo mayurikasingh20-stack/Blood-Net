@@ -142,6 +142,11 @@ export async function patientUpdateRequestStatus(requestId, action) {
   return res.data;
 }
 
+export async function removeAcceptedResponse(donationId) {
+  const res = await api.patch(`/donations/${donationId}/remove`);
+  return res.data;
+}
+
 export async function getMatchingDonors(requestId) {
   const res = await api.get(`/blood-request/${requestId}/matching-donors`);
   return res.data; // { matching_donors: [...], total_matches }
@@ -337,6 +342,11 @@ export async function fulfillBloodRequest(requestId) {
 export async function bloodBankAcceptRequest(requestId) {
   const res = await api.post(`/blood-bank/accept-request/${requestId}`);
   return res.data;
+}
+
+export async function getBloodBankAcceptedRequests() {
+  const res = await api.get("/blood-bank/my-accepted-requests");
+  return res.data; // { accepted_requests: [...] }
 }
 
 export async function getAdminCamps() {

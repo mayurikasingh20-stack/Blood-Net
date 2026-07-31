@@ -74,8 +74,18 @@ export async function refreshAccessToken(refreshToken) {
   return response.data.access_token;
 }
 
-export async function sendTwilioOtp(phone) {
-  const res = await api.post("/auth/send-otp", { phone });
+export async function sendTwilioOtp(phone, purpose) {
+  const res = await api.post("/auth/send-otp", { phone, purpose });
+  return res.data;
+}
+
+export async function resetForgottenPassword(phone, newPassword) {
+  const res = await api.post("/auth/reset-password", { phone, new_password: newPassword });
+  return res.data;
+}
+
+export async function deleteAccount() {
+  const res = await api.delete("/auth/account");
   return res.data;
 }
 

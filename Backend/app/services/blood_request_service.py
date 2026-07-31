@@ -229,6 +229,29 @@ def get_my_requests():
                 for d in donations if d.donor
             ]
 
+            bank_donations = (
+                Donation.query
+                .filter_by(blood_request_id=request.id)
+                .filter(Donation.blood_bank_id.isnot(None))
+                .filter(Donation.status.in_([DonationStatus.ACCEPTED, DonationStatus.VERIFIED]))
+                .order_by(Donation.created_at.desc())
+                .all()
+            )
+            item["accepted_banks"] = [
+                {
+                    "donation_id": d.id,
+                    "bank_id": d.blood_bank.id,
+                    "name": d.blood_bank.facility_name,
+                    "blood_group": request.blood_group,
+                    "phone": d.blood_bank.user.phone if d.blood_bank.user else "",
+                    "city": d.blood_bank.user.city if d.blood_bank.user else "",
+                    "status": d.status.value,
+                    "donated_units": d.donated_units,
+                    "accepted_at": d.accepted_at.isoformat() if d.accepted_at else None,
+                }
+                for d in bank_donations if d.blood_bank
+            ]
+
         data.append(item)
 
     return {

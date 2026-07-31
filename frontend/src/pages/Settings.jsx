@@ -9,10 +9,15 @@ import {
   Save,
   CheckCircle,
   AlertCircle,
+  Trash2,
+  KeyRound,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import useAuth from "../context/useAuth";
 import api from "../services/api";
 import { getDonorProfile, updateDonorProfile } from "../services/dashboardService";
+import OtpVerification from "../components/shared/OtpVerification";
+import { resetForgottenPassword, deleteAccount } from "../services/authService";
 
 const fadeUp = {
   initial: { opacity: 0, y: 20 },
@@ -27,7 +32,8 @@ const tabs = [
 ];
 
 export default function Settings({ role: propRole }) {
-  const { user, hasRole } = useAuth();
+  const { user, hasRole, logout } = useAuth();
+  const navigate = useNavigate();
   const role = propRole || (hasRole("admin") ? "admin" : hasRole("bloodbank") || hasRole("blood_bank") ? "blood bank" : hasRole("donor") && hasRole("patient") ? "user" : hasRole("donor") ? "donor" : hasRole("patient") ? "patient" : "donor");
   const [activeTab, setActiveTab] = useState("profile");
   const [saving, setSaving] = useState(false);
@@ -36,6 +42,13 @@ export default function Settings({ role: propRole }) {
   const [showPassword, setShowPassword] = useState(false);
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+
+  const [forgotMode, setForgotMode] = useState(false);
+  const [otpVerified, setOtpVerified] = useState(false);
+  const [resetData, setResetData] = useState({ new_password: "", confirm_password: "" });
+  const [showResetNew, setShowResetNew] = useState(false);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const isDonor = hasRole("donor");
 
@@ -150,6 +163,58 @@ export default function Settings({ role: propRole }) {
       setError("Could not change password. Check your current password.");
     } finally {
       setSaving(false);
+    }
+  }
+
+  function enterForgotMode() {
+    setError("");
+    setSuccess("");
+    setOtpVerified(false);
+    setResetData({ new_password: "", confirm_password: "" });
+    setForgotMode(true);
+  }
+
+  function exitForgotMode() {
+    setForgotMode(false);
+    setOtpVerified(false);
+    setResetData({ new_password: "", confirm_password: "" });
+  }
+
+  async function handleResetPassword(e) {
+    e.preventDefault();
+    setError("");
+    setSuccess("");
+    if (resetData.new_password !== resetData.confirm_password) {
+      setError("Passwords do not match.");
+      return;
+    }
+    if (resetData.new_password.length < 6) {
+      setError("Password must be at least 6 characters.");
+      return;
+    }
+    setSaving(true);
+    try {
+      await resetForgottenPassword(profile.phone, resetData.new_password);
+      setSuccess("Password reset successfully!");
+      exitForgotMode();
+    } catch (err) {
+      setError(err.response?.data?.message || "Could not reset password.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleDeleteAccount() {
+    if (!window.confirm("Are you sure you want to delete your account? This will permanently remove your account and all your data. This cannot be undone.")) return;
+    if (!window.confirm("This action is permanent. All your requests, donations, and history will be deleted. Continue?")) return;
+    setDeleting(true);
+    try {
+      await deleteAccount();
+      logout();
+      navigate("/");
+    } catch (err) {
+      alert(err.response?.data?.message || "Could not delete account.");
+      setDeleting(false);
     }
   }
 
@@ -268,7 +333,7 @@ export default function Settings({ role: propRole }) {
             <button
               type="submit"
               disabled={saving}
-              className="px-6 py-2.5 bg-red text-white rounded-full text-sm font-bold hover:bg-red-700 transition disabled:opacity-60 flex items-center gap-2"
+              className="px-6 py-2.5 bg-red text-white rounded-full text-sm font-bold hover:bg-red-500 transition disabled:opacity-60 flex items-center gap-2"
             >
               {saving ? (
                 <>
@@ -283,12 +348,102 @@ export default function Settings({ role: propRole }) {
               )}
             </button>
           </form>
+
+          <div className="mt-8 pt-6 border-t border-slate-200">
+            <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+              <Trash2 size={16} className="text-red" /> Danger Zone
+            </h3>
+            <p className="text-sm text-slate-500 mt-1">Permanently delete your account and all associated data. This cannot be undone.</p>
+            <button
+              type="button"
+              onClick={handleDeleteAccount}
+              disabled={deleting}
+              className="mt-4 px-6 py-2.5 bg-red/10 text-red border border-red/30 rounded-full text-sm font-bold hover:bg-red hover:text-white transition disabled:opacity-60 flex items-center gap-2"
+            >
+              {deleting ? (
+                <>
+                  <span className="w-4 h-4 border-2 border-red border-t-transparent rounded-full animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                <>
+                  <Trash2 size={16} />
+                  Delete Account
+                </>
+              )}
+            </button>
+          </div>
         </motion.div>
       )}
 
       {/* Password Tab */}
       {activeTab === "password" && (
         <motion.div className="bg-white rounded-2xl p-4 md:p-8 border border-slate-100 shadow-sm" {...fadeUp}>
+          {forgotMode ? (
+            <div className="space-y-5 max-w-md">
+              <button type="button" onClick={exitForgotMode}
+                className="text-sm font-semibold text-slate-500 hover:text-slate-700 transition">
+                &larr; Back to Change Password
+              </button>
+              <div>
+                <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                  <KeyRound size={18} className="text-red" /> Forgot Password
+                </h3>
+                <p className="text-sm text-slate-500 mt-1">Verify your phone number to reset your password.</p>
+              </div>
+              {!otpVerified ? (
+                <OtpVerification
+                  phone={profile.phone}
+                  purpose="forgot_password"
+                  onVerified={() => setOtpVerified(true)}
+                  onError={(msg) => setError(msg)}
+                />
+              ) : (
+                <form onSubmit={handleResetPassword} className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-1.5">New Password</label>
+                    <div className="relative">
+                      <input type={showResetNew ? "text" : "password"} value={resetData.new_password}
+                        onChange={(e) => setResetData((prev) => ({ ...prev, new_password: e.target.value }))}
+                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-red/20 pr-10"
+                        autoComplete="new-password" required minLength={6} />
+                      <button type="button" onClick={() => setShowResetNew(!showResetNew)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">
+                        {showResetNew ? <EyeOff size={16} /> : <Eye size={16} />}
+                      </button>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-1.5">Confirm New Password</label>
+                    <div className="relative">
+                      <input type={showResetConfirm ? "text" : "password"} value={resetData.confirm_password}
+                        onChange={(e) => setResetData((prev) => ({ ...prev, confirm_password: e.target.value }))}
+                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-red/20 pr-10"
+                        autoComplete="new-password" required />
+                      <button type="button" onClick={() => setShowResetConfirm(!showResetConfirm)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">
+                        {showResetConfirm ? <EyeOff size={16} /> : <Eye size={16} />}
+                      </button>
+                    </div>
+                  </div>
+                  <button type="submit" disabled={saving}
+                    className="px-6 py-2.5 bg-red text-white rounded-full text-sm font-bold hover:bg-red-500 transition disabled:opacity-60 flex items-center gap-2">
+                    {saving ? (
+                      <>
+                        <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        Resetting...
+                      </>
+                    ) : (
+                      <>
+                        <Lock size={16} />
+                        Reset Password
+                      </>
+                    )}
+                  </button>
+                </form>
+              )}
+            </div>
+          ) : (
           <form onSubmit={handleChangePassword} className="space-y-5 max-w-md">
             <div>
               <label className="block text-sm font-semibold text-slate-700 mb-1.5">
@@ -353,7 +508,7 @@ export default function Settings({ role: propRole }) {
             <button
               type="submit"
               disabled={saving}
-              className="px-6 py-2.5 bg-red text-white rounded-full text-sm font-bold hover:bg-red-700 transition disabled:opacity-60 flex items-center gap-2"
+              className="px-6 py-2.5 bg-red text-white rounded-full text-sm font-bold hover:bg-red-500 transition disabled:opacity-60 flex items-center gap-2"
             >
               {saving ? (
                 <>
@@ -367,7 +522,12 @@ export default function Settings({ role: propRole }) {
                 </>
               )}
             </button>
+            <button type="button" onClick={enterForgotMode}
+              className="text-xs font-semibold text-red hover:underline">
+              Forgot your password? Reset with OTP
+            </button>
           </form>
+          )}
         </motion.div>
       )}
 

@@ -7,7 +7,8 @@ from app.services.donation_service import (
     accept_blood_request,
     cancel_donation,
     get_my_donations,
-    verify_fulfillment
+    verify_fulfillment,
+    remove_accepted_response
 )
 donation_bp = Blueprint(
     "donation",
@@ -35,6 +36,13 @@ def fulfill_donation(donation_id):
     from flask import request
     data = request.get_json()
     return verify_fulfillment(donation_id, data)
+
+
+@donation_bp.patch("/<int:donation_id>/remove")
+@jwt_required()
+@role_required("patient")
+def remove_donation_route(donation_id):
+    return remove_accepted_response(donation_id)
 
 
 @donation_bp.get("/my-donations")

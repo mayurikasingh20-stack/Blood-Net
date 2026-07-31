@@ -7,7 +7,8 @@ from app.services.blood_bank_service import (
     update_blood_bank_profile,
     blood_bank_dashboard,
     fulfill_request,
-    accept_request_as_donor
+    accept_request_as_donor,
+    get_accepted_requests
 )
 
 blood_bank_bp = Blueprint(
@@ -50,6 +51,12 @@ def update_profile():
 @role_required("blood_bank")
 def dashboard():
     return blood_bank_dashboard()
+
+@blood_bank_bp.get("/my-accepted-requests")
+@jwt_required()
+@role_required("blood_bank")
+def accepted_requests():
+    return get_accepted_requests()
 
 @blood_bank_bp.post("/fulfill-request/<int:request_id>")
 @jwt_required()

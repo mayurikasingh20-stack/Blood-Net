@@ -15,6 +15,7 @@ auth_bp = Blueprint("auth", __name__, url_prefix="/api/auth")
 def send_otp_route():
     data = request.get_json(silent=True) or {}
     phone = data.get("phone", "").strip()
+    purpose = (data.get("purpose") or "register").strip().lower()
     if not phone:
         return jsonify({"message": "Phone number is required."}), 400
 
@@ -22,7 +23,14 @@ def send_otp_route():
     if not normalized:
         return jsonify({"message": "Invalid phone number. Use E.164 format (e.g. +911234567890)."}), 400
 
-    if User.query.filter_by(phone=normalized).first():
+    existing = User.query.filter_by(phone=normalized).first()
+    if purpose == "forgot_password":
+        if not existing:
+            return jsonify({"message": "No account found with this phone number."}), 404
+        current_user_id = get_jwt_identity()
+        if current_user_id is None or existing.id != current_user_id:
+            return jsonify({"message": "You can only reset the password of your own account."}), 403
+    elif existing:
         return jsonify({"message": "Phone number already registered."}), 409
 
     twilio_phone = f"+91{normalized}"
@@ -169,6 +177,87 @@ def change_password():
     user.password_hash = hash_password(new_password)
     db.session.commit()
     return jsonify({"message": "Password changed successfully."}), 200
+
+
+@auth_bp.post("/reset-password")
+@jwt_required()
+def reset_password():
+    from app.utils.password import hash_password
+
+    user_id = get_jwt_identity()
+    user = db.session.get(User, user_id)
+    if not user:
+        return jsonify({"message": "User not found"}), 404
+
+    data = request.get_json(silent=True) or {}
+    phone = data.get("phone", "").strip()
+    new_password = data.get("new_password", "")
+
+    if not phone or not new_password:
+        return jsonify({"message": "Phone number and new password are required."}), 400
+    if len(new_password) < 6:
+        return jsonify({"message": "New password must be at least 6 characters."}), 400
+
+    normalized = normalize_phone(phone)
+    if not normalized or normalized != user.phone:
+        return jsonify({"message": "Phone number does not match your account."}), 400
+
+    if not hasattr(current_app, '_verified_phones') or normalized not in current_app._verified_phones:
+        return jsonify({"message": "Please verify your phone number with OTP first."}), 400
+
+    user.password_hash = hash_password(new_password)
+    current_app._verified_phones.discard(normalized)
+    db.session.commit()
+    return jsonify({"message": "Password reset successfully."}), 200
+
+
+@auth_bp.delete("/account")
+@jwt_required()
+def delete_account():
+    user_id = get_jwt_identity()
+    user = db.session.get(User, user_id)
+    if not user:
+        return jsonify({"message": "User not found"}), 404
+
+    from app.models.blood_bank import BloodBank
+    from app.models.donation import Donation
+    from app.models.blood_request import BloodRequest
+    from app.models.camp import Camp
+    from app.models.notification import Notification
+
+    donor = Donor.query.filter_by(user_id=user.id).first()
+    bank = BloodBank.query.filter_by(user_id=user.id).first()
+    patient = Patient.query.filter_by(user_id=user.id).first()
+
+    try:
+        Notification.query.filter_by(user_id=user.id).delete()
+
+        if donor:
+            Donation.query.filter_by(donor_id=donor.id).delete()
+
+        if bank:
+            Donation.query.filter_by(blood_bank_id=bank.id).delete()
+            Camp.query.filter_by(blood_bank_id=bank.id).delete()
+
+        req_ids = [r.id for r in BloodRequest.query.filter_by(created_by=user.id).all()]
+        for rid in req_ids:
+            Donation.query.filter_by(blood_request_id=rid).delete()
+        BloodRequest.query.filter(BloodRequest.created_by == user.id).delete()
+
+        if patient:
+            p_req_ids = [r.id for r in BloodRequest.query.filter_by(patient_id=patient.id).all()]
+            for rid in p_req_ids:
+                Donation.query.filter_by(blood_request_id=rid).delete()
+            BloodRequest.query.filter(BloodRequest.patient_id == patient.id).delete()
+
+        db.session.delete(user)
+        db.session.commit()
+        return jsonify({"message": "Account deleted successfully."}), 200
+    except Exception as exc:
+        db.session.rollback()
+        current_app.logger.error(f"Account deletion failed: {exc}")
+        return jsonify({"message": "Failed to delete account. Please try again."}), 500
+
 
 @auth_bp.post("/add-role")
 @jwt_required()

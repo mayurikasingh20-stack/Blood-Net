@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Droplets, Search, CheckCircle, Clock, XCircle, Loader, Heart, Building2 } from "lucide-react";
 import api from "../services/api";
-import { getMyDonations } from "../services/dashboardService";
+import { getMyDonations, getBloodBankAcceptedRequests } from "../services/dashboardService";
 import useAuth from "../context/useAuth";
 
 const statusStyles = {
@@ -35,6 +35,7 @@ export default function DonorDonationHistory() {
 
   const [donations, setDonations] = useState([]);
   const [requests, setRequests] = useState([]);
+  const [acceptedRequests, setAcceptedRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
@@ -45,13 +46,13 @@ export default function DonorDonationHistory() {
         const calls = [];
         if (isDonor) calls.push(getMyDonations().then(d => d?.donations || []).catch(() => []));
         if (isPatient) calls.push(api.get("/blood-request/my-requests").then(r => r.data?.blood_requests || []).catch(() => []));
-        if (isBloodBank) calls.push(api.get("/blood-request/my-requests").then(r => r.data?.blood_requests || []).catch(() => []));
+        if (isBloodBank) calls.push(getBloodBankAcceptedRequests().then(d => d?.accepted_requests || []).catch(() => []));
         const results = await Promise.all(calls);
 
         let idx = 0;
         if (isDonor) setDonations(results[idx++]);
         if (isPatient) setRequests(results[idx++]);
-        if (isBloodBank) setRequests(results[idx++]);
+        if (isBloodBank) setAcceptedRequests(results[idx++]);
       } catch {
         setError("Failed to load history.");
       } finally {
@@ -74,6 +75,13 @@ export default function DonorDonationHistory() {
     (r.city || "").toLowerCase().includes(search.toLowerCase())
   );
 
+  const filteredAcceptedRequests = acceptedRequests.filter((r) =>
+    !search ||
+    (r.blood_group || "").toLowerCase().includes(search.toLowerCase()) ||
+    (r.hospital || "").toLowerCase().includes(search.toLowerCase()) ||
+    (r.city || "").toLowerCase().includes(search.toLowerCase())
+  );
+
   if (loading) return (
     <div className="flex items-center justify-center py-20">
       <Loader className="animate-spin text-red" size={32} />
@@ -86,7 +94,9 @@ export default function DonorDonationHistory() {
         <div>
           <h1 className="text-2xl font-bold text-slate-900">History</h1>
           <p className="text-sm text-slate-500 mt-1">
-            {activeTab === "donor" ? `${donations.length} donation(s) on record` : `${requests.length} request(s) on record`}
+            {activeTab === "donor" ? `${donations.length} donation(s) on record` :
+             activeTab === "bloodbank" ? `${acceptedRequests.length} accepted request(s) on record` :
+             `${requests.length} request(s) on record`}
           </p>
         </div>
         <div className="relative w-full sm:w-64">
@@ -248,48 +258,52 @@ export default function DonorDonationHistory() {
 
       {activeTab === "bloodbank" && isBloodBank && (
         <motion.div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-          {filteredRequests.length === 0 ? (
+          {filteredAcceptedRequests.length === 0 ? (
             <div className="text-center py-12">
               <div className="w-14 h-14 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-3">
                 <Building2 size={22} className="text-slate-400" />
               </div>
-              <p className="text-sm text-slate-500">{requests.length === 0 ? "No blood requests yet" : "No matching requests"}</p>
+              <p className="text-sm text-slate-500">{acceptedRequests.length === 0 ? "No accepted requests yet" : "No matching requests"}</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead className="bg-slate-50 border-b border-slate-100">
                   <tr>
-                    {["Blood Group", "Hospital", "City", "Units", "Urgency", "Status", "Date"].map((h) => (
+                    {["Blood Group", "Hospital", "City", "Units", "Urgency", "Status", "Accepted On"].map((h) => (
                       <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">{h}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {filteredRequests.map((r) => (
-                    <tr key={r.request_id || r.id} className="hover:bg-slate-50/50 transition">
+                  {filteredAcceptedRequests.map((r) => (
+                    <tr key={r.blood_request_id || r.id} className="hover:bg-slate-50/50 transition">
                       <td className="px-4 py-3">
                         <span className="font-bold text-slate-900">{r.blood_group}</span>
                       </td>
-                      <td className="px-4 py-3 text-slate-600">{r.hospital || r.hospital_name || "\u2014"}</td>
+                      <td className="px-4 py-3 text-slate-600">{r.hospital || "\u2014"}</td>
                       <td className="px-4 py-3 text-slate-600">{r.city || "\u2014"}</td>
                       <td className="px-4 py-3">
-                        <span className="font-semibold">{r.units_required || r.units || "\u2014"}</span>
+                        <span className="font-semibold">{r.units || "\u2014"}</span>
                       </td>
                       <td className="px-4 py-3">
                         <span className={`text-[10px] font-bold px-2 py-1 rounded-full border ${
-                          r.urgency === "emergency" ? "bg-red/10 text-red border-red/20" : "bg-slate-50 text-slate-600 border-slate-200"
+                          r.urgency_level === "Critical" ? "bg-red/10 text-red border-red/20" :
+                          r.urgency_level === "High" ? "bg-amber-50 text-amber-700 border-amber-200" :
+                          "bg-blue-50 text-blue-600 border-blue-200"
                         }`}>
-                          {r.urgency || "normal"}
+                          {r.urgency_level || "Moderate"}
                         </span>
                       </td>
                       <td className="px-4 py-3">
-                        <span className={`text-[10px] font-bold px-2 py-1 rounded-full border ${requestStatusStyles[r.status] || requestStatusStyles.pending}`}>
-                          {r.status || "pending"}
+                        <span className={`text-[10px] font-bold px-2 py-1 rounded-full border ${
+                          r.fulfilled ? statusStyles.verified : statusStyles.accepted
+                        }`}>
+                          {r.fulfilled ? "Fulfilled" : "Accepted"}
                         </span>
                       </td>
                       <td className="px-4 py-3 text-slate-400 text-xs">
-                        {r.created_at ? new Date(r.created_at).toLocaleDateString() : "\u2014"}
+                        {r.accepted_at ? new Date(r.accepted_at).toLocaleDateString() : "\u2014"}
                       </td>
                     </tr>
                   ))}

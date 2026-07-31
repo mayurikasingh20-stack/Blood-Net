@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import useAuth from "../context/useAuth";
 import api from "../services/api";
 import DonorScreeningModal from "../components/donor/DonorScreeningModal";
-import { getDonorProfile } from "../services/dashboardService";
+import { getDonorProfile, bloodBankAcceptRequest } from "../services/dashboardService";
 import { BLOOD_GROUPS } from "../utils/constants";
 
 const urgencyLevels = [
@@ -28,6 +28,8 @@ export default function EmergencyRequest() {
   const [screeningRequest, setScreeningRequest] = useState(null);
   const [loading, setLoading] = useState(false);
   const [requests, setRequests] = useState([]);
+  const [acceptingId, setAcceptingId] = useState(null);
+  const [respondedIds, setRespondedIds] = useState(new Set());
   const [donorBloodGroup, setDonorBloodGroup] = useState("");
   const [form, setForm] = useState({
     blood_group: "",
@@ -55,6 +57,19 @@ export default function EmergencyRequest() {
 
   function update(field, value) {
     setForm((prev) => ({ ...prev, [field]: value }));
+  }
+
+  async function handleBankAccept(requestId) {
+    setAcceptingId(requestId);
+    try {
+      await bloodBankAcceptRequest(requestId);
+      setRespondedIds((prev) => new Set(prev).add(requestId));
+      setRequests((prev) => prev.filter((r) => r.id !== requestId));
+    } catch (err) {
+      alert(err.response?.data?.message || "Failed to accept request.");
+    } finally {
+      setAcceptingId(null);
+    }
   }
 
   function validate() {
@@ -120,7 +135,7 @@ export default function EmergencyRequest() {
         </div>
         <button
           onClick={() => { setShowForm(!showForm); setStep(1); setError(""); setSuccess(""); }}
-          className="flex items-center gap-2 px-4 py-2.5 bg-red text-white rounded-full text-sm font-bold hover:bg-red-700 transition"
+          className="flex items-center gap-2 px-4 py-2.5 bg-red text-white rounded-full text-sm font-bold hover:bg-red-500 transition"
         >
           {showForm ? "Cancel" : "+ Raise Request"}
         </button>
@@ -178,7 +193,7 @@ export default function EmergencyRequest() {
                     <input value={form.city} onChange={(e) => update("city", e.target.value)} placeholder="e.g. Mumbai" className={inputClass} />
                   </div>
                 )}
-                <button type="button" onClick={() => { setError(""); setStep(2); }} className="w-full py-3 bg-red text-white rounded-full text-sm font-bold hover:bg-red-700 transition">
+                <button type="button" onClick={() => { setError(""); setStep(2); }} className="w-full py-3 bg-red text-white rounded-full text-sm font-bold hover:bg-red-500 transition">
                   Next
                 </button>
               </div>
@@ -201,7 +216,7 @@ export default function EmergencyRequest() {
                 </div>
                 <div className="flex gap-3">
                   <button type="button" onClick={() => setStep(1)} className="flex-1 py-3 border border-slate-200 rounded-full text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">Back</button>
-                  <button type="submit" disabled={loading} className="flex-[2] py-3 bg-red text-white rounded-full text-sm font-bold hover:bg-red-700 transition disabled:opacity-60">
+                  <button type="submit" disabled={loading} className="flex-[2] py-3 bg-red text-white rounded-full text-sm font-bold hover:bg-red-500 transition disabled:opacity-60">
                     {loading ? "Submitting..." : "Submit Emergency Request"}
                   </button>
                 </div>
@@ -225,7 +240,7 @@ export default function EmergencyRequest() {
                 </div>
                 <div className="flex gap-3">
                   <button type="button" onClick={() => setStep(1)} className="flex-1 py-3 border border-slate-200 rounded-full text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">Back</button>
-                  <button type="button" onClick={() => { setError(""); setStep(3); }} className="flex-[2] py-3 bg-red text-white rounded-full text-sm font-bold hover:bg-red-700 transition">Next</button>
+                  <button type="button" onClick={() => { setError(""); setStep(3); }} className="flex-[2] py-3 bg-red text-white rounded-full text-sm font-bold hover:bg-red-500 transition">Next</button>
                 </div>
               </div>
             )}
@@ -247,7 +262,7 @@ export default function EmergencyRequest() {
                 </div>
                 <div className="flex gap-3">
                   <button type="button" onClick={() => setStep(2)} className="flex-1 py-3 border border-slate-200 rounded-full text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">Back</button>
-                  <button type="submit" disabled={loading} className="flex-[2] py-3 bg-red text-white rounded-full text-sm font-bold hover:bg-red-700 transition disabled:opacity-60">
+                  <button type="submit" disabled={loading} className="flex-[2] py-3 bg-red text-white rounded-full text-sm font-bold hover:bg-red-500 transition disabled:opacity-60">
                     {loading ? "Submitting..." : "Submit Emergency Request"}
                   </button>
                 </div>
@@ -284,9 +299,18 @@ export default function EmergencyRequest() {
                 {isDonor && (
                   <button
                     onClick={() => setScreeningRequest({ ...req, contact_name: req.contact_name, contact_phone: req.contact_phone })}
-                    className="mt-3 px-4 py-2 bg-red text-white rounded-full text-sm font-bold hover:bg-red-700 transition"
+                    className="mt-3 px-4 py-2 bg-red text-white rounded-full text-sm font-bold hover:bg-red-500 transition"
                   >
                     Accept & Donate
+                  </button>
+                )}
+                {isBloodBank && (
+                  <button
+                    onClick={() => handleBankAccept(req.id)}
+                    disabled={acceptingId === req.id || respondedIds.has(req.id)}
+                    className="mt-3 px-4 py-2 bg-red text-white rounded-full text-sm font-bold hover:bg-red-500 transition disabled:opacity-50"
+                  >
+                    {acceptingId === req.id ? "Accepting..." : respondedIds.has(req.id) ? "Accepted" : "Accept Request"}
                   </button>
                 )}
               </div>

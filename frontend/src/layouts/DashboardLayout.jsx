@@ -3,7 +3,7 @@ import { Outlet, Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Droplet, Menu, Bell, CheckCircle, X, Home, Activity,
-  Settings, MapPin, Droplets, Heart, Calendar,
+  Settings, MapPin, Droplets, Heart, Calendar, Users,
 } from "lucide-react";
 import Sidebar from "../components/navigation/Sidebar";
 import Footer from "../components/navigation/Footer";
@@ -202,6 +202,7 @@ function getIconForNav(iconName) {
     group: Heart,
     location_city: MapPin,
     volunteer_activism: Heart,
+    manage_accounts: Users,
     mail: Bell,
     map: MapPin,
     settings: Settings,

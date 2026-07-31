@@ -21,7 +21,7 @@ export default function NotFound() {
         </p>
         <Link
           to="/"
-          className="inline-flex items-center gap-2 px-6 py-3 bg-red text-white rounded-full font-bold text-sm hover:bg-red-700 transition shadow-lg shadow-red/20"
+          className="inline-flex items-center gap-2 px-6 py-3 bg-red text-white rounded-full font-bold text-sm hover:bg-red-500 transition shadow-lg shadow-red/20"
         >
           <Home size={16} />
           Return Home

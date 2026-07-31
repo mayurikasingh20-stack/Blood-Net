@@ -166,6 +166,8 @@ def verify_fulfillment(donation_id, data):
     donation.donated_units = donated_units
     donation.status = DonationStatus.VERIFIED
     donation.verified_at = datetime.utcnow()
+    if donation.donor:
+        donation.donor.last_donation_date = datetime.utcnow().date()
     blood_request.fulfilled_units += donated_units
 
     completed = False
@@ -205,6 +207,52 @@ def verify_fulfillment(donation_id, data):
         "required_units": blood_request.units,
         "request_status": blood_request.status.value
     }, 200
+
+
+def remove_accepted_response(donation_id):
+    user_id = get_jwt_identity()
+    user = db.session.get(User, user_id)
+    if user is None:
+        return {"message": "User not found."}, 404
+
+    donation = db.session.get(Donation, donation_id)
+    if donation is None:
+        return {"message": "Donation not found."}, 404
+
+    blood_request = donation.blood_request
+    if blood_request is None or blood_request.created_by != user.id:
+        return {"message": "Unauthorized access."}, 403
+
+    if donation.status != DonationStatus.ACCEPTED:
+        return {"message": "Only accepted responses can be removed."}, 400
+
+    donation.status = DonationStatus.CANCELLED
+
+    if donation.donor and donation.donor.user:
+        acceptor_user_id = donation.donor.user_id
+        acceptor_name = f"{donation.donor.user.first_name} {donation.donor.user.last_name}"
+    elif donation.blood_bank and donation.blood_bank.user:
+        acceptor_user_id = donation.blood_bank.user_id
+        acceptor_name = donation.blood_bank.facility_name
+    else:
+        acceptor_user_id = None
+        acceptor_name = "Responder"
+
+    if acceptor_user_id:
+        create_notification(
+            user_id=acceptor_user_id,
+            title="Response Removed",
+            message=(
+                f"Your acceptance for the {blood_request.blood_group} request "
+                f"at {blood_request.hospital} was removed by the patient."
+            ),
+            notification_type="donation_cancelled",
+            reference_id=donation.id
+        )
+
+    db.session.commit()
+
+    return {"message": "Response removed successfully."}, 200
 
 
 def get_my_donations():

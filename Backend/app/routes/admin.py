@@ -1,5 +1,5 @@
 from flask import Blueprint, request
-from flask_jwt_extended import jwt_required
+from flask_jwt_extended import jwt_required, get_jwt_identity
 
 from app.utils.decorator import role_required
 from app.services.admin_service import (
@@ -15,6 +15,8 @@ from app.services.admin_service import (
     verify_donation,
     reject_donation,
     get_all_camps,
+    get_all_users,
+    set_user_active,
     admin_dashboard
 )
 
@@ -43,7 +45,13 @@ def single_blood_bank(blood_bank_id):
 @jwt_required()
 @role_required("admin")
 def approve(blood_bank_id):
-    return approve_blood_bank(blood_bank_id)
+    data = request.get_json(silent=True) or {}
+    reason = (data.get("reason") or "").strip()
+    return approve_blood_bank(
+        blood_bank_id,
+        admin_id=get_jwt_identity(),
+        reason=reason
+    )
 
 
 @admin_bp.patch("/blood-banks/<int:blood_bank_id>/reject")
@@ -54,7 +62,8 @@ def reject(blood_bank_id):
 
     return reject_blood_bank(
         blood_bank_id,
-        data
+        data,
+        admin_id=get_jwt_identity()
     )
     
 @admin_bp.get("/blood-requests")
@@ -108,6 +117,31 @@ def reject_donation_route(donation_id):
         data
     )
     
+@admin_bp.get("/users")
+@jwt_required()
+@role_required("admin")
+def all_users():
+    return get_all_users()
+
+
+@admin_bp.patch("/users/<int:user_id>/block")
+@jwt_required()
+@role_required("admin")
+def block_user(user_id):
+    data = request.get_json(silent=True) or {}
+    reason = (data.get("reason") or "").strip()
+    return set_user_active(user_id, False, admin_id=get_jwt_identity(), reason=reason)
+
+
+@admin_bp.patch("/users/<int:user_id>/unblock")
+@jwt_required()
+@role_required("admin")
+def unblock_user(user_id):
+    data = request.get_json(silent=True) or {}
+    reason = (data.get("reason") or "").strip()
+    return set_user_active(user_id, True, admin_id=get_jwt_identity(), reason=reason)
+
+
 @admin_bp.get("/camps")
 @jwt_required()
 @role_required("admin")

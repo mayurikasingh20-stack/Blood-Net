@@ -109,7 +109,7 @@ export default function DonorProfile() {
             <input type="checkbox" checked={form.on_medication} onChange={(e) => setForm((p) => ({ ...p, on_medication: e.target.checked }))} className="rounded border-slate-300 text-red focus:ring-red" />
             <span className="text-sm text-slate-700">I am currently on medication</span>
           </label>
-          <button type="submit" disabled={saving} className="flex items-center gap-2 px-6 py-2.5 bg-red text-white rounded-full text-sm font-bold hover:bg-red-700 transition disabled:opacity-60">
+          <button type="submit" disabled={saving} className="flex items-center gap-2 px-6 py-2.5 bg-red text-white rounded-full text-sm font-bold hover:bg-red-500 transition disabled:opacity-60">
             <Save size={16} /> {saving ? "Saving..." : "Save Changes"}
           </button>
         </form>

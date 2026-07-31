@@ -3,10 +3,10 @@ import { MapContainer, TileLayer, Marker, useMap, useMapEvents } from "react-lea
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { motion } from "framer-motion";
-import { Droplets, AlertTriangle, Bell, CheckCircle, Activity, ThumbsUp, XCircle, MapPin, Calendar, CalendarX, Edit3, Trash2, Plus, X, RefreshCw, LocateFixed } from "lucide-react";
+import { Droplets, AlertTriangle, Bell, CheckCircle, Activity, Calendar, Edit3, Trash2, Plus, X, RefreshCw, LocateFixed } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import useAuth from "../context/useAuth";
-import { getBloodBankDashboard, getInventory, getNotifications, getOpenRequests, getMyCamps, createCamp, updateCamp, deleteCamp, fulfillBloodRequest, bloodBankAcceptRequest } from "../services/dashboardService";
+import { getBloodBankDashboard, getInventory, getNotifications, getMyCamps, createCamp, updateCamp, deleteCamp } from "../services/dashboardService";
 import api from "../services/api";
 import { BLOOD_GROUPS } from "../utils/constants";
 import NotificationPanel from "../components/shared/NotificationPanel";
@@ -100,16 +100,12 @@ export default function BloodBankDashboard() {
   const [dashboard, setDashboard] = useState(null);
   const [inventory, setInventory] = useState([]);
   const [requests, setRequests] = useState([]);
-  const [openBloodRequests, setOpenBloodRequests] = useState([]);
   const [notifications, setNotifications] = useState([]);
   const [camps, setCamps] = useState([]);
   const [showCampModal, setShowCampModal] = useState(false);
   const [editingCamp, setEditingCamp] = useState(null);
   const [campForm, setCampForm] = useState({ title: "", description: "", date: "", time: "", venue: "", address: "", lat: "", lng: "" });
   const [campSaving, setCampSaving] = useState(false);
-  const [fulfillingId, setFulfillingId] = useState(null);
-  const [acceptingId, setAcceptingId] = useState(null);
-  const [respondedIds, setRespondedIds] = useState(new Set());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [sectionErrors, setSectionErrors] = useState({});
@@ -133,11 +129,10 @@ export default function BloodBankDashboard() {
   async function loadAllData(isFullRefresh) {
     const errs = {};
     const safe = (label, fn, fallback) => fn().catch((e) => { errs[label] = true; return fallback; });
-    const [dashData, invData, reqRes, openReqData, notifData, campsData] = await Promise.all([
+    const [dashData, invData, reqRes, notifData, campsData] = await Promise.all([
       safe("dashboard", getBloodBankDashboard, null),
       safe("inventory", getInventory, { inventory: [] }),
       safe("myRequests", () => api.get("/blood-request/my-requests"), { data: { blood_requests: [] } }),
-      safe("openRequests", getOpenRequests, { blood_requests: [] }),
       safe("notifications", getNotifications, { notifications: [] }),
       safe("camps", getMyCamps, { camps: [] }),
     ]);
@@ -147,13 +142,11 @@ export default function BloodBankDashboard() {
 
     const newInv = Array.isArray(invData?.inventory) ? invData.inventory : [];
     const newReqs = Array.isArray(reqRes.data?.blood_requests) ? reqRes.data.blood_requests : [];
-    const newOpen = openReqData?.blood_requests || [];
     const newNotifs = notifData?.notifications || [];
     const newCamps = Array.isArray(campsData?.camps) ? campsData.camps : [];
 
     setInventory((prev) => isFullRefresh || !shallowArrayEqual(newInv, prev) ? newInv : prev);
     setRequests((prev) => isFullRefresh || !shallowArrayEqual(newReqs, prev) ? newReqs : prev);
-    setOpenBloodRequests((prev) => isFullRefresh || !shallowArrayEqual(newOpen, prev) ? newOpen : prev);
     setNotifications((prev) => isFullRefresh || !shallowArrayEqual(newNotifs, prev) ? newNotifs : prev);
     setCamps((prev) => isFullRefresh || !shallowArrayEqual(newCamps, prev) ? newCamps : prev);
   }
@@ -180,30 +173,6 @@ export default function BloodBankDashboard() {
   });
 
   const pendingRequests = requests.filter((r) => r.status === "pending").length;
-
-  async function handleFulfill(requestId) {
-    setFulfillingId(requestId);
-    try {
-      await fulfillBloodRequest(requestId);
-      fetchData();
-    } catch (err) {
-      alert(err.response?.data?.message || "Failed to fulfill request.");
-    } finally {
-      setFulfillingId(null);
-    }
-  }
-
-  async function handleAccept(requestId) {
-    setAcceptingId(requestId);
-    try {
-      await bloodBankAcceptRequest(requestId);
-      setRespondedIds((prev) => new Set(prev).add(requestId));
-    } catch (err) {
-      alert(err.response?.data?.message || "Failed to accept request.");
-    } finally {
-      setAcceptingId(null);
-    }
-  }
 
   async function handleCampSubmit(e) {
     e.preventDefault();
@@ -333,7 +302,7 @@ export default function BloodBankDashboard() {
                   <AlertTriangle size={16} className="text-amber-500" /> Alerts
                 </h3>
                 <button onClick={() => navigate("/bloodbank/emergency")}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-red text-white rounded-xl text-xs font-bold hover:bg-red-700 transition">
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-red text-white rounded-xl text-xs font-bold hover:bg-red-500 transition">
                   Raise Request
                 </button>
               </div>
@@ -382,63 +351,6 @@ export default function BloodBankDashboard() {
             </motion.div>
           )}
 
-          {/* All Open Blood Requests */}
-          <motion.div className="bg-white rounded-2xl border border-slate-100 shadow-sm" {...fadeUp}>
-            <div className="flex items-center justify-between px-4 md:px-6 py-4 border-b border-slate-100">
-              <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                <MapPin size={16} className="text-red" />
-                Blood Requests
-              </h3>
-            </div>
-            <div className="p-4 md:p-6">
-              {openBloodRequests.length === 0 ? (
-                <div className="text-center py-8">
-                  <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <CheckCircle size={20} className="text-slate-400" />
-                  </div>
-                  <p className="text-sm text-slate-500">No open requests</p>
-                  <p className="text-xs text-slate-400 mt-1">All requests have been fulfilled</p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {openBloodRequests.slice(0, 5).map((req) => (
-                    <div key={req.id} className="flex items-center gap-3 p-3 md:p-4 rounded-xl bg-slate-50 hover:bg-red-50 transition">
-                      <div className="w-12 h-12 rounded-xl bg-red/10 flex items-center justify-center text-red font-bold text-base flex-shrink-0">
-                        {req.blood_group}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-bold text-slate-900 truncate">{req.hospital}</p>
-                        <p className="text-xs text-slate-500 truncate">{req.city} &middot; {req.units} unit(s) needed</p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className={`text-[10px] font-bold px-2 py-1 rounded-full ${
-                          req.urgency_level === "Critical" ? "bg-red/10 text-red" :
-                          req.urgency_level === "High" ? "bg-amber-50 text-amber-700" :
-                          "bg-blue-50 text-blue-600"
-                        }`}>
-                          {req.urgency_level}
-                        </span>
-                        <button
-                          onClick={() => handleAccept(req.id)}
-                          disabled={acceptingId === req.id || respondedIds.has(req.id)}
-                          className="text-[10px] font-bold px-2 py-1 rounded-full bg-blue-50 text-blue-600 hover:bg-blue-100 transition disabled:opacity-50"
-                        >
-                          {acceptingId === req.id ? "..." : respondedIds.has(req.id) ? "Accepted" : "Accept"}
-                        </button>
-                        <button
-                          onClick={() => handleFulfill(req.id)}
-                          disabled={fulfillingId === req.id}
-                          className="text-[10px] font-bold px-2 py-1 rounded-full bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition disabled:opacity-50"
-                        >
-                          {fulfillingId === req.id ? "..." : "Fulfill"}
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </motion.div>
         </div>
 
         <NotificationPanel
@@ -465,7 +377,7 @@ export default function BloodBankDashboard() {
               setCampForm({ title: "", description: "", date: "", time: "", venue: "", address: "", lat: "", lng: "" });
               setShowCampModal(true);
             }}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-red text-white rounded-xl text-xs font-bold hover:bg-red-700 transition"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-red text-white rounded-xl text-xs font-bold hover:bg-red-500 transition"
           >
             <Plus size={14} /> Set Up Camp
           </button>
@@ -608,7 +520,7 @@ export default function BloodBankDashboard() {
               </div>
               <div className="flex items-center gap-3 pt-2">
                 <button type="submit" disabled={campSaving}
-                  className="flex-1 py-2.5 bg-red text-white rounded-xl text-sm font-bold hover:bg-red-700 transition disabled:opacity-50">
+                  className="flex-1 py-2.5 bg-red text-white rounded-xl text-sm font-bold hover:bg-red-500 transition disabled:opacity-50">
                   {campSaving ? "Saving..." : editingCamp ? "Update Camp" : "Create Camp"}
                 </button>
                 <button type="button" onClick={() => setShowCampModal(false)}

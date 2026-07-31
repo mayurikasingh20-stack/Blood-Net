@@ -172,7 +172,7 @@ export default function Register() {
                 {error && <ErrorMessage>{error}</ErrorMessage>}
                 <div className="flex justify-end pt-2">
                   <button type="button" onClick={nextStep}
-                    className="flex items-center gap-2 px-6 py-2.5 bg-red text-white rounded-full text-sm font-bold hover:bg-red-700 transition shadow-lg shadow-red/20">
+                    className="flex items-center gap-2 px-6 py-2.5 bg-red text-white rounded-full text-sm font-bold hover:bg-red-500 transition shadow-lg shadow-red/20">
                     Next <ArrowRight size={16} />
                   </button>
                 </div>
@@ -204,7 +204,7 @@ export default function Register() {
                     <ArrowLeft size={16} /> Back
                   </button>
                   <button type="button" onClick={nextStep}
-                    className="flex items-center gap-2 px-6 py-2.5 bg-red text-white rounded-full text-sm font-bold hover:bg-red-700 transition shadow-lg shadow-red/20">
+                    className="flex items-center gap-2 px-6 py-2.5 bg-red text-white rounded-full text-sm font-bold hover:bg-red-500 transition shadow-lg shadow-red/20">
                     Next <ArrowRight size={16} />
                   </button>
                 </div>
@@ -245,11 +245,26 @@ export default function Register() {
                   </div>
                 </div>
 
+                <div className="rounded-2xl border border-slate-200 bg-slate-50">
+                  <div className="flex items-center gap-2 px-4 py-3 border-b border-slate-200">
+                    <ShieldCheck size={16} className="text-red" />
+                    <h3 className="text-sm font-bold text-slate-900">Terms &amp; Conditions</h3>
+                  </div>
+                  <div className="px-4 py-3 space-y-2.5 max-h-44 overflow-y-auto text-xs leading-relaxed text-slate-600">
+                    <p>1. <strong>Contact visibility:</strong> By registering, you agree that your registered phone number and city will be visible to patients, donors and blood banks on the platform for coordination purposes.</p>
+                    <p>2. <strong>Eligibility:</strong> You confirm that you are at least 18 years old and that the information you provide, including your blood group and medical details, is accurate and up to date.</p>
+                    <p>3. <strong>Communication:</strong> You may receive SMS or call notifications regarding blood donation requests, emergency needs, and donation camps in your area.</p>
+                    <p>4. <strong>Eligibility to donate:</strong> Donors confirm they are in good health and will not donate if suffering from any condition that makes blood donation unsafe.</p>
+                    <p>5. <strong>Responsible use:</strong> You agree not to misuse the platform, submit false requests, or use contact information obtained here for any purpose other than blood-related coordination.</p>
+                    <p>6. <strong>Privacy &amp; data:</strong> Your medical data is used solely for matching and screening purposes and will not be shared beyond what is necessary for the platform to function.</p>
+                  </div>
+                </div>
+
                 <label className="flex items-start gap-2 cursor-pointer">
                   <input type="checkbox" checked={formData.acceptedTerms}
                     onChange={(e) => update("acceptedTerms", e.target.checked)}
                     className="mt-0.5 h-4 w-4 rounded border-slate-300 text-red focus:ring-red" />
-                  <span className="text-sm text-slate-700">I confirm that all information provided is accurate and I agree to the terms of service.</span>
+                  <span className="text-sm text-slate-700">I have read and agree to the <span className="font-semibold text-red">Terms &amp; Conditions</span> and confirm that all information provided is accurate.</span>
                 </label>
 
                 {error && <ErrorMessage>{error}</ErrorMessage>}
@@ -260,7 +275,7 @@ export default function Register() {
                     <ArrowLeft size={16} /> Back
                   </button>
                   <button type="button" onClick={nextStep}
-                    className="flex items-center gap-2 px-6 py-2.5 bg-red text-white rounded-full text-sm font-bold hover:bg-red-700 transition shadow-lg shadow-red/20">
+                    className="flex items-center gap-2 px-6 py-2.5 bg-red text-white rounded-full text-sm font-bold hover:bg-red-500 transition shadow-lg shadow-red/20">
                     Next <ArrowRight size={16} />
                   </button>
                 </div>
