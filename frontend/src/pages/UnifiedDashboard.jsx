@@ -10,10 +10,10 @@ import useAuth from "../context/useAuth";
 import NotificationPanel from "../components/shared/NotificationPanel";
 import DonorScreeningModal from "../components/donor/DonorScreeningModal";
 
-import { DONATION_STATUS_STYLES, STATUS_STYLES } from "../utils/constants";
+import { STATUS_STYLES } from "../utils/constants";
 import {
   getUserDashboard, getDonorProfile, getMyDonations, getOpenRequests,
-  updateAvailability, acceptBloodRequest, getNotifications,
+  updateAvailability, getNotifications,
   getMyBloodRequests, cancelBloodRequest,
   verifyDonationFulfillment, patientUpdateRequestStatus, removeAcceptedResponse,
 } from "../services/dashboardService";
@@ -42,7 +42,7 @@ export default function UnifiedDashboard() {
 
   const [dashboard, setDashboard] = useState(null);
   const [donorProfile, setDonorProfile] = useState(null);
-  const [donations, setDonations] = useState([]);
+  const [, setDonations] = useState([]);
   const [openRequests, setOpenRequests] = useState([]);
   const [myRequests, setMyRequests] = useState([]);
   const [notifications, setNotifications] = useState([]);
@@ -50,7 +50,7 @@ export default function UnifiedDashboard() {
   const [error, setError] = useState("");
   const [available, setAvailable] = useState(true);
 
-  const [acceptingId, setAcceptingId] = useState(null);
+  const [acceptingId] = useState(null);
   const [screeningRequest, setScreeningRequest] = useState(null);
   const [expandedRequest, setExpandedRequest] = useState(null);
   const [verifyModal, setVerifyModal] = useState(null);
@@ -124,18 +124,6 @@ export default function UnifiedDashboard() {
       setAvailable(res.available);
     } catch {
       setAvailable(original);
-    }
-  }
-
-  async function handleAccept(requestId) {
-    setAcceptingId(requestId);
-    try {
-      await acceptBloodRequest(requestId);
-      setOpenRequests((prev) => prev.filter((r) => r.id !== requestId));
-    } catch (err) {
-      alert(err.response?.data?.message || "Could not accept request.");
-    } finally {
-      setAcceptingId(null);
     }
   }
 
@@ -216,7 +204,7 @@ export default function UnifiedDashboard() {
 
   return (
     <div className="space-y-6 md:space-y-8 max-w-6xl mx-auto">
-      {/* Header */}
+
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <span className="text-xs font-bold uppercase tracking-wider text-red mb-1 block">
@@ -250,7 +238,6 @@ export default function UnifiedDashboard() {
         </div>
       )}
 
-      {/* Role Tabs (only show when user has both roles) */}
       {isDonor && isPatient && (
         <div className="flex gap-1 bg-slate-100 p-1 rounded-xl w-fit">
           <button
@@ -276,7 +263,6 @@ export default function UnifiedDashboard() {
         </div>
       )}
 
-      {/* Stats Grid */}
       <motion.div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4"
         variants={{ whileInView: { transition: { staggerChildren: 0.08 } } }}
         initial="initial" whileInView="whileInView" viewport={{ once: true }}
@@ -349,7 +335,7 @@ export default function UnifiedDashboard() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
-          {/* Donor: Availability Toggle */}
+
           {isDonor && (activeTab === "donor" || !isPatient) && (
             <>
               <motion.div className="bg-white rounded-2xl p-4 md:p-6 border border-slate-100 shadow-sm" {...fadeUp}>
@@ -371,7 +357,6 @@ export default function UnifiedDashboard() {
                 </div>
               </motion.div>
 
-              {/* Open Blood Requests */}
               <motion.div className="bg-white rounded-2xl border border-slate-100 shadow-sm" {...fadeUp}>
                 <div className="flex items-center justify-between px-4 md:px-6 py-4 border-b border-slate-100">
                   <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
@@ -424,7 +409,6 @@ export default function UnifiedDashboard() {
             </>
           )}
 
-          {/* Patient: Blood Requests */}
           {isPatient && (activeTab === "patient" || !isDonor) && (
             <motion.div className="bg-white rounded-2xl border border-slate-100 shadow-sm" {...fadeUp}>
               <div className="flex items-center justify-between px-4 md:px-6 py-4 border-b border-slate-100">
@@ -512,7 +496,7 @@ export default function UnifiedDashboard() {
                                               onClick={() => setVerifyModal({ donationId: donor.donation_id, donorName: donor.name, requestId: req.id })}
                                               className="px-2 py-0.5 bg-emerald-500 text-white rounded-full text-[10px] font-bold hover:bg-emerald-600 transition"
                                             >
-                                              Verify
+                                              Fulfilled
                                             </button>
                                           )}
                                           <button
@@ -551,7 +535,7 @@ export default function UnifiedDashboard() {
                                               onClick={() => setVerifyModal({ donationId: bank.donation_id, donorName: bank.name, requestId: req.id })}
                                               className="px-2 py-0.5 bg-emerald-500 text-white rounded-full text-[10px] font-bold hover:bg-emerald-600 transition"
                                             >
-                                              Verify
+                                              Fulfilled
                                             </button>
                                           )}
                                           <button
@@ -588,7 +572,6 @@ export default function UnifiedDashboard() {
 
         </div>
 
-        {/* Right Sidebar */}
         <div className="space-y-6">
           {isDonor && (
             <motion.div className="bg-white rounded-2xl p-4 md:p-6 border border-slate-100 shadow-sm" {...fadeUp}>
@@ -619,7 +602,6 @@ export default function UnifiedDashboard() {
         </div>
       </div>
 
-      {/* Screening Modal */}
       {screeningRequest && (
         <DonorScreeningModal
           requestId={screeningRequest.id}
@@ -629,11 +611,10 @@ export default function UnifiedDashboard() {
         />
       )}
 
-      {/* Verify Modal */}
       {verifyModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
           <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-white rounded-2xl p-6 w-full max-w-sm">
-            <h3 className="text-lg font-bold text-slate-900 mb-2">Verify Donation</h3>
+            <h3 className="text-lg font-bold text-slate-900 mb-2">Mark Fulfilled</h3>
             <p className="text-sm text-slate-500 mb-4">
               Confirm donation from <strong>{verifyModal.donorName}</strong>
             </p>

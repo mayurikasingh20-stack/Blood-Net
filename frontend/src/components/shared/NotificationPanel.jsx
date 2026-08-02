@@ -17,8 +17,6 @@ function NotificationIcon({ type }) {
 }
 
 export default function NotificationPanel({ notifications = [], onClear, onReadAll }) {
-  const unread = notifications.filter((n) => n.status === "unread");
-
   async function handleClearAll() {
     try {
       await markAllNotificationsRead();

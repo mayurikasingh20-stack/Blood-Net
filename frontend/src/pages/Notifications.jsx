@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Bell, CheckCheck, Mail, MailOpen, Loader, AlertCircle, Trash2 } from "lucide-react";
+import { Bell, CheckCheck, Mail, Loader, AlertCircle } from "lucide-react";
 import { getNotifications, markNotificationRead, markAllNotificationsRead } from "../services/dashboardService";
 
 const typeIcons = {

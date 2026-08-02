@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Building2, CheckCircle, ArrowLeft, ArrowRight, Loader, Shield, Eye, EyeOff, Smartphone } from "lucide-react";
+import { Building2, CheckCircle, ArrowLeft, ArrowRight, Loader, Shield, Eye, EyeOff } from "lucide-react";
 import OtpVerification from "../components/shared/OtpVerification";
 import api, { setAuthToken } from "../services/api";
 import { saveAuth } from "../utils/authStorage";
@@ -332,7 +332,6 @@ export default function BloodBankRegister() {
               </div>
             )}
 
-            {/* Step 3: OTP Verification */}
             {step === 3 && (
               <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-4">
                 <OtpVerification

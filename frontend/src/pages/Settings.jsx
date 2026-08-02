@@ -93,7 +93,7 @@ export default function Settings({ role: propRole }) {
         }
       }
     })();
-  }, [isDonor]);
+  }, [isDonor, user]);
 
   const [passwordData, setPasswordData] = useState({
     current_password: "",
@@ -241,7 +241,6 @@ export default function Settings({ role: propRole }) {
         </div>
       )}
 
-      {/* Tabs */}
       <div className="flex gap-1 bg-slate-100 p-1 rounded-xl overflow-x-auto">
         {tabs.map((tab) => (
           <button
@@ -259,7 +258,6 @@ export default function Settings({ role: propRole }) {
         ))}
       </div>
 
-      {/* Profile Tab */}
       {activeTab === "profile" && (
         <motion.div className="bg-white rounded-2xl p-4 md:p-8 border border-slate-100 shadow-sm" {...fadeUp}>
           <form onSubmit={handleSaveProfile} className="space-y-5">
@@ -351,7 +349,7 @@ export default function Settings({ role: propRole }) {
 
           <div className="mt-8 pt-6 border-t border-slate-200">
             <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-              <Trash2 size={16} className="text-red" /> Danger Zone
+              <Trash2 size={16} className="text-red" /> Delete Account
             </h3>
             <p className="text-sm text-slate-500 mt-1">Permanently delete your account and all associated data. This cannot be undone.</p>
             <button
@@ -376,7 +374,6 @@ export default function Settings({ role: propRole }) {
         </motion.div>
       )}
 
-      {/* Password Tab */}
       {activeTab === "password" && (
         <motion.div className="bg-white rounded-2xl p-4 md:p-8 border border-slate-100 shadow-sm" {...fadeUp}>
           {forgotMode ? (

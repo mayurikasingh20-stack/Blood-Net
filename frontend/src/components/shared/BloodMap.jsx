@@ -3,7 +3,6 @@ import { MapContainer, TileLayer, Marker, Popup, useMap, ZoomControl } from "rea
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { Navigation, LocateFixed, Search, Droplets, Crosshair } from "lucide-react";
-import { BLOOD_GROUP_COLORS } from "../../utils/constants";
 
 delete L.Icon.Default.prototype._getIconUrl;
 
@@ -24,7 +23,7 @@ const ICONS = {
   }),
   hospital: new L.DivIcon({
     className: "",
-    html: '<div style="background:#16A34A;color:white;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:bold;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.3);">H</div>',
+    html: '<div style="background:#16A34A;color:white;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:bold;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.3);">C</div>',
     iconSize: [36, 36],
     iconAnchor: [18, 18],
     popupAnchor: [0, -20],
@@ -190,13 +189,9 @@ export default function BloodMap({
     }
   }, [searchBloodGroup, banks, registeredBanks]);
 
-  const getBloodGroupColor = (bg) => {
-    return BLOOD_GROUP_COLORS[bg] || "#DC2626";
-  };
-
   return (
     <div className={`space-y-3 ${className}`}>
-      {/* Search Controls */}
+
       <div className="flex flex-col sm:flex-row gap-2">
         <div className="relative flex-[2]">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -227,7 +222,6 @@ export default function BloodMap({
         )}
       </div>
 
-      {/* Map Container */}
       <div className="relative rounded-2xl overflow-hidden border border-slate-200 shadow-sm" style={{ height }}>
         {loading && (
           <div className="absolute inset-0 z-[1001] bg-white/80 flex items-center justify-center">
@@ -423,7 +417,6 @@ export default function BloodMap({
         </MapContainer>
       </div>
 
-      {/* Legend */}
       <div className="flex flex-wrap gap-4 text-xs text-slate-500">
         <span className="flex items-center gap-1">
           <span className="w-3 h-3 rounded-full bg-red" /> Blood Bank

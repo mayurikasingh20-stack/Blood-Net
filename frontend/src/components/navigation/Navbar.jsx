@@ -77,7 +77,6 @@ export default function Navbar({
         </div>
       </header>
 
-      {/* Mobile menu rendered via portal to avoid stacking issues */}
       {mobileOpen && createPortal(
         <div className="fixed inset-0 z-[100] md:hidden">
           <div

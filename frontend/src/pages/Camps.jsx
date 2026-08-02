@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { CalendarDays, MapPin, Droplet, AlertCircle, Clock } from "lucide-react";
+import { CalendarDays, MapPin, Droplet, AlertCircle } from "lucide-react";
 import api from "../services/api";
 
 const fadeUp = {

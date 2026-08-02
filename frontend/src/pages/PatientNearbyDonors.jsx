@@ -51,7 +51,6 @@ export default function PatientNearbyDonors() {
         <p className="text-sm text-slate-500 mt-1">Find and connect with blood donors in your area.</p>
       </div>
 
-      {/* Search Fields */}
       <div className="flex flex-wrap gap-3">
         <div className="relative flex-1 min-w-[200px]">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -78,7 +77,6 @@ export default function PatientNearbyDonors() {
         )}
       </div>
 
-      {/* Blood Group Filter */}
       <div className="flex flex-wrap gap-2">
         <button onClick={() => setSearchBg("")} className={`px-3 py-1.5 rounded-full text-xs font-bold transition ${!searchBg ? "bg-red text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}>All</button>
         {BLOOD_GROUPS.map((bg) => (

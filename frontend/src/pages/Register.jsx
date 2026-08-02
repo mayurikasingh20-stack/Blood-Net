@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Droplets, User, Lock, ShieldCheck, Smartphone, ArrowLeft, ArrowRight } from "lucide-react";
+import { Droplets, User, Lock, ShieldCheck, Smartphone, ArrowLeft, ArrowRight, Eye, EyeOff } from "lucide-react";
 import Button from "../components/ui/Button";
 import Card from "../components/ui/Card";
 import Input from "../components/forms/Input";
@@ -54,7 +54,9 @@ export default function Register() {
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
   const [otpVerified, setOtpVerified] = useState(false);
-  const [otpError, setOtpError] = useState("");
+  const [, setOtpError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const navigate = useNavigate();
 
   const update = (name, value) => setFormData((current) => ({ ...current, [name]: value }));
@@ -127,7 +129,6 @@ export default function Register() {
             <p className="text-sm text-slate-500 mt-1">Join Blood Net as both donor and receiver</p>
           </div>
 
-          {/* Progress Steps */}
           <div className="flex items-center justify-center gap-2 mb-8">
             {steps.map((s, i) => {
               const num = i + 1;
@@ -151,7 +152,7 @@ export default function Register() {
           </div>
 
           <form onSubmit={handleSubmit}>
-            {/* Step 1: Personal Info */}
+
             {step === 1 && (
               <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-4">
                 <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
@@ -179,17 +180,30 @@ export default function Register() {
               </motion.div>
             )}
 
-            {/* Step 2: Security & Location */}
             {step === 2 && (
               <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-4">
                 <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
                   <Lock size={18} className="text-red" /> Security & Location
                 </h2>
                 <div className="grid gap-4 md:grid-cols-2">
-                  <Input label="Password" name="password" type="password" value={formData.password}
-                    onChange={(e) => update("password", e.target.value)} autoComplete="new-password" required />
-                  <Input label="Confirm password" name="confirmPassword" type="password" value={formData.confirmPassword}
-                    onChange={(e) => update("confirmPassword", e.target.value)} autoComplete="new-password" required />
+                  <Input label="Password" name="password" type={showPassword ? "text" : "password"} value={formData.password}
+                    onChange={(e) => update("password", e.target.value)} autoComplete="new-password" required
+                    endAdornment={
+                      <button type="button" onClick={() => setShowPassword(!showPassword)}
+                        aria-label={showPassword ? "Hide password" : "Show password"}
+                        className="text-slate-400 hover:text-slate-600 transition">
+                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                      </button>
+                    } />
+                  <Input label="Confirm password" name="confirmPassword" type={showConfirm ? "text" : "password"} value={formData.confirmPassword}
+                    onChange={(e) => update("confirmPassword", e.target.value)} autoComplete="new-password" required
+                    endAdornment={
+                      <button type="button" onClick={() => setShowConfirm(!showConfirm)}
+                        aria-label={showConfirm ? "Hide password" : "Show password"}
+                        className="text-slate-400 hover:text-slate-600 transition">
+                        {showConfirm ? <EyeOff size={18} /> : <Eye size={18} />}
+                      </button>
+                    } />
                   <Input label="Date of birth" name="dob" type="date" value={formData.dob}
                     onChange={(e) => update("dob", e.target.value)} required />
                   <Input label="City" name="city" value={formData.city}
@@ -211,7 +225,6 @@ export default function Register() {
               </motion.div>
             )}
 
-            {/* Step 3: Donor Info & Confirm */}
             {step === 3 && (
               <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-4">
                 <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
@@ -282,7 +295,6 @@ export default function Register() {
               </motion.div>
             )}
 
-            {/* Step 4: OTP Verification */}
             {step === 4 && (
               <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-4">
                 <button type="button" onClick={prevStep}

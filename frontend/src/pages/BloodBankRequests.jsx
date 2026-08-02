@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
-import { Droplets, Plus, XCircle, AlertCircle, Search, Bell, TrendingUp } from "lucide-react";
+import { Droplets, XCircle, AlertCircle, Search, Bell, TrendingUp, ChevronDown, ChevronUp, Phone, User, Building2, Trash2 } from "lucide-react";
 import useAuth from "../context/useAuth";
 import api from "../services/api";
+import { verifyDonationFulfillment, removeAcceptedResponse } from "../services/dashboardService";
 
 const urgencyColors = {
   Critical: "bg-red/10 text-red border-red/20",
@@ -25,6 +26,11 @@ export default function BloodBankRequests() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
+  const [expandedId, setExpandedId] = useState(null);
+  const [verifyModal, setVerifyModal] = useState(null);
+  const [verifyUnits, setVerifyUnits] = useState(1);
+  const [verifying, setVerifying] = useState(false);
+  const [removingId, setRemovingId] = useState(null);
 
   const fetchRequests = useCallback(async () => {
     setLoading(true);
@@ -50,6 +56,37 @@ export default function BloodBankRequests() {
       alert(err.response?.data?.message || "Could not cancel request.");
     }
   }
+
+  async function handleFulfill() {
+    if (!verifyModal) return;
+    setVerifying(true);
+    try {
+      await verifyDonationFulfillment(verifyModal.donationId, verifyUnits);
+      setVerifyModal(null);
+      setVerifyUnits(1);
+      fetchRequests();
+    } catch (err) {
+      alert(err.response?.data?.message || "Could not mark donation as fulfilled.");
+    } finally {
+      setVerifying(false);
+    }
+  }
+
+  async function handleRemoveResponse(donationId) {
+    if (!window.confirm("Remove this response from the request?")) return;
+    setRemovingId(donationId);
+    try {
+      await removeAcceptedResponse(donationId);
+      fetchRequests();
+    } catch (err) {
+      alert(err.response?.data?.message || "Could not remove response.");
+    } finally {
+      setRemovingId(null);
+    }
+  }
+
+  const responderCount = (req) =>
+    (req.accepted_donors?.length || 0) + (req.accepted_banks?.length || 0);
 
   const filtered = requests.filter((r) => {
     if (r.status === "completed") return false;
@@ -146,7 +183,8 @@ export default function BloodBankRequests() {
                 <tr><td colSpan={7} className="px-6 py-12 text-center text-sm text-slate-500">{searchTerm ? "No matching requests." : "No requests yet."}</td></tr>
               )}
               {filtered.map((req) => (
-                <tr key={req.id} className="hover:bg-slate-50/50 transition">
+                <>
+                <tr className="hover:bg-slate-50/50 transition">
                   <td className="px-4 md:px-6 py-3"><span className="font-bold text-red">{req.blood_group}</span></td>
                   <td className="px-4 md:px-6 py-3 text-slate-600">{req.hospital}</td>
                   <td className="px-4 md:px-6 py-3 text-slate-500 hidden md:table-cell">{req.city}</td>
@@ -161,15 +199,113 @@ export default function BloodBankRequests() {
                       {req.status ? req.status.charAt(0).toUpperCase() + req.status.slice(1) : "Pending"}
                     </span>
                   </td>
-                  <td className="px-4 md:px-6 py-3 text-right">
-                    {(req.status === "pending" || req.status === "matched") && (
-                      <button onClick={() => handleCancel(req.id)}
-                        className="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red transition" title="Cancel Request">
-                        <XCircle size={16} />
-                      </button>
-                    )}
+                  <td className="px-4 md:px-6 py-3 text-right whitespace-nowrap">
+                    <div className="flex items-center justify-end gap-1.5">
+                      {responderCount(req) > 0 && (
+                        <button onClick={() => setExpandedId(expandedId === req.id ? null : req.id)}
+                          className="flex items-center gap-1 px-2.5 py-1 rounded-full border border-red/20 text-red text-[10px] font-bold hover:bg-red/10 transition">
+                          {expandedId === req.id ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+                          View {responderCount(req)} responder{responderCount(req) > 1 ? "s" : ""}
+                        </button>
+                      )}
+                      {(req.status === "pending" || req.status === "matched") && (
+                        <button onClick={() => handleCancel(req.id)}
+                          className="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red transition" title="Cancel Request">
+                          <XCircle size={16} />
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
+                {expandedId === req.id && responderCount(req) > 0 && (
+                  <tr>
+                    <td colSpan={7} className="px-4 md:px-6 py-4 bg-slate-50/50">
+                      <div className="space-y-2">
+                        {req.accepted_donors?.map((donor) => (
+                          <div key={donor.donation_id} className="flex items-center gap-3 p-3 rounded-xl bg-white border border-slate-100">
+                            <div className="w-10 h-10 rounded-full bg-red/10 flex items-center justify-center text-red font-bold text-sm flex-shrink-0">
+                              {donor.name?.charAt(0) || "?"}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-bold text-slate-900 truncate flex items-center gap-1">
+                                <User size={12} className="text-slate-400" /> {donor.name}
+                              </p>
+                              <p className="text-xs text-slate-500">{donor.blood_group} &middot; {donor.city || "—"}</p>
+                            </div>
+                            <div className="flex items-center gap-2 text-xs text-slate-500">
+                              <Phone size={12} className="text-slate-400" />
+                              <span className="font-semibold text-slate-700">{donor.phone}</span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                                donor.status === "verified" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"
+                              }`}>
+                                {donor.status === "verified" ? `Fulfilled (${donor.donated_units} unit)` : "Accepted"}
+                              </span>
+                              {donor.status === "accepted" && (
+                                <button
+                                  onClick={() => setVerifyModal({ donationId: donor.donation_id, name: donor.name })}
+                                  className="px-2 py-0.5 bg-emerald-500 text-white rounded-full text-[10px] font-bold hover:bg-emerald-600 transition"
+                                >
+                                  Fulfilled
+                                </button>
+                              )}
+                              <button
+                                onClick={() => handleRemoveResponse(donor.donation_id)}
+                                disabled={removingId === donor.donation_id}
+                                title="Remove response"
+                                className="p-1 rounded-lg text-slate-400 hover:bg-red-50 hover:text-red transition disabled:opacity-50"
+                              >
+                                <Trash2 size={13} />
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                        {req.accepted_banks?.map((bank) => (
+                          <div key={bank.donation_id} className="flex items-center gap-3 p-3 rounded-xl bg-white border border-slate-100">
+                            <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 font-bold text-sm flex-shrink-0">
+                              {bank.name?.charAt(0) || "B"}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-bold text-slate-900 truncate flex items-center gap-1">
+                                <Building2 size={12} className="text-slate-400" /> {bank.name}
+                              </p>
+                              <p className="text-xs text-slate-500">{bank.blood_group} &middot; {bank.city || "—"}</p>
+                            </div>
+                            <div className="flex items-center gap-2 text-xs text-slate-500">
+                              <Phone size={12} className="text-slate-400" />
+                              <span className="font-semibold text-slate-700">{bank.phone}</span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                                bank.status === "verified" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"
+                              }`}>
+                                {bank.status === "verified" ? `Fulfilled (${bank.donated_units} unit)` : "Accepted"}
+                              </span>
+                              {bank.status === "accepted" && (
+                                <button
+                                  onClick={() => setVerifyModal({ donationId: bank.donation_id, name: bank.name })}
+                                  className="px-2 py-0.5 bg-emerald-500 text-white rounded-full text-[10px] font-bold hover:bg-emerald-600 transition"
+                                >
+                                  Fulfilled
+                                </button>
+                              )}
+                              <button
+                                onClick={() => handleRemoveResponse(bank.donation_id)}
+                                disabled={removingId === bank.donation_id}
+                                title="Remove response"
+                                className="p-1 rounded-lg text-slate-400 hover:bg-red-50 hover:text-red transition disabled:opacity-50"
+                              >
+                                <Trash2 size={13} />
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </td>
+                  </tr>
+                )}
+                </>
               ))}
             </tbody>
           </table>
@@ -180,6 +316,32 @@ export default function BloodBankRequests() {
           </div>
         )}
       </motion.div>
+
+      {verifyModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
+          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-white rounded-2xl p-6 w-full max-w-sm">
+            <h3 className="text-lg font-bold text-slate-900 mb-2">Mark Fulfilled</h3>
+            <p className="text-sm text-slate-500 mb-4">
+              Confirm donation from <strong>{verifyModal.name}</strong>
+            </p>
+            <form onSubmit={(e) => { e.preventDefault(); handleFulfill(); }}>
+              <label className="text-sm font-semibold text-slate-700 block mb-1.5">Units Donated</label>
+              <input type="number" min={1} value={verifyUnits}
+                onChange={(e) => setVerifyUnits(Math.max(1, parseInt(e.target.value) || 1))}
+                className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-red/20 mb-4"
+              />
+              <div className="flex gap-3">
+                <button type="button" onClick={() => setVerifyModal(null)} className="w-1/3 py-2.5 border border-slate-200 rounded-full text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">Cancel</button>
+                <button type="submit" disabled={verifying}
+                  className="w-2/3 py-2.5 bg-emerald-500 text-white rounded-full text-sm font-bold hover:bg-emerald-600 transition disabled:opacity-60"
+                >
+                  {verifying ? "Marking..." : "Confirm Fulfillment"}
+                </button>
+              </div>
+            </form>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 }

@@ -105,7 +105,6 @@ export default function BloodBankInventory() {
     return daysLeft >= 0 && daysLeft <= 7 && (item.status === "AVAILABLE" || item.status === "LOW_STOCK");
   });
 
-  const totalAvailable = sumUnits(inventory.filter((i) => i.status === "AVAILABLE"));
   const totalUnits = sumUnits(inventory);
   const availableTypes = new Set(inventory.filter((i) => i.units > 0 && i.status !== "EXPIRED").map((i) => i.blood_group)).size;
 

@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
 import { User, Droplets, Weight, Calendar, MapPin, ToggleLeft, ToggleRight, Loader, Save } from "lucide-react";
 import api from "../services/api";
 

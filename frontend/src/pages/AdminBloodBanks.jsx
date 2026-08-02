@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from "react";
-import { motion } from "framer-motion";
 import { Search, CheckCircle, XCircle, AlertTriangle } from "lucide-react";
 import api from "../services/api";
 

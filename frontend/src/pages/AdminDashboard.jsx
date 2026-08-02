@@ -10,10 +10,7 @@ import {
   TrendingUp,
   Activity,
   Search,
-  ChevronRight,
   Shield,
-  UserCheck,
-  Ban,
   Calendar,
 } from "lucide-react";
 import { getAdminDashboard, getAdminCamps, getNotifications } from "../services/dashboardService";
@@ -46,13 +43,13 @@ const tabs = [
 ];
 
 export default function AdminDashboard() {
-  const [dashboard, setDashboard] = useState(null);
+  const [, setDashboard] = useState(null);
   const [bloodBanks, setBloodBanks] = useState([]);
   const [allRequests, setAllRequests] = useState([]);
   const [allDonations, setAllDonations] = useState([]);
   const [camps, setCamps] = useState([]);
   const [notifications, setNotifications] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [activeTab, setActiveTab] = useState("overview");
   const [searchTerm, setSearchTerm] = useState("");
@@ -124,8 +121,6 @@ export default function AdminDashboard() {
   }
 
   const pendingBanks = bloodBanks.filter((b) => (b.verification_status || b.status) === "pending");
-  const approvedBanks = bloodBanks.filter((b) => (b.verification_status || b.status) === "approved");
-  const pendingRequests = allRequests.filter((r) => r.status === "pending");
   const today = new Date().toISOString().split("T")[0];
 
   const filteredBanks = bloodBanks.filter((b) =>
@@ -152,7 +147,6 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      {/* Stats */}
       <motion.div
         className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4"
         variants={{ whileInView: { transition: { staggerChildren: 0.08 } } }}
@@ -181,7 +175,6 @@ export default function AdminDashboard() {
         ))}
       </motion.div>
 
-      {/* Tabs */}
       <div className="flex gap-1 bg-slate-100 p-1 rounded-xl overflow-x-auto">
         {tabs.map((tab) => (
           <button
@@ -197,9 +190,8 @@ export default function AdminDashboard() {
         ))}
       </div>
 
-      {/* Tab Content */}
       <div className="space-y-6">
-        {/* Overview Tab */}
+
         {activeTab === "overview" && (
           <motion.div className="space-y-6" {...fadeUp}>
             <NotificationPanel notifications={notifications} onClear={() => setNotifications([])} onReadAll={() => {
@@ -258,7 +250,6 @@ export default function AdminDashboard() {
           </motion.div>
         )}
 
-        {/* Blood Banks Tab */}
         {activeTab === "bloodbanks" && (
           <motion.div className="bg-white rounded-2xl border border-slate-100 shadow-sm" {...fadeUp}>
             <div className="px-4 md:px-6 py-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -348,7 +339,6 @@ export default function AdminDashboard() {
           </motion.div>
         )}
 
-        {/* Requests Tab */}
         {activeTab === "requests" && (
           <motion.div className="bg-white rounded-2xl border border-slate-100 shadow-sm" {...fadeUp}>
             <div className="px-4 md:px-6 py-4 border-b border-slate-100">
@@ -409,7 +399,6 @@ export default function AdminDashboard() {
           </motion.div>
         )}
 
-        {/* Donations Tab */}
         {activeTab === "donations" && (
           <motion.div className="bg-white rounded-2xl border border-slate-100 shadow-sm" {...fadeUp}>
             <div className="px-4 md:px-6 py-4 border-b border-slate-100">

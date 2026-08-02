@@ -3,11 +3,12 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   Droplet,
-  Heart,
+  HeartPulse,
   Shield,
   Clock,
   Users,
   Building2,
+  Siren,
   ChevronDown,
   ChevronUp,
   Quote,
@@ -32,13 +33,6 @@ const stagger = {
   viewport: { once: true },
   transition: { duration: 0.4, staggerChildren: 0.1 },
 };
-
-const stats = [
-  { value: "10k+", label: "Lives Saved Yearly", icon: Heart, color: "text-red" },
-  { value: "450+", label: "Verified Blood Banks", icon: Building2, color: "text-blue-600" },
-  { value: "15k+", label: "Registered Donors", icon: Users, color: "text-emerald-600" },
-  { value: "24/7", label: "Active Monitoring", icon: Clock, color: "text-purple-600" },
-];
 
 const features = [
   {
@@ -145,8 +139,20 @@ export default function Landing() {
   const [openFaq, setOpenFaq] = useState(null);
   const [topRequests, setTopRequests] = useState([]);
   const [requestsLoading, setRequestsLoading] = useState(true);
+  const [heroStats, setHeroStats] = useState({ totalUsers: 0, totalBloodBanks: 0, activeRequests: 0 });
 
   useEffect(() => {
+    api
+      .get("/public/stats")
+      .then((res) =>
+        setHeroStats({
+          totalUsers: res.data.total_users || 0,
+          totalBloodBanks: res.data.total_blood_banks || 0,
+          activeRequests: res.data.active_blood_requests || 0,
+        })
+      )
+      .catch(() => {});
+
     api
       .get("/public/requests/top")
       .then((res) => setTopRequests(res.data.blood_requests))
@@ -163,7 +169,7 @@ export default function Landing() {
 
   return (
     <>
-      {/* HERO SECTION */}
+
       <section className="relative min-h-screen flex items-center overflow-hidden bg-[#0B0F19] text-white">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(230,57,70,0.12),transparent_50%),radial-gradient(circle_at_80%_20%,rgba(37,99,235,0.06),transparent_40%)]" />
         <div className="relative w-full max-w-6xl mx-auto px-4 md:px-8 py-10 md:py-16">
@@ -214,42 +220,91 @@ export default function Landing() {
               viewport={{ once: true }}
               transition={{ duration: 0.6 }}
             >
-              <div className="relative w-full max-w-sm flex flex-col items-center">
-                <div className="absolute -inset-10 bg-[#E63946]/20 blur-[80px] rounded-full" />
-                <div className="relative w-48 h-56 md:w-56 md:h-64">
-                  <svg viewBox="0 0 120 160" className="w-full h-full drop-shadow-2xl" xmlns="http://www.w3.org/2000/svg">
-                    <defs>
-                      <linearGradient id="bloodGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stopColor="#E63946" stopOpacity="0.95" />
-                        <stop offset="40%" stopColor="#c1121f" stopOpacity="0.85" />
-                        <stop offset="100%" stopColor="#780000" stopOpacity="0.7" />
-                      </linearGradient>
-                      <linearGradient id="shine" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stopColor="#ffffff" stopOpacity="0.35" />
-                        <stop offset="50%" stopColor="#ffffff" stopOpacity="0.05" />
-                        <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
-                      </linearGradient>
-                      <filter id="glow">
-                        <feGaussianBlur stdDeviation="6" result="blur" />
-                        <feComposite in="SourceGraphic" in2="blur" operator="over" />
-                      </filter>
-                    </defs>
-                    <path d="M60 10 C40 40 15 70 15 100 C15 130 30 150 60 150 C90 150 105 130 105 100 C105 70 80 40 60 10Z"
-                      fill="url(#bloodGrad)" filter="url(#glow)" />
-                    <path d="M35 85 Q45 75 55 80 Q65 85 60 95 Q55 105 45 100 Q35 95 35 85Z"
-                      fill="url(#shine)" opacity="0.6" />
-                    <ellipse cx="42" cy="75" rx="8" ry="12" fill="url(#shine)" opacity="0.4" transform="rotate(-20 42 75)" />
-                    <ellipse cx="75" cy="115" rx="10" ry="5" fill="url(#shine)" opacity="0.2" transform="rotate(10 75 115)" />
-                  </svg>
+              <div className="relative w-[460px] h-[560px]">
+                <div className="absolute -inset-10 bg-[#E63946]/20 blur-[90px] rounded-full" />
+
+                <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 flex items-center justify-center">
+                  <span
+                    className="absolute inset-0 rounded-full bg-[#E63946]/25 animate-ping"
+                    style={{ animationDuration: "3s" }}
+                  />
+                  <span
+                    className="absolute inset-8 rounded-full bg-[#E63946]/15 animate-ping"
+                    style={{ animationDuration: "3s", animationDelay: "1s" }}
+                  />
+                  <div className="relative w-[264px] h-[264px] rounded-full bg-white/10 backdrop-blur-xl border border-white/25 shadow-2xl flex items-center justify-center">
+                    <HeartPulse size={88} className="text-[#E63946]" strokeWidth={1.75} />
+                  </div>
                 </div>
+
                 <motion.div
-                  className="relative -mt-3 inline-flex items-center gap-2 bg-white/10 backdrop-blur-xl border border-white/20 px-4 py-2.5 rounded-full shadow-xl"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.4, duration: 0.5 }}
+                  className="absolute w-24 h-24"
+                  style={{ left: 22, top: 47 }}
+                  initial={{ opacity: 0, y: 12 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: 0.15, duration: 0.5 }}
                 >
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#E63946] animate-pulse" />
-                  <span className="text-xs font-semibold text-slate-200">{topRequests.length} Active Blood Request{topRequests.length !== 1 ? "s" : ""}</span>
+                  <motion.div
+                    className="w-full h-full rounded-2xl bg-white/10 backdrop-blur-xl border border-white/25 shadow-xl flex flex-col items-center justify-center"
+                    animate={{ y: [0, -7, 0] }}
+                    transition={{ duration: 4.5, repeat: Infinity, ease: "easeInOut" }}
+                  >
+                    <span className="w-7 h-7 rounded-full bg-emerald-400/15 flex items-center justify-center mb-1">
+                      <Users size={14} className="text-emerald-300" />
+                    </span>
+                    <span className="text-xl font-black text-white leading-none">
+                      {heroStats.totalUsers.toLocaleString("en-IN")}
+                    </span>
+                    <span className="mt-1 text-[9px] font-bold uppercase tracking-widest text-slate-300">Total Users</span>
+                  </motion.div>
+                </motion.div>
+
+                <motion.div
+                  className="absolute w-24 h-24"
+                  style={{ left: 342, top: 47 }}
+                  initial={{ opacity: 0, y: 12 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: 0.25, duration: 0.5 }}
+                >
+                  <motion.div
+                    className="w-full h-full rounded-2xl bg-white/10 backdrop-blur-xl border border-white/25 shadow-xl flex flex-col items-center justify-center"
+                    animate={{ y: [0, -7, 0] }}
+                    transition={{ duration: 4.5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+                  >
+                    <span className="w-7 h-7 rounded-full bg-blue-400/15 flex items-center justify-center mb-1">
+                      <Building2 size={14} className="text-blue-300" />
+                    </span>
+                    <span className="text-xl font-black text-white leading-none">
+                      {heroStats.totalBloodBanks.toLocaleString("en-IN")}
+                    </span>
+                    <span className="mt-1 text-[9px] font-bold uppercase tracking-widest text-slate-300">Blood Banks</span>
+                  </motion.div>
+                </motion.div>
+
+                <motion.div
+                  className="absolute w-32 h-24"
+                  style={{ left: 166, top: 464 }}
+                  initial={{ opacity: 0, y: 12 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: 0.35, duration: 0.5 }}
+                >
+                  <motion.div
+                    className="w-full h-full rounded-2xl bg-[#E63946]/15 backdrop-blur-xl border border-[#E63946]/40 shadow-2xl shadow-[#E63946]/20 flex flex-col items-center justify-center"
+                    animate={{ y: [0, -7, 0] }}
+                    transition={{ duration: 4.5, repeat: Infinity, ease: "easeInOut", delay: 2 }}
+                  >
+                    <span className="w-7 h-7 rounded-full bg-[#E63946]/25 flex items-center justify-center mb-1 relative">
+                      <Siren size={14} className="text-[#E63946]" />
+                      <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-[#E63946] animate-pulse" />
+                    </span>
+                    <span className="text-xl font-black text-white leading-none">
+                      {heroStats.activeRequests.toLocaleString("en-IN")}
+                    </span>
+                    <span className="mt-1 text-[9px] font-bold uppercase tracking-widest text-red-100">Blood Requests</span>
+                  </motion.div>
                 </motion.div>
               </div>
             </motion.div>
@@ -257,7 +312,6 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* URGENT BLOOD REQUESTS BOARD */}
       <section className="max-w-6xl mx-auto px-4 md:px-8 py-16 md:py-24">
         <div className="text-center mb-12 md:mb-16">
           <span className="text-red font-bold text-sm uppercase tracking-wider bg-red/10 px-4 py-1.5 rounded-full">
@@ -312,7 +366,7 @@ export default function Landing() {
                     <span className="font-bold text-slate-700">{req.units}</span> unit{req.units > 1 ? "s" : ""}
                   </span>
                   <Link
-                    to="/register?role=donor"
+                    to="/login"
                     className="flex-shrink-0 text-xs font-bold text-red hover:text-red-700 transition flex items-center gap-1"
                   >
                     Help <ArrowRight size={12} />
@@ -335,7 +389,6 @@ export default function Landing() {
         )}
       </section>
 
-      {/* FEATURES */}
       <motion.section className="max-w-6xl mx-auto px-4 md:px-8 py-16 md:py-24" {...fadeUp}>
         <div className="text-center mb-12 md:mb-16">
           <span className="text-red font-bold text-sm uppercase tracking-wider bg-red/10 px-4 py-1.5 rounded-full">
@@ -375,7 +428,6 @@ export default function Landing() {
         </motion.div>
       </motion.section>
 
-      {/* HOW IT WORKS */}
       <motion.section className="bg-white py-16 md:py-24" {...fadeUp}>
         <div className="max-w-6xl mx-auto px-4 md:px-8">
           <div className="text-center mb-12 md:mb-16">
@@ -416,7 +468,6 @@ export default function Landing() {
         </div>
       </motion.section>
 
-      {/* TESTIMONIALS */}
       <motion.section className="max-w-6xl mx-auto px-4 md:px-8 py-16 md:py-24" {...fadeUp}>
         <div className="text-center mb-12 md:mb-16">
           <span className="text-red font-bold text-sm uppercase tracking-wider bg-red/10 px-4 py-1.5 rounded-full">
@@ -458,7 +509,6 @@ export default function Landing() {
         </div>
       </motion.section>
 
-      {/* FAQ */}
       <motion.section className="bg-white py-16 md:py-24" {...fadeUp}>
         <div className="max-w-3xl mx-auto px-4 md:px-8">
           <div className="text-center mb-10 md:mb-14">
@@ -505,7 +555,6 @@ export default function Landing() {
         </div>
       </motion.section>
 
-      {/* CONTACT SECTION */}
       <motion.section className="max-w-6xl mx-auto px-4 md:px-8 py-16 md:py-24" {...fadeUp}>
         <div className="bg-gradient-to-br from-[#7F1D1D] to-[#5C1010] rounded-2xl p-8 md:p-16 text-white text-center">
           <motion.div

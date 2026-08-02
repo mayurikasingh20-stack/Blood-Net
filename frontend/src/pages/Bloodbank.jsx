@@ -3,10 +3,10 @@ import { MapContainer, TileLayer, Marker, useMap, useMapEvents } from "react-lea
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { motion } from "framer-motion";
-import { Droplets, AlertTriangle, Bell, CheckCircle, Activity, Calendar, Edit3, Trash2, Plus, X, RefreshCw, LocateFixed } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Droplets, AlertTriangle, Bell, CheckCircle, Activity, Calendar, Edit3, Trash2, Plus, X, RefreshCw, LocateFixed, ChevronDown, ChevronUp, Phone, User, Building2 } from "lucide-react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import useAuth from "../context/useAuth";
-import { getBloodBankDashboard, getInventory, getNotifications, getMyCamps, createCamp, updateCamp, deleteCamp } from "../services/dashboardService";
+import { getBloodBankDashboard, getInventory, getNotifications, getMyCamps, createCamp, updateCamp, deleteCamp, verifyDonationFulfillment, removeAcceptedResponse } from "../services/dashboardService";
 import api from "../services/api";
 import { BLOOD_GROUPS } from "../utils/constants";
 import NotificationPanel from "../components/shared/NotificationPanel";
@@ -109,6 +109,22 @@ export default function BloodBankDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [sectionErrors, setSectionErrors] = useState({});
+  const [expandedId, setExpandedId] = useState(null);
+  const [verifyModal, setVerifyModal] = useState(null);
+  const [verifyUnits, setVerifyUnits] = useState(1);
+  const [verifying, setVerifying] = useState(false);
+  const [removingId, setRemovingId] = useState(null);
+
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  useEffect(() => {
+    if (searchParams.get("newCamp") === "1") {
+      setEditingCamp(null);
+      setCampForm({ title: "", description: "", date: "", time: "", venue: "", address: "", lat: "", lng: "" });
+      setShowCampModal(true);
+      setSearchParams({}, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -128,7 +144,7 @@ export default function BloodBankDashboard() {
 
   async function loadAllData(isFullRefresh) {
     const errs = {};
-    const safe = (label, fn, fallback) => fn().catch((e) => { errs[label] = true; return fallback; });
+    const safe = (label, fn, fallback) => fn().catch(() => { errs[label] = true; return fallback; });
     const [dashData, invData, reqRes, notifData, campsData] = await Promise.all([
       safe("dashboard", getBloodBankDashboard, null),
       safe("inventory", getInventory, { inventory: [] }),
@@ -159,7 +175,6 @@ export default function BloodBankDashboard() {
   }, [pollData]);
 
   const sumUnits = (items) => items.reduce((s, i) => s + (i.units || 0), 0);
-  const totalAvailable = sumUnits(inventory.filter((i) => i.status === "AVAILABLE"));
   const totalUnits = sumUnits(inventory);
   const availableTypes = new Set(inventory.filter((i) => i.units > 0 && i.status !== "EXPIRED").map((i) => i.blood_group)).size;
   const today = new Date().toISOString().split("T")[0];
@@ -201,6 +216,37 @@ export default function BloodBankDashboard() {
   const campPositionChange = useCallback((pos) => {
     setCampForm((prev) => ({ ...prev, lat: pos.lat, lng: pos.lng }));
   }, []);
+
+  async function handleFulfill() {
+    if (!verifyModal) return;
+    setVerifying(true);
+    try {
+      await verifyDonationFulfillment(verifyModal.donationId, verifyUnits);
+      setVerifyModal(null);
+      setVerifyUnits(1);
+      fetchData();
+    } catch (err) {
+      alert(err.response?.data?.message || "Could not mark donation as fulfilled.");
+    } finally {
+      setVerifying(false);
+    }
+  }
+
+  async function handleRemoveResponse(donationId) {
+    if (!window.confirm("Remove this response from the request?")) return;
+    setRemovingId(donationId);
+    try {
+      await removeAcceptedResponse(donationId);
+      fetchData();
+    } catch (err) {
+      alert(err.response?.data?.message || "Could not remove response.");
+    } finally {
+      setRemovingId(null);
+    }
+  }
+
+  const responderCount = (req) =>
+    (req.accepted_donors?.length || 0) + (req.accepted_banks?.length || 0);
 
   const campMarkerPos = campForm.lat && campForm.lng
     ? { lat: parseFloat(campForm.lat), lng: parseFloat(campForm.lng) }
@@ -342,9 +388,100 @@ export default function BloodBankDashboard() {
               </div>
               <div className="space-y-2">
                 {requests.filter((r) => r.status === "pending").slice(0, 3).map((req) => (
-                  <div key={req.id} className="flex items-center justify-between text-sm px-3 py-2 bg-blue-50 rounded-xl">
-                    <span className="text-slate-600">{req.blood_group} - {req.hospital}</span>
-                    <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700">{req.units} units</span>
+                  <div key={req.id} className="bg-blue-50 rounded-xl">
+                    <div className="flex items-center justify-between text-sm px-3 py-2">
+                      <span className="text-slate-600">{req.blood_group} - {req.hospital}</span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700">{req.units} units</span>
+                        {responderCount(req) > 0 && (
+                          <button onClick={() => setExpandedId(expandedId === req.id ? null : req.id)}
+                            className="flex items-center gap-1 px-2 py-1 rounded-full bg-white border border-blue-200 text-blue-600 text-[10px] font-bold hover:bg-blue-100 transition">
+                            {expandedId === req.id ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                            {responderCount(req)} responder{responderCount(req) > 1 ? "s" : ""}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                    {expandedId === req.id && (
+                      <div className="px-3 pb-3 space-y-2">
+                        {req.accepted_donors?.map((donor) => (
+                          <div key={donor.donation_id} className="flex items-center gap-2 p-2 rounded-lg bg-white border border-slate-100">
+                            <div className="w-8 h-8 rounded-full bg-red/10 flex items-center justify-center text-red font-bold text-xs flex-shrink-0">
+                              {donor.name?.charAt(0) || "?"}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs font-bold text-slate-900 truncate flex items-center gap-1">
+                                <User size={10} className="text-slate-400" /> {donor.name}
+                              </p>
+                              <p className="text-[10px] text-slate-500">{donor.blood_group} &middot; {donor.city || "—"}</p>
+                            </div>
+                            <div className="flex items-center gap-1 text-[10px] text-slate-500">
+                              <Phone size={10} className="text-slate-400" />
+                              <span className="font-semibold text-slate-700">{donor.phone}</span>
+                            </div>
+                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                              donor.status === "verified" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"
+                            }`}>
+                              {donor.status === "verified" ? `Fulfilled (${donor.donated_units} unit)` : "Accepted"}
+                            </span>
+                            {donor.status === "accepted" && (
+                              <button
+                                onClick={() => setVerifyModal({ donationId: donor.donation_id, name: donor.name })}
+                                className="px-2 py-0.5 bg-emerald-500 text-white rounded-full text-[10px] font-bold hover:bg-emerald-600 transition"
+                              >
+                                Fulfilled
+                              </button>
+                            )}
+                            <button
+                              onClick={() => handleRemoveResponse(donor.donation_id)}
+                              disabled={removingId === donor.donation_id}
+                              title="Remove response"
+                              className="p-1 rounded-lg text-slate-400 hover:bg-red-50 hover:text-red transition disabled:opacity-50"
+                            >
+                              <Trash2 size={12} />
+                            </button>
+                          </div>
+                        ))}
+                        {req.accepted_banks?.map((bank) => (
+                          <div key={bank.donation_id} className="flex items-center gap-2 p-2 rounded-lg bg-white border border-slate-100">
+                            <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 font-bold text-xs flex-shrink-0">
+                              {bank.name?.charAt(0) || "B"}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs font-bold text-slate-900 truncate flex items-center gap-1">
+                                <Building2 size={10} className="text-slate-400" /> {bank.name}
+                              </p>
+                              <p className="text-[10px] text-slate-500">{bank.blood_group} &middot; {bank.city || "—"}</p>
+                            </div>
+                            <div className="flex items-center gap-1 text-[10px] text-slate-500">
+                              <Phone size={10} className="text-slate-400" />
+                              <span className="font-semibold text-slate-700">{bank.phone}</span>
+                            </div>
+                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                              bank.status === "verified" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"
+                            }`}>
+                              {bank.status === "verified" ? `Fulfilled (${bank.donated_units} unit)` : "Accepted"}
+                            </span>
+                            {bank.status === "accepted" && (
+                              <button
+                                onClick={() => setVerifyModal({ donationId: bank.donation_id, name: bank.name })}
+                                className="px-2 py-0.5 bg-emerald-500 text-white rounded-full text-[10px] font-bold hover:bg-emerald-600 transition"
+                              >
+                                Fulfilled
+                              </button>
+                            )}
+                            <button
+                              onClick={() => handleRemoveResponse(bank.donation_id)}
+                              disabled={removingId === bank.donation_id}
+                              title="Remove response"
+                              className="p-1 rounded-lg text-slate-400 hover:bg-red-50 hover:text-red transition disabled:opacity-50"
+                            >
+                              <Trash2 size={12} />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -364,7 +501,6 @@ export default function BloodBankDashboard() {
         />
       </div>
 
-      {/* ==================== CAMPS SECTION ==================== */}
       <motion.div className="bg-white rounded-2xl border border-slate-100 shadow-sm" {...fadeUp}>
         <div className="flex items-center justify-between px-4 md:px-6 py-4 border-b border-slate-100">
           <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
@@ -453,7 +589,6 @@ export default function BloodBankDashboard() {
         </div>
       </motion.div>
 
-      {/* ===== CAMP MODAL ===== */}
       {showCampModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setShowCampModal(false)}>
           <div className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-xl" onClick={(e) => e.stopPropagation()}>
@@ -530,6 +665,32 @@ export default function BloodBankDashboard() {
               </div>
             </form>
           </div>
+        </div>
+      )}
+
+      {verifyModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
+          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-white rounded-2xl p-6 w-full max-w-sm">
+            <h3 className="text-lg font-bold text-slate-900 mb-2">Mark Fulfilled</h3>
+            <p className="text-sm text-slate-500 mb-4">
+              Confirm donation from <strong>{verifyModal.name}</strong>
+            </p>
+            <form onSubmit={(e) => { e.preventDefault(); handleFulfill(); }}>
+              <label className="text-sm font-semibold text-slate-700 block mb-1.5">Units Donated</label>
+              <input type="number" min={1} value={verifyUnits}
+                onChange={(e) => setVerifyUnits(Math.max(1, parseInt(e.target.value) || 1))}
+                className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-red/20 mb-4"
+              />
+              <div className="flex gap-3">
+                <button type="button" onClick={() => setVerifyModal(null)} className="w-1/3 py-2.5 border border-slate-200 rounded-full text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">Cancel</button>
+                <button type="submit" disabled={verifying}
+                  className="w-2/3 py-2.5 bg-emerald-500 text-white rounded-full text-sm font-bold hover:bg-emerald-600 transition disabled:opacity-60"
+                >
+                  {verifying ? "Marking..." : "Confirm Fulfillment"}
+                </button>
+              </div>
+            </form>
+          </motion.div>
         </div>
       )}
     </div>

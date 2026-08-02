@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { Outlet, Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Droplet, Menu, Bell, CheckCircle, X, Home, Activity,
+  Droplet, Menu, Bell, CheckCircle, Home, Activity,
   Settings, MapPin, Droplets, Heart, Calendar, Users,
 } from "lucide-react";
 import Sidebar from "../components/navigation/Sidebar";
@@ -66,7 +66,7 @@ export default function DashboardLayout({
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-slate-900 pb-20 md:pb-0 md:pl-64">
-      {/* Top Header */}
+
       <header className="fixed top-0 right-0 left-0 lg:left-64 z-50 bg-white/90 backdrop-blur-xl border-b border-slate-200/60 shadow-sm h-16 flex items-center justify-between px-4 md:px-8">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-red-500 to-[#7F1D1D] flex items-center justify-center shadow-md shadow-red/20">
@@ -149,7 +149,6 @@ export default function DashboardLayout({
         </div>
       </header>
 
-      {/* Sidebar */}
       <Sidebar
         items={sidebarItems}
         open={menuOpen}
@@ -159,7 +158,6 @@ export default function DashboardLayout({
         subtitle={displaySubtitle}
       />
 
-      {/* Main Content with Page Transitions */}
       <motion.main
         className="pt-24 px-4 md:px-8 max-w-6xl mx-auto pb-12"
         {...pageTransition}
@@ -170,7 +168,6 @@ export default function DashboardLayout({
 
       <Footer className="md:pl-64" />
 
-      {/* Mobile Bottom Nav */}
       <nav className="lg:hidden fixed bottom-0 left-0 w-full z-50 bg-white/95 backdrop-blur-lg border-t border-slate-200 flex justify-around items-center h-16 px-2 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] safe-area-pb">
         {sidebarItems.slice(0, 5).map((item) => {
           const IconComponent = getIconForNav(item.icon);

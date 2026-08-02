@@ -31,7 +31,7 @@ def cancel_donation_route(donation_id):
 
 @donation_bp.post("/<int:donation_id>/fulfill")
 @jwt_required()
-@role_required("patient")
+@role_required("patient", "blood_bank")
 def fulfill_donation(donation_id):
     from flask import request
     data = request.get_json()
@@ -40,7 +40,7 @@ def fulfill_donation(donation_id):
 
 @donation_bp.patch("/<int:donation_id>/remove")
 @jwt_required()
-@role_required("patient")
+@role_required("patient", "blood_bank")
 def remove_donation_route(donation_id):
     return remove_accepted_response(donation_id)
 

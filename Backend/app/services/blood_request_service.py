@@ -217,7 +217,7 @@ def get_my_requests():
             "accepted_count": accepted_count,
         }
 
-        if user.has_role("patient"):
+        if user.has_role("patient") or user.has_role("blood_bank"):
             donations = (
                 Donation.query
                 .filter_by(blood_request_id=request.id, status=DonationStatus.ACCEPTED)
@@ -274,7 +274,10 @@ def get_open_requests():
     if user is None:
         return {"message": "User not found."}, 404
 
-    query = BloodRequest.query.filter_by(status=RequestStatus.PENDING)
+    query = BloodRequest.query.filter(
+        BloodRequest.status == RequestStatus.PENDING,
+        BloodRequest.required_before >= datetime.now()
+    )
 
     if user.has_role("donor"):
         donor = Donor.query.filter_by(user_id=user.id).first()
@@ -331,7 +334,10 @@ def get_top_requests():
 
     requests = (
         BloodRequest.query
-        .filter_by(status=RequestStatus.PENDING)
+        .filter(
+            BloodRequest.status == RequestStatus.PENDING,
+            BloodRequest.required_before >= datetime.now()
+        )
         .order_by(BloodRequest.created_at.desc())
         .limit(7)
         .all()

@@ -1,9 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, AlertCircle, CheckCircle, ChevronLeft, ChevronRight, Loader, Phone, User } from "lucide-react";
 import api from "../../services/api";
-
-const DONATION_MIN_GAP_DAYS = 56;
 
 export default function DonorScreeningModal({ requestId, requestBloodGroup, donorBloodGroup, contactName, contactPhone, onComplete, onClose }) {
   const [step, setStep] = useState("checking");
@@ -15,15 +13,17 @@ export default function DonorScreeningModal({ requestId, requestBloodGroup, dono
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    if (donorBloodGroup && requestBloodGroup && donorBloodGroup !== requestBloodGroup) {
-      setStep("blood_group_mismatch");
-    } else {
-      checkEligibility();
+  const loadQuestions = useCallback(async () => {
+    try {
+      const res = await api.get("/donor/screening-questions");
+      setQuestions(res.data.questions || []);
+    } catch {
+      setError("Could not load screening questions.");
+      setStep("error");
     }
   }, []);
 
-  async function checkEligibility() {
+  const checkEligibility = useCallback(async () => {
     setStep("checking");
     try {
       const res = await api.post("/donor/check-eligibility");
@@ -38,17 +38,15 @@ export default function DonorScreeningModal({ requestId, requestBloodGroup, dono
       setError(err.response?.data?.message || "Could not check eligibility.");
       setStep("error");
     }
-  }
+  }, [loadQuestions]);
 
-  async function loadQuestions() {
-    try {
-      const res = await api.get("/donor/screening-questions");
-      setQuestions(res.data.questions || []);
-    } catch {
-      setError("Could not load screening questions.");
-      setStep("error");
+  useEffect(() => {
+    if (donorBloodGroup && requestBloodGroup && donorBloodGroup !== requestBloodGroup) {
+      setStep("blood_group_mismatch");
+    } else {
+      checkEligibility();
     }
-  }
+  }, [donorBloodGroup, requestBloodGroup, checkEligibility]);
 
   function setAnswer(qId, value) {
     setAnswers((prev) => ({ ...prev, [qId]: value }));

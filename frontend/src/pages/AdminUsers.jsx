@@ -60,7 +60,11 @@ export default function AdminUsers() {
   }
 
   const q = search.trim().toLowerCase();
-  const filtered = users.filter((u) => {
+  const visibleUsers = users.filter((u) => {
+    const roles = u.roles || [];
+    return roles.includes("admin") || roles.includes("donor") || roles.includes("patient");
+  });
+  const filtered = visibleUsers.filter((u) => {
     if (!q) return true;
     return (
       (u.email || "").toLowerCase().includes(q) ||
@@ -73,7 +77,7 @@ export default function AdminUsers() {
     <div className="space-y-6 max-w-6xl mx-auto">
       <div>
         <h2 className="text-2xl font-bold text-slate-900">Manage Users</h2>
-        <p className="text-sm text-slate-500 mt-1">View all users and block or unblock their access.</p>
+        <p className="text-sm text-slate-500 mt-1">Manage donor, patient, and admin accounts. Blood banks are managed in their own section.</p>
       </div>
 
       <div className="relative max-w-md">

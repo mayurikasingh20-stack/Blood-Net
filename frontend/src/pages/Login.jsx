@@ -54,7 +54,7 @@ export default function Login() {
     <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center px-4 py-10">
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-md">
         <Card padding="lg" className="bg-white rounded-2xl border border-slate-100 shadow-sm">
-          {/* Logo */}
+
           <div className="flex items-center justify-center gap-2 mb-8">
             <div className="w-10 h-10 bg-red rounded-xl flex items-center justify-center">
               <Droplets size={22} className="text-white" />
@@ -62,17 +62,10 @@ export default function Login() {
             <span className="text-xl font-bold text-slate-900 tracking-wide">BLOOD NET</span>
           </div>
 
-          {/* Heading */}
-          {/* <h1 className="text-2xl md:text-3xl font-bold text-slate-900 text-center mb-2">
-            Welcome Back
-          </h1> */}
-
-          {/* Description */}
           <p className="text-sm text-slate-500 text-center mb-8">
             Sign in with your registered email address or phone number.
           </p>
 
-          {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="relative">
               <Input

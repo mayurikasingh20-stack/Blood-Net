@@ -124,7 +124,6 @@ export default function Contact() {
     <div className="min-h-screen bg-[#F8FAFC]">
       <div className="max-w-6xl mx-auto px-4 md:px-8 py-12 md:py-20">
 
-        {/* Header */}
         <motion.div className="text-center mb-12 md:mb-16" {...fadeUp}>
           <span className="inline-flex items-center gap-2 text-red font-bold text-sm uppercase tracking-wider bg-red/10 px-4 py-1.5 rounded-full mb-4">
             <Droplet size={16} /> Get In Touch
@@ -137,7 +136,6 @@ export default function Contact() {
           </p>
         </motion.div>
 
-        {/* Contact Info Cards */}
         <motion.div
           className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-5 mb-12"
           variants={{ whileInView: { transition: { staggerChildren: 0.08 } } }}
@@ -165,7 +163,7 @@ export default function Contact() {
         </motion.div>
 
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 md:gap-8">
-          {/* Contact Form */}
+
           <motion.div className="lg:col-span-3 bg-white rounded-2xl p-6 md:p-8 border border-slate-100 shadow-sm" {...fadeUp}>
             {submitted ? (
               <motion.div
@@ -298,7 +296,6 @@ export default function Contact() {
             )}
           </motion.div>
 
-          {/* Map Sidebar */}
           <motion.div className="lg:col-span-2 space-y-4 md:space-y-6" {...stagger}>
             <div className="bg-white rounded-2xl overflow-hidden border border-slate-100 shadow-sm h-[280px] md:h-[320px]">
               <MapContainer

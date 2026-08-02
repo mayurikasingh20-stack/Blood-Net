@@ -18,7 +18,6 @@ export default function EmergencyRequest() {
   const { user, hasRole } = useAuth();
   const navigate = useNavigate();
   const isDonor = hasRole("donor");
-  const isPatient = hasRole("patient");
   const isBloodBank = hasRole("bloodbank") || hasRole("blood_bank");
   const totalSteps = isBloodBank ? 2 : 3;
   const [showForm, setShowForm] = useState(false);
@@ -54,7 +53,7 @@ export default function EmergencyRequest() {
         .then((data) => setDonorBloodGroup(data?.donor?.blood_group || ""))
         .catch(() => {});
     }
-  }, []);
+  }, [isDonor]);
 
   function update(field, value) {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -132,7 +131,7 @@ export default function EmergencyRequest() {
 
   return (
     <div className="space-y-8 max-w-5xl mx-auto">
-      {/* Header */}
+
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-slate-900">Emergency Blood Requests</h2>
@@ -146,7 +145,6 @@ export default function EmergencyRequest() {
         </button>
       </div>
 
-      {/* Raise a Request Form (togglable) */}
       {showForm && (
         <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm">
           <div className="mb-4">
@@ -287,7 +285,6 @@ export default function EmergencyRequest() {
         </div>
       )}
 
-      {/* Open Requests Section */}
       <div>
         <h2 className="text-xl font-bold text-slate-900 mb-4">Open Emergency Requests</h2>
         <p className="text-sm text-slate-500 mb-4">All pending blood requests from patients, donors, and blood banks.</p>
@@ -297,7 +294,7 @@ export default function EmergencyRequest() {
           </div>
         ) : (
           <div className="grid gap-4">
-            {requests.filter((r) => r.status === "pending").map((req) => (
+            {requests.filter((r) => r.status === "pending" && r.required_before && new Date(r.required_before) >= new Date()).map((req) => (
               <div key={req.id} className="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm">
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-lg font-bold text-red">{req.blood_group}</span>

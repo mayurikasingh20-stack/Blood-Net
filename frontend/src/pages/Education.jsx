@@ -122,7 +122,7 @@ function BloodGroupCard({ group, compat }) {
   );
 }
 
-function MythCard({ myth, fact, index }) {
+function MythCard({ myth, fact }) {
   const [open, setOpen] = useState(false);
   return (
     <motion.div variants={fadeUp} className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
@@ -154,7 +154,7 @@ function MythCard({ myth, fact, index }) {
   );
 }
 
-function FAQItem({ faq, index }) {
+function FAQItem({ faq }) {
   const [open, setOpen] = useState(false);
   return (
     <motion.div variants={fadeUp} className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
@@ -194,7 +194,7 @@ function TimelineStep({ number, title, description, icon: Icon }) {
 export default function Education() {
   return (
     <div className="bg-cream min-h-screen">
-      {/* ==================== HERO ==================== */}
+
       <section className="relative overflow-hidden bg-gradient-to-br from-red/5 via-cream to-red/10 py-20 md:py-28">
         <div className="absolute inset-0 opacity-[0.03] bg-[radial-gradient(circle_at_30%_50%,#7F1D1D,transparent_70%)]" />
         <div className="max-w-6xl mx-auto px-4 md:px-8 relative">
@@ -215,7 +215,6 @@ export default function Education() {
 
       <div className="max-w-6xl mx-auto px-4 md:px-8 space-y-16 md:space-y-24 pb-16 md:pb-24">
 
-        {/* ==================== WHY BLOOD DONATION MATTERS ==================== */}
         <motion.section {...stagger} className="scroll-mt-20">
           <SectionHeading label="Impact" title="Why Blood Donation Matters" />
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
@@ -236,7 +235,6 @@ export default function Education() {
           </div>
         </motion.section>
 
-        {/* ==================== ELIGIBILITY ==================== */}
         <motion.section {...stagger} className="scroll-mt-20">
           <SectionHeading label="Eligibility" title="Blood Donation Eligibility" />
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4">
@@ -259,7 +257,6 @@ export default function Education() {
           </div>
         </motion.section>
 
-        {/* ==================== HOW OFTEN ==================== */}
         <motion.section {...stagger} className="scroll-mt-20">
           <SectionHeading label="Frequency" title="How Often Can You Donate?" />
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
@@ -287,7 +284,6 @@ export default function Education() {
           <p className="text-xs text-slate-500 text-center mt-4">Always follow the doctor's recommendation and blood bank guidelines.</p>
         </motion.section>
 
-        {/* ==================== BLOOD GROUPS ==================== */}
         <motion.section {...stagger} className="scroll-mt-20">
           <SectionHeading label="Compatibility" title="Blood Groups" />
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
@@ -301,7 +297,6 @@ export default function Education() {
           </div>
         </motion.section>
 
-        {/* ==================== BLOOD BANK FACTS ==================== */}
         <motion.section {...stagger} className="scroll-mt-20">
           <SectionHeading label="India" title="Blood Bank Facts" />
           <div className="bg-white rounded-2xl p-6 md:p-8 border border-slate-100 shadow-sm">
@@ -326,7 +321,6 @@ export default function Education() {
           </div>
         </motion.section>
 
-        {/* ==================== CHARGES ==================== */}
         <motion.section {...stagger} className="scroll-mt-20">
           <SectionHeading label="Costs" title="Approximate Blood Processing Charges" />
           <p className="text-xs text-slate-500 text-center mb-6">These are approximate processing charges and may vary between hospitals and states. Prices are regulated by authorities.</p>
@@ -351,7 +345,6 @@ export default function Education() {
           <p className="text-xs text-slate-400 text-center mt-4">Prices vary by state and government / private institution.</p>
         </motion.section>
 
-        {/* ==================== BEFORE DONATING ==================== */}
         <motion.section {...stagger} className="scroll-mt-20">
           <SectionHeading label="Preparation" title="Before Donating Blood" />
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
@@ -371,7 +364,6 @@ export default function Education() {
           </div>
         </motion.section>
 
-        {/* ==================== AFTER DONATING ==================== */}
         <motion.section {...stagger} className="scroll-mt-20">
           <SectionHeading label="Recovery" title="After Donating Blood" />
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
@@ -391,7 +383,6 @@ export default function Education() {
           </div>
         </motion.section>
 
-        {/* ==================== MYTHS VS FACTS ==================== */}
         <motion.section {...stagger} className="scroll-mt-20">
           <SectionHeading label="Myth Busters" title="Common Myths vs Facts" />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
@@ -401,7 +392,6 @@ export default function Education() {
           </div>
         </motion.section>
 
-        {/* ==================== FAQ ==================== */}
         <motion.section {...stagger} className="scroll-mt-20">
           <SectionHeading label="FAQ" title="Frequently Asked Questions" />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
@@ -411,7 +401,6 @@ export default function Education() {
           </div>
         </motion.section>
 
-        {/* ==================== EMERGENCY REQUEST PROCESS ==================== */}
         <motion.section {...stagger} className="scroll-mt-20">
           <SectionHeading label="How It Works" title="Emergency Blood Request Process" />
           <p className="text-xs text-slate-500 text-center mb-8 max-w-xl mx-auto">Here is how Blood Net helps connect patients with nearby donors in real time.</p>
@@ -431,7 +420,6 @@ export default function Education() {
           </div>
         </motion.section>
 
-        {/* ==================== CTA ==================== */}
         <motion.section {...stagger} className="scroll-mt-20">
           <motion.div variants={fadeUp} className="relative overflow-hidden bg-gradient-to-br from-[#7F1D1D] via-[#7F1D1D] to-[#5C1010] text-white rounded-2xl p-8 md:p-12 text-center shadow-xl">
             <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_30%_50%,#ffffff,transparent_70%)]" />
@@ -461,7 +449,6 @@ export default function Education() {
           </motion.div>
         </motion.section>
 
-        {/* ==================== FOOTER DISCLAIMER ==================== */}
         <motion.div variants={fadeUp} className="text-center">
           <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 md:p-5">
             <div className="flex items-start justify-center gap-2">

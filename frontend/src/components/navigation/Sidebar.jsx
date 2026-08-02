@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { LogOut, Droplet } from "lucide-react";
+import { LogOut, Droplet, Plus } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 const itemVariants = {
@@ -13,7 +13,6 @@ export default function Sidebar({
   onClose,
   onLogout,
   title = "Admin Portal",
-  subtitle = "Central Region HQ",
 }) {
   const location = useLocation();
 
@@ -56,6 +55,15 @@ export default function Sidebar({
                 <span className="text-sm">{item.label}</span>
                 {active && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-[#7F1D1D]" />}
               </Link>
+              {item.action && (
+                <Link
+                  to={item.action.to}
+                  onClick={onClose}
+                  className="mx-3 mt-1 flex items-center justify-center gap-1.5 rounded-lg border border-[#7F1D1D]/10 bg-[#7F1D1D]/5 px-3 py-1.5 text-xs font-bold text-[#7F1D1D] transition hover:bg-[#7F1D1D] hover:text-white"
+                >
+                  <Plus size={13} /> {item.action.label}
+                </Link>
+              )}
             </motion.div>
           );
         })}

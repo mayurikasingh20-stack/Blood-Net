@@ -1,5 +1,5 @@
 import api from "./api";
-import { backendRoleToUiRole, uiRoleToBackendRole } from "../utils/roleHelpers";
+import { backendRoleToUiRole } from "../utils/roleHelpers";
 
 export async function loginUser({ identifier, password }) {
   const response = await api.post("/auth/login", { identifier, password });

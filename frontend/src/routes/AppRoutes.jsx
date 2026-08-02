@@ -58,7 +58,7 @@ const bankSidebar = [
   { label: "Inventory", icon: "bloodtype", to: "/bloodbank/inventory" },
   { label: "Emergency", icon: "emergency", to: "/bloodbank/emergency" },
   { label: "Requests", icon: "notification_important", to: "/bloodbank/requests" },
-  { label: "Camps", icon: "calendar_month", to: "/bloodbank/camps" },
+  { label: "Camps", icon: "calendar_month", to: "/bloodbank/camps", action: { label: "Set Up Camp", to: "/bloodbank?newCamp=1" } },
   { label: "History", icon: "history", to: "/history" },
   mapItem,
   { label: "Settings", icon: "settings", to: "/bloodbank/settings" },
@@ -103,7 +103,7 @@ function useSidebar() {
 export default function AppRoutes() {
   return (
     <Routes>
-      {/* Public Routes */}
+
       <Route path="/" element={<PublicPage><Landing /></PublicPage>} />
       <Route path="/about" element={<PublicPage><About /></PublicPage>} />
       <Route path="/contact" element={<PublicPage><Contact /></PublicPage>} />
@@ -113,7 +113,6 @@ export default function AppRoutes() {
       <Route path="/bloodbank-register" element={<BloodBankRegister />} />
       <Route path="/unauthorized" element={<PublicPage><Unauthorized /></PublicPage>} />
 
-      {/* Donor/Patient Routes */}
       <Route
         path="/dashboard"
         element={
@@ -184,7 +183,7 @@ export default function AppRoutes() {
           </RoleBasedRoute>
         }
       />
-      {/* Shared Routes — sidebar adapts to user role */}
+
       <Route
         path="/settings"
         element={
@@ -216,7 +215,6 @@ export default function AppRoutes() {
         }
       />
 
-      {/* Admin Routes */}
       <Route
         path="/admin"
         element={
@@ -302,7 +300,6 @@ export default function AppRoutes() {
   }
 />
 
-      {/* Blood Bank Routes */}
       <Route
         path="/bloodbank"
         element={
@@ -374,7 +371,6 @@ export default function AppRoutes() {
         }
       />
 
-      {/* 404 */}
       <Route path="*" element={<PublicPage><NotFound /></PublicPage>} />
     </Routes>
   );
