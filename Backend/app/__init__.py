@@ -26,27 +26,27 @@ from app.utils.password import hash_password
 from werkzeug.exceptions import HTTPException
 
 
-def seed_admin_users():
-    admins = [
-        {"email": "iamadmin@gmail.com", "password": "password", "first_name": "Admin", "last_name": "User", "phone": "+91 99999 00001"},
-        {"email": "vinay@gmail.com", "password": "password2", "first_name": "Vinay", "last_name": "Kumar", "phone": "+91 99999 00002"},
-    ]
-    for admin in admins:
-        if not User.query.filter_by(email=admin["email"]).first():
-            new_admin = User(
-                first_name=admin["first_name"],
-                last_name=admin["last_name"],
-                email=admin["email"],
-                phone=admin["phone"],
-                password_hash=hash_password(admin["password"]),
-                role="admin",
-                gender="Male",
-                dob=date(1990, 1, 1),
-                city="System",
-                phone_verified=True,
-            )
-            db.session.add(new_admin)
-    db.session.commit()
+# def seed_admin_users():
+#     admins = [
+#         {"email": "iamadmin@gmail.com", "password": "password", "first_name": "Admin", "last_name": "User", "phone": "+91 99999 00001"},
+#         {"email": "vinay@gmail.com", "password": "password2", "first_name": "Vinay", "last_name": "Kumar", "phone": "+91 99999 00002"},
+#     ]
+#     for admin in admins:
+#         if not User.query.filter_by(email=admin["email"]).first():
+#             new_admin = User(
+#                 first_name=admin["first_name"],
+#                 last_name=admin["last_name"],
+#                 email=admin["email"],
+#                 phone=admin["phone"],
+#                 password_hash=hash_password(admin["password"]),
+#                 role="admin",
+#                 gender="Male",
+#                 dob=date(1990, 1, 1),
+#                 city="System",
+#                 phone_verified=True,
+#             )
+#             db.session.add(new_admin)
+#     db.session.commit()
 
 
 def create_app():
@@ -94,7 +94,7 @@ def create_app():
         if "request_document" not in [c["name"] for c in inspector.get_columns("blood_requests")]:
             db.session.execute(sa.text("ALTER TABLE blood_requests ADD COLUMN request_document VARCHAR(255)"))
             db.session.commit()
-        seed_admin_users()
+        # seed_admin_users()
 
     @app.errorhandler(500)
     def internal_error(error):

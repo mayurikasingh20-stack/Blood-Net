@@ -285,21 +285,20 @@ export default function AppRoutes() {
           </RoleBasedRoute>
         }
       />
-<Route
-  path="/admin/notifications"
-  element={
-    <RoleBasedRoute allowedRoles={["admin"]}>
-      <DashboardPage
-        sidebarItems={adminSidebar}
-        title="Admin"
-        subtitle="Notifications"
-      >
-        <Notifications />
-      </DashboardPage>
-    </RoleBasedRoute>
-  }
-/>
-
+      <Route
+        path="/admin/notifications"
+        element={
+          <RoleBasedRoute allowedRoles={["admin"]}>
+            <DashboardPage
+              sidebarItems={adminSidebar}
+              title="Admin"
+              subtitle="Notifications"
+            >
+              <Notifications />
+            </DashboardPage>
+          </RoleBasedRoute>
+        }
+      />
       <Route
         path="/bloodbank"
         element={

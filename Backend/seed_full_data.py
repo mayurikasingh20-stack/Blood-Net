@@ -10,6 +10,16 @@ from app.utils.password import hash_password
 
 PASSWORD = "password"
 
+ADMIN_ACCOUNTS = [
+    {
+        "email": "admin@gmail.com",
+        "password": "Welcome11",
+        "first_name": "Admin",
+        "last_name": "User",
+        "phone": "+91 99999 00000",
+    },
+]
+
 USER_CITIES = [
     ("Delhi", 28.6139, 77.2090),
     ("Mumbai", 19.0760, 72.8777),
@@ -184,8 +194,8 @@ credentials.append("BLOOD NET - DEMO CREDENTIALS")
 credentials.append("All passwords = password")
 credentials.append("")
 credentials.append("ADMIN ACCOUNTS")
-credentials.append("  iamadmin@gmail.com / password")
-credentials.append("  vinay@gmail.com / password2")
+for admin in ADMIN_ACCOUNTS:
+    credentials.append(f"  {admin['email']} / {admin['password']}")
 credentials.append("")
 
 
@@ -194,6 +204,33 @@ def normalize_phone(phone):
 
 
 with app.app_context():
+    created_admins = 0
+    for admin in ADMIN_ACCOUNTS:
+        user = User.query.filter_by(email=admin["email"]).first()
+        if user is None:
+            user = User(
+                first_name=admin["first_name"],
+                last_name=admin["last_name"],
+                email=admin["email"],
+                phone=normalize_phone(admin["phone"]),
+                password_hash=hash_password(admin["password"]),
+                role="admin",
+                gender="Other",
+                dob=date(1990, 1, 1),
+                city="System",
+                phone_verified=True,
+                is_active=True,
+            )
+            db.session.add(user)
+            created_admins += 1
+            print(f"Created admin: {admin['email']}")
+        else:
+            user.password_hash = hash_password(admin["password"])
+            user.role = "admin"
+            user.phone_verified = True
+            user.is_active = True
+            print(f"Updated admin: {admin['email']}")
+
     created_users = 0
     for i, (first, last, email, phone, y, m, d) in enumerate(USERS):
         if User.query.filter_by(phone=phone).first() or User.query.filter_by(email=email).first():
@@ -299,7 +336,8 @@ with app.app_context():
         f.write("\n".join(credentials) + "\n")
 
     print("\n=== Summary ===")
+    print(f"Admins created: {created_admins} / {len(ADMIN_ACCOUNTS)}")
     print(f"Users created: {created_users} / {len(USERS)}")
     print(f"Blood banks created: {created_banks} / {len(BANKS)}")
-    print("All passwords set to: password")
+    print("Demo user and blood bank passwords set to: password")
     print(f"Credentials saved to: {credentials_path}")
